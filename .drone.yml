@@ -1,0 +1,25 @@
+workspace:
+  base: /go
+  path: src/github.com/presslabs/wordpress-operator
+
+pipeline:
+  test:
+    image: golang:1.10
+    commands:
+      - make lint
+      - make full-test
+
+  build:
+    image: golang:1.10
+    commands:
+      - make build
+
+#  publish:
+#    image: plugins/docker
+#    secrets:
+#      - QUAY_TOKEN
+#    repo: quay.io/presslabs/wordpress-operator
+#    tags: [ "latest" ]
+#    when:
+#      branch: master
+#      event: push

@@ -79,12 +79,12 @@ spec:
   nodeSelector: {}
   tolerations: {}
   affinity: {}
+  serviceSpec: {}
+  ingressAnnotations: {}
   rollingUpdate:
     maxUnavailable: 25%
     maxSurge: 25%
   persistentVolumeTemplate: {}  # a PVC template for cloning. (defaults to emptyDir)
-  serviceSpec: {}
-  ingressAnnotations: {}
 status:
   conditions:
     - type: Ready
