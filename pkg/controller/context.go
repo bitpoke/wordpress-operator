@@ -1,6 +1,7 @@
 package controller
 
 import (
+	apiextenstions_clientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
 	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -20,16 +21,21 @@ type Context struct {
 
 	// KubeClient is a Kubernetes clientset
 	KubeClient kubernetes.Interface
-	// Recorder to record events to
-	Recorder record.EventRecorder
 	// KubeSharedInformerFactory can be used to obtain shared
 	// SharedIndexInformer instances for Kubernetes types
 	KubeSharedInformerFactory kubeinformers.SharedInformerFactory
 
+	// Recorder to record events to
+	Recorder record.EventRecorder
+
 	// WordpressClient is a Presslabs Wordpress Operator clientset
 	WordpressClient wpclientset.Interface
-
 	// WordpressSharedInformerFactory can be used to obtain shared
 	// SharedIndexInformer instances for Presslabs Wordpress Operator types
 	WordpressSharedInformerFactory wpinformers.SharedInformerFactory
+
+	// InstallCRDs signals the controller whenever the install Worpdress CRDs
+	InstallCRDs bool
+	// CRDClient is the clientset for Custom Resource Definitions
+	CRDClient apiextenstions_clientset.ApiextensionsV1beta1Interface
 }

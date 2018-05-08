@@ -17,16 +17,11 @@ limitations under the License.
 package wordpress
 
 import (
-	"github.com/appscode/kutil/tools/queue"
+	apiextenstions_util "github.com/appscode/kutil/apiextensions/v1beta1"
 	"github.com/golang/glog"
-	"k8s.io/client-go/informers"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/cache"
-	"k8s.io/client-go/tools/record"
+	apiextenstions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 
-	wpclientset "github.com/presslabs/wordpress-operator/pkg/client/clientset/versioned"
-	wpinformers "github.com/presslabs/wordpress-operator/pkg/client/informers/externalversions"
-	wplister "github.com/presslabs/wordpress-operator/pkg/client/listers/wordpress/v1alpha1"
+	wpapi "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 	"github.com/presslabs/wordpress-operator/pkg/controller"
 )
 
@@ -37,32 +32,13 @@ const (
 )
 
 type Controller struct {
-	kubeClient          kubernetes.Interface
-	kubeInformerFactory informers.SharedInformerFactory
-
-	wpClient          wpclientset.Interface
-	wpInformerFactory wpinformers.SharedInformerFactory
-
-	recorder record.EventRecorder
-
-	// Wordpress CRD
-	wpQueue    *queue.Worker
-	wpInformer cache.SharedIndexInformer
-	wpLister   wplister.WordpressLister
+	*controller.Context
+	*WordpressContext
 }
 
-func NewController(
-	ctx *controller.Context,
-) (c *Controller, err error) {
-	c = &Controller{
-		kubeClient:          ctx.KubeClient,
-		kubeInformerFactory: ctx.KubeSharedInformerFactory,
-
-		wpClient:          ctx.WordpressClient,
-		wpInformerFactory: ctx.WordpressSharedInformerFactory,
-
-		recorder: ctx.Recorder,
-	}
+func NewController(ctx *controller.Context) (c *Controller, err error) {
+	c = &Controller{}
+	c.Context = ctx
 
 	c.initWordpressWorker()
 
@@ -71,10 +47,40 @@ func NewController(
 
 // Run starts the control loop for the Wordpress Controller
 func (c *Controller) Run(stopCh <-chan struct{}) {
+	crds := []*apiextenstions.CustomResourceDefinition{
+		wpapi.ResourceWordpressCRD,
+	}
+
+	if c.InstallCRDs {
+		if err := c.installCRDs(crds); err != nil {
+			glog.Fatalf(err.Error())
+			return
+		}
+	}
+	if err := c.waitForCRDs(crds); err != nil {
+		glog.Fatalf(err.Error())
+		return
+	}
+
 	glog.Infof("Starting %s control loops", controllerName)
 
 	c.wpQueue.Run(stopCh)
 
 	<-stopCh
 	glog.Infof("Stopping %s control loops", controllerName)
+}
+
+func (c *Controller) installCRDs(crds []*apiextenstions.CustomResourceDefinition) error {
+	glog.Info("Registering Custom Resource Definitions")
+
+	if err := apiextenstions_util.RegisterCRDs(c.CRDClient, crds); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Controller) waitForCRDs(crds []*apiextenstions.CustomResourceDefinition) error {
+	glog.Info("Waiting for Custom Resource Definitions to become available")
+	return apiextenstions_util.WaitForCRDReady(c.CRDClient.RESTClient(), crds)
 }

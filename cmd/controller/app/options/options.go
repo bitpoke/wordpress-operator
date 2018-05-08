@@ -20,6 +20,7 @@ const (
 type ControllerManagerOptions struct {
 	Kubeconfig        string
 	KubeconfigContext string
+	InstallCRDs       bool
 
 	LeaderElect                 bool
 	LeaderElectionNamespace     string
@@ -48,6 +49,10 @@ func (o *ControllerManagerOptions) Validate() error {
 func (o *ControllerManagerOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&o.Kubeconfig, "kubeconfig", defaultKubeconfig, "Path for kubeconfig file")
 	fs.StringVar(&o.KubeconfigContext, "context", defaultKubeconfigContext, "Name of the kubeconfig context to use")
+	fs.BoolVar(&o.InstallCRDs, "install-crds", true, "If true, the "+
+		"wordpress-controller will install the Custom Resource Definitions "+
+		"for Wordpress. The controller needs the appropriate permissions in "+
+		"order to do so.")
 
 	fs.BoolVar(&o.LeaderElect, "leader-elect", true, ""+
 		"If true, wordpress-controller will perform leader election between instances to ensure no more "+

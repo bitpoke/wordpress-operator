@@ -21,14 +21,26 @@ import (
 
 	"github.com/appscode/kutil/tools/queue"
 	"github.com/golang/glog"
+	"k8s.io/client-go/tools/cache"
 
 	wpapi "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
+	wplister "github.com/presslabs/wordpress-operator/pkg/client/listers/wordpress/v1alpha1"
 )
 
+type WordpressContext struct {
+	// Wordpress CRD
+	wpQueue    *queue.Worker
+	wpInformer cache.SharedIndexInformer
+	wpLister   wplister.WordpressLister
+}
+
 func (c *Controller) initWordpressWorker() {
-	c.wpInformer = c.wpInformerFactory.Wordpress().V1alpha1().Wordpresses().Informer()
-	c.wpLister = c.wpInformerFactory.Wordpress().V1alpha1().Wordpresses().Lister()
-	c.wpQueue = queue.New("Wordpress", maxRetries, threadiness, c.reconcileWordpress)
+	c.WordpressContext = &WordpressContext{
+		wpInformer: c.WordpressSharedInformerFactory.Wordpress().V1alpha1().Wordpresses().Informer(),
+		wpLister:   c.WordpressSharedInformerFactory.Wordpress().V1alpha1().Wordpresses().Lister(),
+		wpQueue:    queue.New("wordpress", maxRetries, threadiness, c.reconcileWordpress),
+	}
+
 	c.wpInformer.AddEventHandler(queue.NewEventHandler(c.wpQueue.GetQueue(), func(old interface{}, new interface{}) bool {
 		oldSpec, ok := old.(*wpapi.Wordpress)
 		if !ok {

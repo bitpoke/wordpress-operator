@@ -28,6 +28,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 	"k8s.io/api/core/v1"
+	kext_cs "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
@@ -155,6 +156,12 @@ func buildControllerContext(c *options.ControllerManagerOptions) (*controller.Co
 		return nil, fmt.Errorf("error creating kubernetes client: %s", err.Error())
 	}
 
+	// Create the CRD client
+	crdcl, err := kext_cs.NewForConfig(kubeCfg)
+	if err != nil {
+		return nil, fmt.Errorf("error creating kubernetes CRD client: %s", err.Error())
+	}
+
 	// Create a Navigator api client
 	intcl, err := wpclientset.NewForConfig(kubeCfg)
 
@@ -180,6 +187,8 @@ func buildControllerContext(c *options.ControllerManagerOptions) (*controller.Co
 		Recorder:                       recorder,
 		WordpressClient:                intcl,
 		WordpressSharedInformerFactory: wordpressInformerFactory,
+		CRDClient:                      crdcl,
+		InstallCRDs:                    c.InstallCRDs,
 	}, nil
 }
 
