@@ -32,6 +32,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/appscode/go"
+  packages = ["types"]
+  revision = "230e0e4622c682b5d117db8c28a66404ed874ed5"
+
+[[projects]]
+  branch = "master"
   name = "github.com/appscode/jsonpatch"
   packages = ["."]
   revision = "1359b374de83fa14fd58ab10aa8ea4935f84d249"
@@ -41,6 +47,7 @@
   name = "github.com/appscode/kutil"
   packages = [
     ".",
+    "apiextensions/v1beta1",
     "meta",
     "tools/clientcmd",
     "tools/queue"
@@ -416,6 +423,17 @@
   version = "kubernetes-1.10.0"
 
 [[projects]]
+  name = "k8s.io/apiextensions-apiserver"
+  packages = [
+    "pkg/apis/apiextensions",
+    "pkg/apis/apiextensions/v1beta1",
+    "pkg/client/clientset/clientset/scheme",
+    "pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
+  ]
+  revision = "4347b330d0ff094db860f2f75fa725b4f4b53618"
+  version = "kubernetes-1.10.1"
+
+[[projects]]
   name = "k8s.io/apimachinery"
   packages = [
     "pkg/api/errors",
@@ -658,6 +676,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "833b4284d00d9089a492cf498c1d14d5b1bba830bee1ba39a46365a292968e5f"
+  inputs-digest = "9ad4aafa99293e2fa2bb3e58a9a9dcc8312ecb08c87a607fa72e6772e162fe05"
   solver-name = "gps-cdcl"
   solver-version = 1

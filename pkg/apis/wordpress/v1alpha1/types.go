@@ -22,9 +22,7 @@ import (
 )
 
 const (
-	ResourceKindWordpress     = "Wordpress"
-	ResourceSingularWordpress = "wordpress"
-	ResourcePluralWordpress   = "wordpresses"
+	ResourceKindWordpress = "Wordpress"
 )
 
 // SecretRef represents a reference to a Secret

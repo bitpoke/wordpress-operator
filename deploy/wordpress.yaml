@@ -1,0 +1,113 @@
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  creationTimestamp: null
+  name: wordpresses.wordpress.presslabs.org
+spec:
+  group: wordpress.presslabs.org
+  names:
+    kind: Wordpress
+    plural: wordpresses
+    shortNames:
+    - wp
+    singular: wordpress
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      properties:
+        spec:
+          properties:
+            affinity: {}
+            domains:
+              description: Domains for this this site answers. The first item is set
+                as the "main domain" (WP_HOME and WP_SITEURL constants).
+              items:
+                type: string
+              type: array
+            env:
+              description: List of environment variables to set in the PHP container.
+              items: {}
+              type: array
+            image:
+              description: Image is the docker image to use as basis for the execution
+                environment of this WordPress site.
+              type: string
+            ingressAnnotations:
+              description: If specified apply these annotations to the Ingress resource
+                created for this Wordpress Site.
+              type: object
+            keepUploadsLocal:
+              description: KeepUploadsLocal mounts from the volume specified in persistentVolumeTemplate
+                the folder /wp-content/uploads as RW. This is a pointer to distinguish
+                between explicit false and not specified. Defaults to false.
+              type: boolean
+            nodeSelector:
+              description: 'NodeSelector is a selector which must be true for the
+                pod to fit on a node. Selector which must match a node''s labels for
+                the pod to be scheduled on that node. More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/'
+              type: object
+            persistentVolumeTemplate: {}
+            readOnlyContents:
+              description: ReadOnlyContents mounts the /wp-content/{themes,plugins,mu-plugins,languages}
+                from persistentVolumeTemplate as RW. This is a pointer to distinguish
+                between explicit false and not specified. Defaults to true.
+              type: boolean
+            replicas:
+              description: Number of desired pods. This is a pointer to distinguish
+                between explicit zero and not specified. Defaults to 1.
+              format: int32
+              type: integer
+            repoRef:
+              description: RepoRef is the git reference to checkout when starting
+                this site. Defaults to master.
+              type: string
+            repoURL:
+              description: RepoURL is the git clone url for this WordPress site.
+              type: string
+            resources: {}
+            secretRef:
+              description: |-
+                The secret name which contain credentilas and cusomizations fot this WordPress site. The secret is mounted as a volume, and the following keys get special treatment: - wp-config.php
+                  Custom wp-config
+                - php.ini
+                  Contains custom php.ini definitions
+                - id_rsa
+                  Is the SSH key used to access the code repository
+                - netrc
+                  Is the .netrc file used for cloning the code repository. It can be used
+                  for granting access to repos over HTTP
+                - google_service_account.json
+                  Google Service Account key file, for accessing Google Cloud Services
+                  from within the WordPress site
+                - aws_credentials - aws_config
+                  The ~/.aws/credentials and ~/.aws/config files, used for accessing AWS
+                  Services from within the WordPress site
+                - nginx-server.conf
+                  nginx customizations to include in nginx http {  } config block
+                - nginx-vhost.conf
+                  nginx customizations to include in nginx server {  } config block
+              type: string
+            serviceSpec: {}
+            tlsSecretRef:
+              description: TLSSecretRef a secret containing the TLS certificates for
+                this site.
+              type: string
+            tolerations:
+              description: If specified, the pod's tolerations.
+              items: {}
+              type: array
+          required:
+          - domains
+          - repoURL
+          - secretRef
+      required:
+      - spec
+  version: v1alpha1
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: null
