@@ -105,4 +105,5 @@ publish: images
 
 CODEGEN_APIS_VERSIONS := wordpress:v1alpha1
 CODEGEN_TOOLS := deepcopy client lister informer openapi
+CODEGEN_OPENAPI_EXTAPKGS ?= k8s.io/apimachinery/pkg/apis/meta/v1 k8s.io/api/core/v1
 include hack/codegen.mk

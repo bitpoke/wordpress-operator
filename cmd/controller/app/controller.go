@@ -42,6 +42,8 @@ import (
 	wpintscheme "github.com/presslabs/wordpress-operator/pkg/client/clientset/versioned/scheme"
 	wpinformers "github.com/presslabs/wordpress-operator/pkg/client/informers/externalversions"
 
+	wpcontroller "github.com/presslabs/wordpress-operator/pkg/controller/wordpress"
+
 	"github.com/presslabs/wordpress-operator/cmd/controller/app/options"
 	"github.com/presslabs/wordpress-operator/pkg/controller"
 	"github.com/presslabs/wordpress-operator/pkg/version"
@@ -91,13 +93,31 @@ func Run(c *options.ControllerManagerOptions, stopCh <-chan struct{}) error {
 		glog.V(4).Infof("Starting shared informer factories")
 		ctx.KubeSharedInformerFactory.Start(stopCh)
 		ctx.WordpressSharedInformerFactory.Start(stopCh)
-		// TODO: Start controller loops here
+		// Wait for all involved caches to be synced, before processing items from the queue is started
+		for t, v := range ctx.KubeSharedInformerFactory.WaitForCacheSync(stopCh) {
+			if !v {
+				glog.Fatalf("%v timed out waiting for caches to sync", t)
+				return
+			}
+		}
+		for t, v := range ctx.WordpressSharedInformerFactory.WaitForCacheSync(stopCh) {
+			if !v {
+				glog.Fatalf("%v timed out waiting for caches to sync", t)
+				return
+			}
+		}
+		glog.V(4).Infof("Informer cache synced")
 
-		// The code bellow just waits forever
+		// Start the Wordpress Controller
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			glog.Infof("Starting dummy loop and waiting until CTRL+C")
+			ctrl, err := wpcontroller.NewController(ctx)
+			if err != nil {
+				glog.Fatalf(err.Error())
+				return
+			}
+			ctrl.Run(stopCh)
 			<-stopCh
 		}()
 

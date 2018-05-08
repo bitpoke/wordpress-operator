@@ -42,9 +42,10 @@
   packages = [
     ".",
     "meta",
-    "tools/clientcmd"
+    "tools/clientcmd",
+    "tools/queue"
   ]
-  revision = "8ca4fc5af50635c6a604ab905dda87c3e4033fa2"
+  revision = "7c06d378914d77d52a1e2eda9c61560a38950794"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -593,7 +594,8 @@
     "util/homedir",
     "util/integer",
     "util/jsonpath",
-    "util/retry"
+    "util/retry",
+    "util/workqueue"
   ]
   revision = "989be4278f353e42f26c416c53757d16fcff77db"
   version = "kubernetes-1.10.1"
@@ -656,6 +658,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6c4f3a7409a6936f50bb0a0b30be91265e22ed65aa56138f98739cbab7ffc860"
+  inputs-digest = "833b4284d00d9089a492cf498c1d14d5b1bba830bee1ba39a46365a292968e5f"
   solver-name = "gps-cdcl"
   solver-version = 1

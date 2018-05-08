@@ -21,6 +21,12 @@ import (
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	ResourceKindWordpress     = "Wordpress"
+	ResourceSingularWordpress = "wordpress"
+	ResourcePluralWordpress   = "wordpresses"
+)
+
 // SecretRef represents a reference to a Secret
 type SecretRef string
 
@@ -56,7 +62,9 @@ const (
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 type Wordpress struct {
-	meta.TypeMeta   `json:",inline"`
+	// +k8s:openapi-gen=false
+	meta.TypeMeta `json:",inline"`
+	// +k8s:openapi-gen=false
 	meta.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec WordpressSpec `json:"spec"`
