@@ -1,0 +1,9 @@
+apiVersion: wordpress.presslabs.org/v1alpha1
+kind: Wordpress
+metadata:
+  name: mysite
+spec:
+  secretRef: mysite-secret
+  repoURL: git@github.com:calind/site.git
+  domains:
+    - calin.localtest.me2

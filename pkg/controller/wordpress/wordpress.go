@@ -24,6 +24,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 
 	wpapi "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
+	// wpinformer "github.com/presslabs/wordpress-operator/pkg/client/informers/externalversions"
 	wplister "github.com/presslabs/wordpress-operator/pkg/client/listers/wordpress/v1alpha1"
 )
 
@@ -35,9 +36,10 @@ type WordpressContext struct {
 }
 
 func (c *Controller) initWordpressWorker() {
+	inf := c.WordpressSharedInformerFactory.Wordpress().V1alpha1().Wordpresses()
 	c.WordpressContext = &WordpressContext{
-		wpInformer: c.WordpressSharedInformerFactory.Wordpress().V1alpha1().Wordpresses().Informer(),
-		wpLister:   c.WordpressSharedInformerFactory.Wordpress().V1alpha1().Wordpresses().Lister(),
+		wpInformer: inf.Informer(),
+		wpLister:   inf.Lister(),
 		wpQueue:    queue.New("wordpress", maxRetries, threadiness, c.reconcileWordpress),
 	}
 

@@ -62,6 +62,24 @@ func (c *Controller) Run(stopCh <-chan struct{}) {
 		return
 	}
 
+	glog.V(2).Infof("Starting shared informer factories")
+	c.KubeSharedInformerFactory.Start(stopCh)
+	c.WordpressSharedInformerFactory.Start(stopCh)
+	// Wait for all involved caches to be synced, before processing items from the queue is started
+	for t, v := range c.KubeSharedInformerFactory.WaitForCacheSync(stopCh) {
+		if !v {
+			glog.Fatalf("%v timed out waiting for caches to sync", t)
+			return
+		}
+	}
+	for t, v := range c.WordpressSharedInformerFactory.WaitForCacheSync(stopCh) {
+		if !v {
+			glog.Fatalf("%v timed out waiting for caches to sync", t)
+			return
+		}
+	}
+	glog.V(2).Infof("Informer cache synced")
+
 	glog.Infof("Starting %s control loops", controllerName)
 
 	c.wpQueue.Run(stopCh)

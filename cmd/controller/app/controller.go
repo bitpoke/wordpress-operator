@@ -83,36 +83,19 @@ func NewControllerManagerCommand(stopCh <-chan struct{}) *cobra.Command {
 // Run Wordpress Controller Manager.  This should never exit.
 func Run(c *options.ControllerManagerOptions, stopCh <-chan struct{}) error {
 	glog.Infof("Starting Wordpress Operator Controller (%s)...", version.Get())
-	ctx, err := buildControllerContext(c)
-
-	if err != nil {
-		return err
-	}
 
 	run := func(_ <-chan struct{}) {
 		var wg sync.WaitGroup
-		glog.V(4).Infof("Starting shared informer factories")
-		ctx.KubeSharedInformerFactory.Start(stopCh)
-		ctx.WordpressSharedInformerFactory.Start(stopCh)
-		// Wait for all involved caches to be synced, before processing items from the queue is started
-		for t, v := range ctx.KubeSharedInformerFactory.WaitForCacheSync(stopCh) {
-			if !v {
-				glog.Fatalf("%v timed out waiting for caches to sync", t)
-				return
-			}
-		}
-		for t, v := range ctx.WordpressSharedInformerFactory.WaitForCacheSync(stopCh) {
-			if !v {
-				glog.Fatalf("%v timed out waiting for caches to sync", t)
-				return
-			}
-		}
-		glog.V(4).Infof("Informer cache synced")
-
 		// Start the Wordpress Controller
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
+			ctx, err := buildControllerContext(c)
+
+			if err != nil {
+				glog.Fatalf(err.Error())
+				return
+			}
 			ctrl, err := wpcontroller.NewController(ctx)
 			if err != nil {
 				glog.Fatalf(err.Error())
@@ -131,8 +114,12 @@ func Run(c *options.ControllerManagerOptions, stopCh <-chan struct{}) error {
 		return nil
 	}
 
-	leaderElectionClient, err := kubernetes.NewForConfig(rest.AddUserAgent(ctx.RESTConfig, "leader-election"))
+	ctx, err := buildControllerContext(c)
+	if err != nil {
+		return err
+	}
 
+	leaderElectionClient, err := kubernetes.NewForConfig(rest.AddUserAgent(ctx.RESTConfig, "leader-election"))
 	if err != nil {
 		glog.Fatalf("error creating leader election client: %s", err.Error())
 	}
