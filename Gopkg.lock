@@ -43,16 +43,27 @@
   revision = "1359b374de83fa14fd58ab10aa8ea4935f84d249"
 
 [[projects]]
-  branch = "master"
+  branch = "fix-upsert-volume-mount"
   name = "github.com/appscode/kutil"
   packages = [
     ".",
     "apiextensions/v1beta1",
+    "apps/v1",
+    "core/v1",
+    "discovery",
+    "extensions/v1beta1",
     "meta",
     "tools/clientcmd",
     "tools/queue"
   ]
-  revision = "7c06d378914d77d52a1e2eda9c61560a38950794"
+  revision = "09131d6361b87aaee652afb3fde5413030ecfb75"
+  source = "https://github.com/presslabs/kutil"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/appscode/mergo"
+  packages = ["."]
+  revision = "e3000cb3d28c72b837601cac94debd91032d19fe"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -65,6 +76,15 @@
   packages = ["."]
   revision = "06ea1031745cb8b3dab3f6a236daf2b0aa468b7e"
   version = "v3.2.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/docker/spdystream"
+  packages = [
+    ".",
+    "spdy"
+  ]
+  revision = "bc6354cbbc295e925e4c611ffe90c1f287ee54db"
 
 [[projects]]
   name = "github.com/emicklei/go-restful"
@@ -184,6 +204,13 @@
     "pagination"
   ]
   revision = "fc1122caa2de7bcd7d189719873fe5f2b9156a75"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/hashicorp/go-version"
+  packages = ["."]
+  revision = "53932f80ddea12bea96be074f9fb2dc545806aba"
+  source = "https://github.com/appscode/go-version.git"
 
 [[projects]]
   branch = "master"
@@ -462,10 +489,13 @@
     "pkg/util/diff",
     "pkg/util/errors",
     "pkg/util/framer",
+    "pkg/util/httpstream",
+    "pkg/util/httpstream/spdy",
     "pkg/util/intstr",
     "pkg/util/json",
     "pkg/util/mergepatch",
     "pkg/util/net",
+    "pkg/util/remotecommand",
     "pkg/util/runtime",
     "pkg/util/sets",
     "pkg/util/strategicpatch",
@@ -476,6 +506,7 @@
     "pkg/version",
     "pkg/watch",
     "third_party/forked/golang/json",
+    "third_party/forked/golang/netutil",
     "third_party/forked/golang/reflect"
   ]
   revision = "302974c03f7e50f16561ba237db776ab93594ef6"
@@ -605,9 +636,12 @@
     "tools/pager",
     "tools/record",
     "tools/reference",
+    "tools/remotecommand",
     "transport",
+    "transport/spdy",
     "util/buffer",
     "util/cert",
+    "util/exec",
     "util/flowcontrol",
     "util/homedir",
     "util/integer",
@@ -676,6 +710,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "9ad4aafa99293e2fa2bb3e58a9a9dcc8312ecb08c87a607fa72e6772e162fe05"
+  inputs-digest = "a6d490adb976585f5b7a776434d51915d6255eaae39447e312f1db26387b8017"
   solver-name = "gps-cdcl"
   solver-version = 1

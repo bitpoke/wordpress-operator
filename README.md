@@ -41,8 +41,15 @@ spec:
   tlsSecretRef: mysite-tls
   repoURL: "https://github.com/octocat/Hello-World.git"
   repoRef: "master"
-  readOnlyContent: true
-  keepUploadsLocal: false # if enabled, mount RW `/www/wp-content/uploads` from PVC
+  mediaBucketURL: "gs://bucket/some/prefix"
+  contentVolumeSpec:
+    # readOnly: true
+    # emptyDir: {}
+    # persistentVolumeClaim: {}
+  mediaVolumeSpec:
+    # readOnly: true
+    # emptyDir: {}
+    # persistentVolumeClaim: {}
   secretRef: mysite  # keys
     # wp-config.php
     # php.ini
@@ -84,7 +91,6 @@ spec:
   rollingUpdate:
     maxUnavailable: 25%
     maxSurge: 25%
-  persistentVolumeTemplate: {}  # a PVC template for cloning. (defaults to emptyDir)
 status:
   conditions:
     - type: Ready

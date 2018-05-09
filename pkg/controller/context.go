@@ -34,8 +34,11 @@ type Context struct {
 	// SharedIndexInformer instances for Presslabs Wordpress Operator types
 	WordpressSharedInformerFactory wpinformers.SharedInformerFactory
 
-	// InstallCRDs signals the controller whenever the install Worpdress CRDs
-	InstallCRDs bool
 	// CRDClient is the clientset for Custom Resource Definitions
 	CRDClient apiextenstions_clientset.ApiextensionsV1beta1Interface
+
+	// InstallCRDs signals the controller whenever the install Worpdress CRDs
+	InstallCRDs bool
+	// RuntimeImage is the runtime image used for runnging Wordpress.
+	RuntimeImage string
 }

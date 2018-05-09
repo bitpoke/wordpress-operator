@@ -107,7 +107,7 @@ publish: images
 gen-crds: bin/wordpress-gen-openapi_$(GOOS)_$(GOARCH) deploy/wordpress.yaml
 
 gen-crds-verify: SHELL := /bin/bash
-gen-crds-verify:
+gen-crds-verify: bin/wordpress-gen-openapi_$(GOOS)_$(GOARCH)
 	@echo "Verifying generated CRDs"
 	diff -Naupr deploy/wordpress.yaml <(bin/wordpress-gen-openapi_$(GOOS)_$(GOARCH) --crd wordpresses.wordpress.presslabs.org)
 
@@ -116,6 +116,5 @@ deploy/wordpress.yaml: $(SRC_APIS)
 
 CODEGEN_APIS_VERSIONS := wordpress:v1alpha1
 CODEGEN_TOOLS := deepcopy client lister informer openapi
-CODEGEN_OPENAPI_EXTAPKGS ?= k8s.io/apimachinery/pkg/apis/meta/v1 k8s.io/api/core/v1
 include hack/codegen.mk
 

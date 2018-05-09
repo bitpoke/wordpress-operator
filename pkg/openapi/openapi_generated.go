@@ -30,46 +30,47 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1.Wordpress":     schema_pkg_apis_wordpress_v1alpha1_Wordpress(ref),
-		"github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1.WordpressList": schema_pkg_apis_wordpress_v1alpha1_WordpressList(ref),
-		"github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1.WordpressSpec": schema_pkg_apis_wordpress_v1alpha1_WordpressSpec(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.APIGroup":                                     schema_pkg_apis_meta_v1_APIGroup(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.APIGroupList":                                 schema_pkg_apis_meta_v1_APIGroupList(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.APIResource":                                  schema_pkg_apis_meta_v1_APIResource(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.APIResourceList":                              schema_pkg_apis_meta_v1_APIResourceList(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.APIVersions":                                  schema_pkg_apis_meta_v1_APIVersions(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.DeleteOptions":                                schema_pkg_apis_meta_v1_DeleteOptions(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.Duration":                                     schema_pkg_apis_meta_v1_Duration(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.ExportOptions":                                schema_pkg_apis_meta_v1_ExportOptions(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.GetOptions":                                   schema_pkg_apis_meta_v1_GetOptions(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.GroupKind":                                    schema_pkg_apis_meta_v1_GroupKind(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.GroupResource":                                schema_pkg_apis_meta_v1_GroupResource(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.GroupVersion":                                 schema_pkg_apis_meta_v1_GroupVersion(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.GroupVersionForDiscovery":                     schema_pkg_apis_meta_v1_GroupVersionForDiscovery(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.GroupVersionKind":                             schema_pkg_apis_meta_v1_GroupVersionKind(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.GroupVersionResource":                         schema_pkg_apis_meta_v1_GroupVersionResource(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.Initializer":                                  schema_pkg_apis_meta_v1_Initializer(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.Initializers":                                 schema_pkg_apis_meta_v1_Initializers(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.InternalEvent":                                schema_pkg_apis_meta_v1_InternalEvent(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.LabelSelector":                                schema_pkg_apis_meta_v1_LabelSelector(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.LabelSelectorRequirement":                     schema_pkg_apis_meta_v1_LabelSelectorRequirement(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.List":                                         schema_pkg_apis_meta_v1_List(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta":                                     schema_pkg_apis_meta_v1_ListMeta(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.ListOptions":                                  schema_pkg_apis_meta_v1_ListOptions(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.MicroTime":                                    schema_pkg_apis_meta_v1_MicroTime(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta":                                   schema_pkg_apis_meta_v1_ObjectMeta(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.OwnerReference":                               schema_pkg_apis_meta_v1_OwnerReference(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.Patch":                                        schema_pkg_apis_meta_v1_Patch(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.Preconditions":                                schema_pkg_apis_meta_v1_Preconditions(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.RootPaths":                                    schema_pkg_apis_meta_v1_RootPaths(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.ServerAddressByClientCIDR":                    schema_pkg_apis_meta_v1_ServerAddressByClientCIDR(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.Status":                                       schema_pkg_apis_meta_v1_Status(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.StatusCause":                                  schema_pkg_apis_meta_v1_StatusCause(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.StatusDetails":                                schema_pkg_apis_meta_v1_StatusDetails(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.Time":                                         schema_pkg_apis_meta_v1_Time(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.Timestamp":                                    schema_pkg_apis_meta_v1_Timestamp(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.TypeMeta":                                     schema_pkg_apis_meta_v1_TypeMeta(ref),
-		"k8s.io/apimachinery/pkg/apis/meta/v1.WatchEvent":                                   schema_pkg_apis_meta_v1_WatchEvent(ref),
+		"github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1.Wordpress":           schema_pkg_apis_wordpress_v1alpha1_Wordpress(ref),
+		"github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1.WordpressList":       schema_pkg_apis_wordpress_v1alpha1_WordpressList(ref),
+		"github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1.WordpressSpec":       schema_pkg_apis_wordpress_v1alpha1_WordpressSpec(ref),
+		"github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1.WordpressVolumeSpec": schema_pkg_apis_wordpress_v1alpha1_WordpressVolumeSpec(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.APIGroup":                                           schema_pkg_apis_meta_v1_APIGroup(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.APIGroupList":                                       schema_pkg_apis_meta_v1_APIGroupList(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.APIResource":                                        schema_pkg_apis_meta_v1_APIResource(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.APIResourceList":                                    schema_pkg_apis_meta_v1_APIResourceList(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.APIVersions":                                        schema_pkg_apis_meta_v1_APIVersions(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.DeleteOptions":                                      schema_pkg_apis_meta_v1_DeleteOptions(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.Duration":                                           schema_pkg_apis_meta_v1_Duration(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.ExportOptions":                                      schema_pkg_apis_meta_v1_ExportOptions(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.GetOptions":                                         schema_pkg_apis_meta_v1_GetOptions(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.GroupKind":                                          schema_pkg_apis_meta_v1_GroupKind(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.GroupResource":                                      schema_pkg_apis_meta_v1_GroupResource(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.GroupVersion":                                       schema_pkg_apis_meta_v1_GroupVersion(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.GroupVersionForDiscovery":                           schema_pkg_apis_meta_v1_GroupVersionForDiscovery(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.GroupVersionKind":                                   schema_pkg_apis_meta_v1_GroupVersionKind(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.GroupVersionResource":                               schema_pkg_apis_meta_v1_GroupVersionResource(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.Initializer":                                        schema_pkg_apis_meta_v1_Initializer(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.Initializers":                                       schema_pkg_apis_meta_v1_Initializers(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.InternalEvent":                                      schema_pkg_apis_meta_v1_InternalEvent(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.LabelSelector":                                      schema_pkg_apis_meta_v1_LabelSelector(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.LabelSelectorRequirement":                           schema_pkg_apis_meta_v1_LabelSelectorRequirement(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.List":                                               schema_pkg_apis_meta_v1_List(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta":                                           schema_pkg_apis_meta_v1_ListMeta(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.ListOptions":                                        schema_pkg_apis_meta_v1_ListOptions(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.MicroTime":                                          schema_pkg_apis_meta_v1_MicroTime(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta":                                         schema_pkg_apis_meta_v1_ObjectMeta(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.OwnerReference":                                     schema_pkg_apis_meta_v1_OwnerReference(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.Patch":                                              schema_pkg_apis_meta_v1_Patch(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.Preconditions":                                      schema_pkg_apis_meta_v1_Preconditions(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.RootPaths":                                          schema_pkg_apis_meta_v1_RootPaths(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.ServerAddressByClientCIDR":                          schema_pkg_apis_meta_v1_ServerAddressByClientCIDR(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.Status":                                             schema_pkg_apis_meta_v1_Status(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.StatusCause":                                        schema_pkg_apis_meta_v1_StatusCause(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.StatusDetails":                                      schema_pkg_apis_meta_v1_StatusDetails(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.Time":                                               schema_pkg_apis_meta_v1_Time(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.Timestamp":                                          schema_pkg_apis_meta_v1_Timestamp(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.TypeMeta":                                           schema_pkg_apis_meta_v1_TypeMeta(ref),
+		"k8s.io/apimachinery/pkg/apis/meta/v1.WatchEvent":                                         schema_pkg_apis_meta_v1_WatchEvent(ref),
 	}
 }
 
@@ -177,18 +178,23 @@ func schema_pkg_apis_wordpress_v1alpha1_WordpressSpec(ref common.ReferenceCallba
 							Format:      "",
 						},
 					},
-					"readOnlyContents": {
+					"contentVolumeSpec": {
 						SchemaProps: spec.SchemaProps{
-							Description: "ReadOnlyContents mounts the /wp-content/{themes,plugins,mu-plugins,languages} from persistentVolumeTemplate as RW. This is a pointer to distinguish between explicit false and not specified. Defaults to true.",
-							Type:        []string{"boolean"},
+							Description: "ContentVolumeSpec defines how wp-content is mounted.",
+							Ref:         ref("github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1.WordpressVolumeSpec"),
+						},
+					},
+					"mediaBucketURL": {
+						SchemaProps: spec.SchemaProps{
+							Description: "MediaBucketURL represents the bucket to use for storing media files. Can contain also an optional prefix. Examples:\n\t\ts3://another-bucket/\n     gs://mybucket/with/prefix",
+							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
-					"keepUploadsLocal": {
+					"mediaVolumeSpec": {
 						SchemaProps: spec.SchemaProps{
-							Description: "KeepUploadsLocal mounts from the volume specified in persistentVolumeTemplate the folder /wp-content/uploads as RW. This is a pointer to distinguish between explicit false and not specified. Defaults to false.",
-							Type:        []string{"boolean"},
-							Format:      "",
+							Description: "MediaVolumeSpec if specified, defines the volume for storing media files.",
+							Ref:         ref("github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1.WordpressVolumeSpec"),
 						},
 					},
 					"secretRef": {
@@ -290,18 +296,50 @@ func schema_pkg_apis_wordpress_v1alpha1_WordpressSpec(ref common.ReferenceCallba
 							Ref:         ref("k8s.io/api/core/v1.ServiceSpec"),
 						},
 					},
-					"persistentVolumeTemplate": {
-						SchemaProps: spec.SchemaProps{
-							Description: "PersistentVolumeTemplate is the PVC used for cloning the site repository If not defined, the cloning takes place into an emptyDir volume, not shared by the pods in deployment.",
-							Ref:         ref("k8s.io/api/core/v1.PersistentVolumeClaim"),
-						},
-					},
 				},
 				Required: []string{"domains", "repoURL", "secretRef"},
 			},
 		},
 		Dependencies: []string{
-			"k8s.io/api/core/v1.Affinity", "k8s.io/api/core/v1.EnvVar", "k8s.io/api/core/v1.PersistentVolumeClaim", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/api/core/v1.ServiceSpec", "k8s.io/api/core/v1.Toleration"},
+			"github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1.WordpressVolumeSpec", "k8s.io/api/core/v1.Affinity", "k8s.io/api/core/v1.EnvVar", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/api/core/v1.ServiceSpec", "k8s.io/api/core/v1.Toleration"},
+	}
+}
+
+func schema_pkg_apis_wordpress_v1alpha1_WordpressVolumeSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Properties: map[string]spec.Schema{
+					"readOnly": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ReadOnly specifies if the volume should be mounted read only. WARNING: It still can be mounted read-write when initializing for example. Defaults to false.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"emptyDir": {
+						SchemaProps: spec.SchemaProps{
+							Description: "EmptyDir to use if no PersistentVolumeClaim or HostPath is specified",
+							Ref:         ref("k8s.io/api/core/v1.EmptyDirVolumeSource"),
+						},
+					},
+					"hostPath": {
+						SchemaProps: spec.SchemaProps{
+							Description: "HostPath to use instead of a PersistentVolumeClaim.",
+							Ref:         ref("k8s.io/api/core/v1.HostPathVolumeSource"),
+						},
+					},
+					"persistentVolumeClaim": {
+						SchemaProps: spec.SchemaProps{
+							Description: "PersistentVolumeClaim to use. It has the highest level of precedence, followed by HostPath and EmptyDir",
+							Ref:         ref("k8s.io/api/core/v1.PersistentVolumeClaimSpec"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/api/core/v1.EmptyDirVolumeSource", "k8s.io/api/core/v1.HostPathVolumeSource", "k8s.io/api/core/v1.PersistentVolumeClaimSpec"},
 	}
 }
 

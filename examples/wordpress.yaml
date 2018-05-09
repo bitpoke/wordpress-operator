@@ -3,7 +3,33 @@ kind: Wordpress
 metadata:
   name: mysite
 spec:
+  replicas: 1
   secretRef: mysite-secret
   repoURL: git@github.com:calind/site.git
+  contentVolumeSpec:
+    hostPath:
+      path: "/Users/calin/work/src/github.com/presslabs/wordpress-operator/content"
+      type: "DirectoryOrCreate"
   domains:
-    - calin.localtest.me2
+    - calin.localtest.me
+  env:
+    - name: PHP_WORKERS
+      value: "32"
+  serviceSpec:
+    type: ClusterIP
+  resources:
+    limits:
+      php/cpu: 500m
+      nginx/cpu: 500m
+      php/memory: 500Mi
+      php/workers: 64
+      php/worker-memory: 512Mi
+      php/max-execution-seconds: 45
+      ingress/max-body-size: 100Mi
+    requests:
+      php/workers: 64
+      php/worker-memory: 128Mi
+      php/max-execution-seconds: 30
+      php/workers: 8
+      nginx/cpu: 100m
+      php/cpu: 100m

@@ -66,7 +66,21 @@ func (c *Controller) reconcileWordpress(key string) error {
 		glog.Infof("Sync/Add/Update for Wordpress %s", key)
 		wp := obj.(*wpapi.Wordpress).DeepCopy()
 
-		c.syncDeployment(wp)
+		if err := c.syncService(wp); err != nil {
+			return err
+		}
+
+		if err := c.syncIngress(wp); err != nil {
+			return err
+		}
+
+		if err := c.syncPVC(wp); err != nil {
+			return err
+		}
+
+		if err := c.syncDeployment(wp); err != nil {
+			return err
+		}
 	}
 	return nil
 }

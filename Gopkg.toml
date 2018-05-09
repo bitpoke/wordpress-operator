@@ -37,7 +37,9 @@ required = [
 
 [[constraint]]
   name = "github.com/appscode/kutil"
-  branch = "release-7.0"
+  # branch = "release-7.0"
+  source = "https://github.com/presslabs/kutil"
+  branch = "fix-upsert-volume-mount"
 
 # Fixes: cannot use spt.Token (type func() adal.Token) as type adal.Token in field value
 [[override]]

@@ -10,6 +10,8 @@ const (
 	defaultKubeconfig        = ""
 	defaultKubeconfigContext = ""
 
+	defaultRuntimeImage = "quay.io/presslabs/runtime:latest"
+
 	defaultLeaderElect                 = true
 	defaultLeaderElectionNamespace     = "kube-system"
 	defaultLeaderElectionLeaseDuration = 15 * time.Second
@@ -21,6 +23,8 @@ type ControllerManagerOptions struct {
 	Kubeconfig        string
 	KubeconfigContext string
 	InstallCRDs       bool
+
+	RuntimeImage string
 
 	LeaderElect                 bool
 	LeaderElectionNamespace     string
@@ -53,6 +57,8 @@ func (o *ControllerManagerOptions) AddFlags(fs *pflag.FlagSet) {
 		"wordpress-controller will install the Custom Resource Definitions "+
 		"for Wordpress. The controller needs the appropriate permissions in "+
 		"order to do so.")
+
+	fs.StringVar(&o.RuntimeImage, "runtime", defaultRuntimeImage, "Runtime image to use by default")
 
 	fs.BoolVar(&o.LeaderElect, "leader-elect", true, ""+
 		"If true, wordpress-controller will perform leader election between instances to ensure no more "+

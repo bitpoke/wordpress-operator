@@ -28,12 +28,13 @@ import (
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 	"k8s.io/api/core/v1"
-	kext_cs "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
-	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	apiextensions_clientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
-	core "k8s.io/client-go/kubernetes/typed/core/v1"
+	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
@@ -144,7 +145,7 @@ func buildControllerContext(c *options.ControllerManagerOptions) (*controller.Co
 	}
 
 	// Create the CRD client
-	crdcl, err := kext_cs.NewForConfig(kubeCfg)
+	crdcl, err := apiextensions_clientset.NewForConfig(kubeCfg)
 	if err != nil {
 		return nil, fmt.Errorf("error creating kubernetes CRD client: %s", err.Error())
 	}
@@ -162,7 +163,7 @@ func buildControllerContext(c *options.ControllerManagerOptions) (*controller.Co
 	glog.V(4).Info("Creating event broadcaster")
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(glog.V(4).Infof)
-	eventBroadcaster.StartRecordingToSink(&core.EventSinkImpl{Interface: cl.CoreV1().Events("")})
+	eventBroadcaster.StartRecordingToSink(&corev1.EventSinkImpl{Interface: cl.CoreV1().Events("")})
 	recorder := eventBroadcaster.NewRecorder(scheme.Scheme, v1.EventSource{Component: controllerAgentName})
 
 	kubeSharedInformerFactory := informers.NewFilteredSharedInformerFactory(cl, time.Second*30, "", nil)
@@ -176,6 +177,7 @@ func buildControllerContext(c *options.ControllerManagerOptions) (*controller.Co
 		WordpressSharedInformerFactory: wordpressInformerFactory,
 		CRDClient:                      crdcl,
 		InstallCRDs:                    c.InstallCRDs,
+		RuntimeImage:                   c.RuntimeImage,
 	}, nil
 }
 
@@ -188,7 +190,7 @@ func startLeaderElection(c *options.ControllerManagerOptions, leaderElectionClie
 
 	// Lock required for leader election
 	rl := resourcelock.EndpointsLock{
-		EndpointsMeta: meta.ObjectMeta{
+		EndpointsMeta: metav1.ObjectMeta{
 			Namespace: c.LeaderElectionNamespace,
 			Name:      controllerAgentName,
 		},

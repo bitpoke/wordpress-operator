@@ -21,6 +21,16 @@ spec:
         spec:
           properties:
             affinity: {}
+            contentVolumeSpec:
+              properties:
+                emptyDir: {}
+                hostPath: {}
+                persistentVolumeClaim: {}
+                readOnly:
+                  description: 'ReadOnly specifies if the volume should be mounted
+                    read only. WARNING: It still can be mounted read-write when initializing
+                    for example. Defaults to false.'
+                  type: boolean
             domains:
               description: Domains for this this site answers. The first item is set
                 as the "main domain" (WP_HOME and WP_SITEURL constants).
@@ -39,22 +49,26 @@ spec:
               description: If specified apply these annotations to the Ingress resource
                 created for this Wordpress Site.
               type: object
-            keepUploadsLocal:
-              description: KeepUploadsLocal mounts from the volume specified in persistentVolumeTemplate
-                the folder /wp-content/uploads as RW. This is a pointer to distinguish
-                between explicit false and not specified. Defaults to false.
-              type: boolean
+            mediaBucketURL:
+              description: "MediaBucketURL represents the bucket to use for storing
+                media files. Can contain also an optional prefix. Examples:\n\t\ts3://another-bucket/\n
+                \    gs://mybucket/with/prefix"
+              type: string
+            mediaVolumeSpec:
+              properties:
+                emptyDir: {}
+                hostPath: {}
+                persistentVolumeClaim: {}
+                readOnly:
+                  description: 'ReadOnly specifies if the volume should be mounted
+                    read only. WARNING: It still can be mounted read-write when initializing
+                    for example. Defaults to false.'
+                  type: boolean
             nodeSelector:
               description: 'NodeSelector is a selector which must be true for the
                 pod to fit on a node. Selector which must match a node''s labels for
                 the pod to be scheduled on that node. More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/'
               type: object
-            persistentVolumeTemplate: {}
-            readOnlyContents:
-              description: ReadOnlyContents mounts the /wp-content/{themes,plugins,mu-plugins,languages}
-                from persistentVolumeTemplate as RW. This is a pointer to distinguish
-                between explicit false and not specified. Defaults to true.
-              type: boolean
             replicas:
               description: Number of desired pods. This is a pointer to distinguish
                 between explicit zero and not specified. Defaults to 1.
