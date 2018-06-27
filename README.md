@@ -1,37 +1,30 @@
 # wordpress-operator
-WordPress operator for Kubernetes
+WordPress operator enables managing multiple WordPress installments at scale.
+
+## Goals and status
+
+The main goals of the operator are:
+
+1. Easily deploy scalable WordPress sites on top of kubernetes
+2. Allow best practices for en masse upgrades (canary, slow rollout, etc.)
+3. Friendly to devops (monitoring, availability, scalability and backup stories solved)
+
+The project is in pre-alpha state.
+
+## Components
+
+1. WordPress operator - this project
+2. WordPress runtime - container image supporting the project goals (https://github.com/presslabs/runtime)
 
 # Kubernetes resources
 
 ## Wordpress Site
 
 ```yaml
-apiVersion: wordpress.presslabs.net/v1
+apiVersion: wordpress.presslabs.org/v1alpha1
 kind: Wordpress
 metadata:
   name: mysite
-  labels:
-    wordpress-runtime: stable
-    env: production
-    flavor: scalable
-  annotations:
-    # *.provisioner.presslabs.com annotations drives provisioning under Presslabs Dashboard
-    mysql.provisioner.presslabs.com/class: "mysql-operator"
-    mysql.provisioner.presslabs.com/secret-name: "mysite-mysql"
-    # if this mysql cluster exists in namespace, skip provisioning
-    # the Site Controller sets the env accoding to this instance
-    mysql.provisioner.presslabs.com/instance: "mysite-mysql-ru5zti"
-
-    memcached.provisioner.presslabs.com/class: "inline"
-    # if this memcached statefulset exists in namespace, skip provisioning
-    # the Site Controller sets the env accoding to this instance
-    memcached.provisioner.presslabs.com/instance: "mysite-memcached-pprfg8"
-
-    git.provisioner.presslabs.com/class: "project-gitea"
-    git.provisioner.presslabs.com/repo: "octocat/mysite"
-
-    media.provisioner.presslabs.com/class: "gcs"
-    media.provisioner.presslabs.com/bucket: "mysite-files"
 spec:
   image: quay.io/presslabs/wordpress:4.9.5-r148-php71
   replicas: 1
@@ -39,18 +32,19 @@ spec:
     - "example.com"
     - "www.example.com"
   tlsSecretRef: mysite-tls
-  repoURL: "https://github.com/octocat/Hello-World.git"
-  repoRef: "master"
-  mediaBucketURL: "gs://bucket/some/prefix"
   contentVolumeSpec:
     # readOnly: true
-    # emptyDir: {}
+    # one of the following
     # persistentVolumeClaim: {}
+    # hostPath: {}
+    # emptyDir: {}
   mediaVolumeSpec:
     # readOnly: true
-    # emptyDir: {}
+    # one of the following
     # persistentVolumeClaim: {}
-  secretRef: mysite  # keys
+    # hostPath: {}
+    # emptyDir: {}
+  secretRef: mysite
     # wp-config.php
     # php.ini
     # nginx-vhost.conf
@@ -88,13 +82,9 @@ spec:
   affinity: {}
   serviceSpec: {}
   ingressAnnotations: {}
-  rollingUpdate:
-    maxUnavailable: 25%
-    maxSurge: 25%
-status:
-  conditions:
-    - type: Ready
-      status: True
-      reason: StatefulSetReady
-      message: The statefulset transitioned to Ready
 ```
+
+## License
+
+This project is licensed under Apache 2.0 license. Read the [LICENSE](LICENSE) file in the
+top distribution directory, for the full license text.

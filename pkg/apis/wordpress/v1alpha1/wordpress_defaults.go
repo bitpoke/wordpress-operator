@@ -21,9 +21,5 @@ import (
 )
 
 func (wp *Wordpress) WithDefaults() (d *Wordpress) {
-	d = wp.DeepCopy()
-	if len(wp.Spec.RepoRef) == 0 {
-		d.Spec.RepoRef = "master"
-	}
 	return
 }

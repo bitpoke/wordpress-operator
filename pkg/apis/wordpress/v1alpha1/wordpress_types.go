@@ -84,27 +84,14 @@ type WordpressSpec struct {
 	// TLSSecretRef a secret containing the TLS certificates for this site.
 	// +optional
 	TLSSecretRef SecretRef `json:"tlsSecretRef,omitempty"`
-	// RepoURL is the git clone url for this WordPress site.
-	RepoURL URL `json:"repoURL"`
-	// RepoRef is the git reference to checkout when starting this site.
-	// Defaults to master.
-	// +optional
-	RepoRef string `json:"repoRef,omitempty"`
 	// ContentVolumeSpec defines how wp-content is mounted.
 	// +optional
 	ContentVolumeSpec WordpressVolumeSpec `json:"contentVolumeSpec,omitempty"`
-	// MediaBucketURL represents the bucket to use for storing media files.
-	// Can contain also an optional prefix.
-	// Examples:
-	//		s3://another-bucket/
-	//      gs://mybucket/with/prefix
-	// +optional
-	MediaBucket URL `json:"mediaBucketURL,omitempty"`
 	// MediaVolumeSpec if specified, defines the volume for storing media
 	// files.
 	// +optional
 	MediaVolumeSpec *WordpressVolumeSpec `json:"mediaVolumeSpec,omitempty"`
-	// The secret name which contain credentilas and cusomizations fot this
+	// The secret name which contain credentials and customizations for this
 	// WordPress site. The secret is mounted as a volume, and the following keys
 	// get special treatment:
 	// - wp-config.php
@@ -166,7 +153,7 @@ type WordpressSpec struct {
 
 type WordpressVolumeSpec struct {
 	// ReadOnly specifies if the volume should be mounted read only.
-	// WARNING: It still can be mounted read-write when initializing for
+	// WARNING: It still can be mounted read-write for initialization for
 	// example.
 	// Defaults to false.
 	// +optional

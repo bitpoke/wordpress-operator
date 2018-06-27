@@ -164,31 +164,10 @@ func schema_pkg_apis_wordpress_v1alpha1_WordpressSpec(ref common.ReferenceCallba
 							Format:      "",
 						},
 					},
-					"repoURL": {
-						SchemaProps: spec.SchemaProps{
-							Description: "RepoURL is the git clone url for this WordPress site.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"repoRef": {
-						SchemaProps: spec.SchemaProps{
-							Description: "RepoRef is the git reference to checkout when starting this site. Defaults to master.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 					"contentVolumeSpec": {
 						SchemaProps: spec.SchemaProps{
 							Description: "ContentVolumeSpec defines how wp-content is mounted.",
 							Ref:         ref("github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1.WordpressVolumeSpec"),
-						},
-					},
-					"mediaBucketURL": {
-						SchemaProps: spec.SchemaProps{
-							Description: "MediaBucketURL represents the bucket to use for storing media files. Can contain also an optional prefix. Examples:\n\t\ts3://another-bucket/\n     gs://mybucket/with/prefix",
-							Type:        []string{"string"},
-							Format:      "",
 						},
 					},
 					"mediaVolumeSpec": {
@@ -199,7 +178,7 @@ func schema_pkg_apis_wordpress_v1alpha1_WordpressSpec(ref common.ReferenceCallba
 					},
 					"secretRef": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The secret name which contain credentilas and cusomizations fot this WordPress site. The secret is mounted as a volume, and the following keys get special treatment: - wp-config.php\n  Custom wp-config\n- php.ini\n  Contains custom php.ini definitions\n- id_rsa\n  Is the SSH key used to access the code repository\n- netrc\n  Is the .netrc file used for cloning the code repository. It can be used\n  for granting access to repos over HTTP\n- google_service_account.json\n  Google Service Account key file, for accessing Google Cloud Services\n  from within the WordPress site\n- aws_credentials - aws_config\n  The ~/.aws/credentials and ~/.aws/config files, used for accessing AWS\n  Services from within the WordPress site\n- nginx-server.conf\n  nginx customizations to include in nginx http {  } config block\n- nginx-vhost.conf\n  nginx customizations to include in nginx server {  } config block",
+							Description: "The secret name which contain credentials and customizations for this WordPress site. The secret is mounted as a volume, and the following keys get special treatment: - wp-config.php\n  Custom wp-config\n- php.ini\n  Contains custom php.ini definitions\n- id_rsa\n  Is the SSH key used to access the code repository\n- netrc\n  Is the .netrc file used for cloning the code repository. It can be used\n  for granting access to repos over HTTP\n- google_service_account.json\n  Google Service Account key file, for accessing Google Cloud Services\n  from within the WordPress site\n- aws_credentials - aws_config\n  The ~/.aws/credentials and ~/.aws/config files, used for accessing AWS\n  Services from within the WordPress site\n- nginx-server.conf\n  nginx customizations to include in nginx http {  } config block\n- nginx-vhost.conf\n  nginx customizations to include in nginx server {  } config block",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -297,7 +276,7 @@ func schema_pkg_apis_wordpress_v1alpha1_WordpressSpec(ref common.ReferenceCallba
 						},
 					},
 				},
-				Required: []string{"domains", "repoURL", "secretRef"},
+				Required: []string{"domains", "secretRef"},
 			},
 		},
 		Dependencies: []string{
@@ -312,7 +291,7 @@ func schema_pkg_apis_wordpress_v1alpha1_WordpressVolumeSpec(ref common.Reference
 				Properties: map[string]spec.Schema{
 					"readOnly": {
 						SchemaProps: spec.SchemaProps{
-							Description: "ReadOnly specifies if the volume should be mounted read only. WARNING: It still can be mounted read-write when initializing for example. Defaults to false.",
+							Description: "ReadOnly specifies if the volume should be mounted read only. WARNING: It still can be mounted read-write for initialization for example. Defaults to false.",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},

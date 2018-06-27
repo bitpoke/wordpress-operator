@@ -91,14 +91,6 @@ func (c *Controller) ensureWordpressEnv(wp *wpapi.Wordpress, ctr *corev1.Contain
 	}
 	env := []corev1.EnvVar{
 		corev1.EnvVar{
-			Name:  "WORDPRESS_REPO_URL",
-			Value: string(wp.Spec.RepoURL),
-		},
-		corev1.EnvVar{
-			Name:  "WORDPRESS_REPO_REF",
-			Value: wp.Spec.RepoRef,
-		},
-		corev1.EnvVar{
 			Name:  "WORDPRESS_DOMAINS",
 			Value: strings.Join(domains, ","),
 		},

@@ -28,7 +28,7 @@ spec:
                 persistentVolumeClaim: {}
                 readOnly:
                   description: 'ReadOnly specifies if the volume should be mounted
-                    read only. WARNING: It still can be mounted read-write when initializing
+                    read only. WARNING: It still can be mounted read-write for initialization
                     for example. Defaults to false.'
                   type: boolean
             domains:
@@ -49,11 +49,6 @@ spec:
               description: If specified apply these annotations to the Ingress resource
                 created for this Wordpress Site.
               type: object
-            mediaBucketURL:
-              description: "MediaBucketURL represents the bucket to use for storing
-                media files. Can contain also an optional prefix. Examples:\n\t\ts3://another-bucket/\n
-                \    gs://mybucket/with/prefix"
-              type: string
             mediaVolumeSpec:
               properties:
                 emptyDir: {}
@@ -61,7 +56,7 @@ spec:
                 persistentVolumeClaim: {}
                 readOnly:
                   description: 'ReadOnly specifies if the volume should be mounted
-                    read only. WARNING: It still can be mounted read-write when initializing
+                    read only. WARNING: It still can be mounted read-write for initialization
                     for example. Defaults to false.'
                   type: boolean
             nodeSelector:
@@ -74,17 +69,10 @@ spec:
                 between explicit zero and not specified. Defaults to 1.
               format: int32
               type: integer
-            repoRef:
-              description: RepoRef is the git reference to checkout when starting
-                this site. Defaults to master.
-              type: string
-            repoURL:
-              description: RepoURL is the git clone url for this WordPress site.
-              type: string
             resources: {}
             secretRef:
               description: |-
-                The secret name which contain credentilas and cusomizations fot this WordPress site. The secret is mounted as a volume, and the following keys get special treatment: - wp-config.php
+                The secret name which contain credentials and customizations for this WordPress site. The secret is mounted as a volume, and the following keys get special treatment: - wp-config.php
                   Custom wp-config
                 - php.ini
                   Contains custom php.ini definitions
@@ -115,7 +103,6 @@ spec:
               type: array
           required:
           - domains
-          - repoURL
           - secretRef
       required:
       - spec
