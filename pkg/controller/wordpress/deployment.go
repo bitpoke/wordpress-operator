@@ -75,6 +75,12 @@ func (c *Controller) syncDeployment(wp *wpapi.Wordpress) error {
 		in.Spec.Template.Spec.Tolerations = wpdef.Spec.Tolerations
 		in.Spec.Template.Spec.Affinity = &wpdef.Spec.Affinity
 
+		if len(wp.Spec.ServiceAccountName) > 0 {
+			in.Spec.Template.Spec.ServiceAccountName = wp.Spec.ServiceAccountName
+		} else {
+			in.Spec.Template.Spec.ServiceAccountName = "default"
+		}
+
 		in.Spec.Template.Spec.Volumes = c.ensureVolumes(wpdef, in.Spec.Template.Spec.Volumes)
 
 		return in
@@ -187,6 +193,9 @@ func (c *Controller) ensurePHPContainer(wp *wpapi.Wordpress, in *appsv1.Deployme
 		ctr.Image = wp.Spec.Image
 	} else {
 		ctr.Image = c.RuntimeImage
+	}
+	if len(wp.Spec.ImagePullPolicy) > 0 {
+		ctr.ImagePullPolicy = wp.Spec.ImagePullPolicy
 	}
 	ctr.Args = []string{"/usr/local/bin/php-fpm"}
 
@@ -334,6 +343,9 @@ func (c *Controller) ensureNginxContainer(wp *wpapi.Wordpress, in *appsv1.Deploy
 		ctr.Image = wp.Spec.Image
 	} else {
 		ctr.Image = c.RuntimeImage
+	}
+	if len(wp.Spec.ImagePullPolicy) > 0 {
+		ctr.ImagePullPolicy = wp.Spec.ImagePullPolicy
 	}
 	ctr.Args = []string{"/usr/local/bin/nginx"}
 

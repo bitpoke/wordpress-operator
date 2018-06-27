@@ -21,5 +21,9 @@ import (
 )
 
 func (wp *Wordpress) WithDefaults() (d *Wordpress) {
+	d = wp.DeepCopy()
+	if len(d.Spec.CLIDriver) == 0 {
+		d.Spec.CLIDriver = "standalone"
+	}
 	return
 }

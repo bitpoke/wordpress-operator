@@ -21,6 +21,16 @@ spec:
         spec:
           properties:
             affinity: {}
+            cliDriver:
+              description: |-
+                CLI driver to use for running wp cron, database upgrades: * standalone (default)
+                  spawns a standalone pod when running a cli command
+                * inline
+                  uses kubectl to exec into a running pod, and executes the cli commands
+                  there. These jobs tend to fail more often and are more fragile, but
+                  they work in cases where standalone driver cannot be used (eg. content
+                  must be shred by pods running wordpress and pods running jobs)
+              type: string
             contentVolumeSpec:
               properties:
                 emptyDir: {}
@@ -44,6 +54,11 @@ spec:
             image:
               description: Image is the docker image to use as basis for the execution
                 environment of this WordPress site.
+              type: string
+            imagePullPolicy:
+              description: 'Image pull policy. One of Always, Never, IfNotPresent.
+                Defaults to Always if :latest tag is specified, or IfNotPresent otherwise.
+                Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images'
               type: string
             ingressAnnotations:
               description: If specified apply these annotations to the Ingress resource
@@ -91,6 +106,9 @@ spec:
                   nginx customizations to include in nginx http {  } config block
                 - nginx-vhost.conf
                   nginx customizations to include in nginx server {  } config block
+              type: string
+            serviceAccountName:
+              description: ServiceAccount to use for running pods.
               type: string
             serviceSpec: {}
             tlsSecretRef:

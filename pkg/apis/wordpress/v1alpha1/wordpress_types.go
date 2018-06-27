@@ -124,10 +124,26 @@ type WordpressSpec struct {
 	// of this WordPress site.
 	// +optional
 	Image string `json:"image,omitempty"`
+	// Image pull policy.
+	// One of Always, Never, IfNotPresent.
+	// Defaults to Always if :latest tag is specified, or IfNotPresent otherwise.
+	// Cannot be updated.
+	// More info: https://kubernetes.io/docs/concepts/containers/images#updating-images
+	// +optional
+	ImagePullPolicy corev1.PullPolicy `json:"imagePullPolicy,omitempty"`
 	// Number of desired pods. This is a pointer to distinguish between explicit
 	// zero and not specified. Defaults to 1.
 	// +optional
 	Replicas *int32 `json:"replicas,omitempty"`
+	// CLI driver to use for running wp cron, database upgrades:
+	// * standalone (default)
+	//   spawns a standalone pod when running a cli command
+	// * inline
+	//   uses kubectl to exec into a running pod, and executes the cli commands
+	//   there. These jobs tend to fail more often and are more fragile, but
+	//   they work in cases where standalone driver cannot be used (eg. content
+	//   must be shred by pods running wordpress and pods running jobs)
+	CLIDriver string `json:"cliDriver,omitempty"`
 	// Compute Resources required by this Wordpress instance.
 	// +optional
 	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
@@ -142,6 +158,9 @@ type WordpressSpec struct {
 	// If specified, the pod's scheduling constraints.
 	// +optional
 	Affinity corev1.Affinity `json:"affinity,omitempty"`
+	// ServiceAccount to use for running pods.
+	// +optional
+	ServiceAccountName string `json:"serviceAccountName,omitempty"`
 	// If specified apply these annotations to the Ingress resource created for
 	// this Wordpress Site.
 	// +optional

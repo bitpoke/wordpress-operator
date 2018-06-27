@@ -209,11 +209,25 @@ func schema_pkg_apis_wordpress_v1alpha1_WordpressSpec(ref common.ReferenceCallba
 							Format:      "",
 						},
 					},
+					"imagePullPolicy": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"replicas": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
 							Type:        []string{"integer"},
 							Format:      "int32",
+						},
+					},
+					"cliDriver": {
+						SchemaProps: spec.SchemaProps{
+							Description: "CLI driver to use for running wp cron, database upgrades: * standalone (default)\n  spawns a standalone pod when running a cli command\n* inline\n  uses kubectl to exec into a running pod, and executes the cli commands\n  there. These jobs tend to fail more often and are more fragile, but\n  they work in cases where standalone driver cannot be used (eg. content\n  must be shred by pods running wordpress and pods running jobs)",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"resources": {
@@ -253,6 +267,13 @@ func schema_pkg_apis_wordpress_v1alpha1_WordpressSpec(ref common.ReferenceCallba
 						SchemaProps: spec.SchemaProps{
 							Description: "If specified, the pod's scheduling constraints.",
 							Ref:         ref("k8s.io/api/core/v1.Affinity"),
+						},
+					},
+					"serviceAccountName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ServiceAccount to use for running pods.",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"ingressAnnotations": {
