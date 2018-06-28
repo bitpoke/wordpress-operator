@@ -25,16 +25,19 @@ import (
 	corev1 "k8s.io/api/core/v1"
 
 	wpapi "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
-)
-
-const (
-	contentPVCName = "%s"
-	mediaPVCName   = "%s-media"
+	"github.com/presslabs/wordpress-operator/pkg/factory/wordpress"
 )
 
 func (c *Controller) syncPVC(wp *wpapi.Wordpress) error {
+	wpf := wordpress.Generator{
+		WP:                  wp.WithDefaults(),
+		DefaultRuntimeImage: c.RuntimeImage,
+	}
+	labels := wpf.Labels()
+
 	if wp.Spec.ContentVolumeSpec.PersistentVolumeClaim != nil {
-		meta := c.objectMeta(wp, contentPVCName)
+		meta := c.objectMeta(wp, wpf.ContentVolumeName())
+		meta.Labels = labels
 		_, _, err := core_util.CreateOrPatchPVC(c.KubeClient, meta, func(in *corev1.PersistentVolumeClaim) *corev1.PersistentVolumeClaim {
 			if wp.Spec.ContentVolumeSpec.PersistentVolumeClaim != nil {
 				if reflect.DeepEqual(in.Spec, corev1.PersistentVolumeClaimSpec{}) {
@@ -55,7 +58,8 @@ func (c *Controller) syncPVC(wp *wpapi.Wordpress) error {
 		return nil
 	}
 	if wp.Spec.MediaVolumeSpec.PersistentVolumeClaim != nil {
-		meta := c.objectMeta(wp, contentPVCName)
+		meta := c.objectMeta(wp, wpf.MediaVolumeName())
+		meta.Labels = labels
 		_, _, err := core_util.CreateOrPatchPVC(c.KubeClient, meta, func(in *corev1.PersistentVolumeClaim) *corev1.PersistentVolumeClaim {
 			if wp.Spec.MediaVolumeSpec.PersistentVolumeClaim != nil {
 				if reflect.DeepEqual(in.Spec, corev1.PersistentVolumeClaimSpec{}) {

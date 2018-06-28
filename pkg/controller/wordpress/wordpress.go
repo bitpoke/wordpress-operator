@@ -81,6 +81,10 @@ func (c *Controller) reconcileWordpress(key string) error {
 		if err := c.syncDeployment(wp); err != nil {
 			return err
 		}
+
+		if err := c.syncCron(wp); err != nil {
+			return err
+		}
 	}
 	return nil
 }

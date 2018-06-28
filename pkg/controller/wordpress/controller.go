@@ -23,7 +23,6 @@ import (
 	"github.com/golang/glog"
 	apiextenstions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 
 	wpapi "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 	"github.com/presslabs/wordpress-operator/pkg/controller"
@@ -125,18 +124,9 @@ func (c *Controller) ensureControllerReference(in metav1.ObjectMeta, wp *wpapi.W
 	return in
 }
 
-func (c *Controller) instanceLabels(wp *wpapi.Wordpress) labels.Set {
-	return labels.Set{
-		"app.kubernetes.io/name":           "wordpress",
-		"app.kubernetes.io/app-instance":   wp.ObjectMeta.Name,
-		"app.kubernetes.io/deploy-manager": "wordpress-operator",
-	}
-}
-
 func (c *Controller) objectMeta(wp *wpapi.Wordpress, nameTemplate string) metav1.ObjectMeta {
 	return metav1.ObjectMeta{
 		Name:      fmt.Sprintf(nameTemplate, wp.ObjectMeta.Name),
 		Namespace: wp.ObjectMeta.Namespace,
-		Labels:    c.instanceLabels(wp),
 	}
 }

@@ -22,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	wpapi "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
+	"github.com/presslabs/wordpress-operator/pkg/factory/wordpress"
 )
 
 const (
@@ -31,8 +32,15 @@ const (
 func (c *Controller) syncService(wp *wpapi.Wordpress) error {
 	glog.Infof("Syncing service for %s/%s", wp.ObjectMeta.Namespace, wp.ObjectMeta.Name)
 
+	wpf := wordpress.Generator{
+		WP:                  wp.WithDefaults(),
+		DefaultRuntimeImage: c.RuntimeImage,
+	}
+	labels := wpf.Labels()
+	labels["app.kubernetes.io/tier"] = "front"
+
 	meta := c.objectMeta(wp, serviceName)
-	meta.Labels["app.kubernetes.io/tier"] = "front"
+	meta.Labels = labels
 
 	_, _, err := core_util.CreateOrPatchService(c.KubeClient, meta, func(in *corev1.Service) *corev1.Service {
 		in.ObjectMeta = c.ensureControllerReference(in.ObjectMeta, wp)
@@ -74,7 +82,7 @@ func (c *Controller) syncService(wp *wpapi.Wordpress) error {
 			in.Spec.Type = corev1.ServiceTypeClusterIP
 		}
 
-		in.Spec.Selector = c.podLabels(wp)
+		in.Spec.Selector = labels
 
 		in.Spec.Ports = core_util.MergeServicePorts(in.Spec.Ports, []corev1.ServicePort{
 			corev1.ServicePort{

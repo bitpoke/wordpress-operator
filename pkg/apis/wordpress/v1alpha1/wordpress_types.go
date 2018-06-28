@@ -51,6 +51,10 @@ const (
 	ResourcePHPMaxExecutionSeconds corev1.ResourceName = "php/max-execution-seconds"
 	// Maximum request body size in bytes (500Gi = 500GiB = 500 * 1024 * 1024 * 1024)
 	ResourceIngressBodySize corev1.ResourceName = "ingress/max-body-size"
+	// CPU in cores for running wp cli commands (eg. 500m = .5 cores)
+	ResourceCLICPU corev1.ResourceName = "cli/cpu"
+	// Memory, in bytes for running cli commands. (500Gi = 500GiB = 500 * 1024 * 1024 * 1024)
+	ResourceCLIMemory corev1.ResourceName = "cli/memory"
 )
 
 // +k8s:openapi-gen=true

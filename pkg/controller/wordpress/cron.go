@@ -17,42 +17,47 @@ limitations under the License.
 package wordpress
 
 import (
-	apps_util "github.com/appscode/kutil/apps/v1"
+	batch_util "github.com/appscode/kutil/batch/v1beta1"
 	"github.com/golang/glog"
-	appsv1 "k8s.io/api/apps/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	batchv1beta1 "k8s.io/api/batch/v1beta1"
 
 	wpapi "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 	"github.com/presslabs/wordpress-operator/pkg/factory/wordpress"
 )
 
 const (
-	deploymentName = "%s"
+	cronName = "%s-wp-cron"
 )
 
-func (c *Controller) syncDeployment(wp *wpapi.Wordpress) error {
-	glog.Infof("Syncing deployment for %s/%s", wp.ObjectMeta.Namespace, wp.ObjectMeta.Name)
+func (c *Controller) syncCron(wp *wpapi.Wordpress) error {
+	glog.Infof("Syncing wp-cron for %s/%s", wp.ObjectMeta.Namespace, wp.ObjectMeta.Name)
 
 	wpf := wordpress.Generator{
 		WP:                  wp.WithDefaults(),
 		DefaultRuntimeImage: c.RuntimeImage,
 	}
 	labels := wpf.Labels()
-	labels["app.kubernetes.io/tier"] = "front"
+	labels["app.kubernetes.io/tier"] = "wp-cron"
 
-	meta := c.objectMeta(wp, deploymentName)
+	meta := c.objectMeta(wp, cronName)
 	meta.Labels = labels
 
-	_, _, err := apps_util.CreateOrPatchDeployment(c.KubeClient, meta, func(in *appsv1.Deployment) *appsv1.Deployment {
+	var backoffLimit int32 = 1
+	var activeDeadlineSeconds int64 = 30
+
+	_, _, err := batch_util.CreateOrPatchCronJob(c.KubeClient, meta, func(in *batchv1beta1.CronJob) *batchv1beta1.CronJob {
 		in.ObjectMeta = c.ensureControllerReference(in.ObjectMeta, wp)
 
-		in.Spec.Selector = metav1.SetAsLabelSelector(labels)
-		in.Spec.Template = *wpf.PodTemplateSpec(&in.Spec.Template)
-		in.Spec.Template.ObjectMeta.Labels = labels
+		in.Spec.Schedule = "* * * * *"
+		in.Spec.ConcurrencyPolicy = "Forbid"
 
-		if wp.Spec.Replicas != nil {
-			in.Spec.Replicas = wp.Spec.Replicas
-		}
+		in.Spec.JobTemplate.ObjectMeta.Labels = labels
+		in.Spec.JobTemplate.Spec.BackoffLimit = &backoffLimit
+		in.Spec.JobTemplate.Spec.ActiveDeadlineSeconds = &activeDeadlineSeconds
+
+		cmd := []string{"wp", "cron", "event", "run", "--due-now"}
+		in.Spec.JobTemplate.Spec.Template = *wpf.JobPodTemplateSpec(&in.Spec.JobTemplate.Spec.Template, cmd...)
+		in.Spec.JobTemplate.Spec.Template.ObjectMeta.Labels = labels
 
 		return in
 	})
