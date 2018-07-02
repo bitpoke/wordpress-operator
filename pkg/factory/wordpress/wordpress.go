@@ -78,6 +78,9 @@ func (g *Generator) PodTemplateSpec(in *corev1.PodTemplateSpec) (out *corev1.Pod
 	in.Spec.Tolerations = g.WP.Spec.Tolerations
 	in.Spec.Affinity = &g.WP.Spec.Affinity
 
+	if len(g.WP.Spec.ImagePullSecrets) > 0 {
+		in.Spec.ImagePullSecrets = g.WP.Spec.ImagePullSecrets
+	}
 	if len(g.WP.Spec.ServiceAccountName) > 0 {
 		in.Spec.ServiceAccountName = g.WP.Spec.ServiceAccountName
 	} else {
@@ -93,14 +96,27 @@ func (g *Generator) PodTemplateSpec(in *corev1.PodTemplateSpec) (out *corev1.Pod
 func (g *Generator) JobPodTemplateSpec(in *corev1.PodTemplateSpec, cmd ...string) (out *corev1.PodTemplateSpec) {
 	switch g.WP.Spec.CLIDriver {
 	case "inline":
-		return g.inlineJobPodTemplate(in, cmd...)
+		in = g.inlineJobPodTemplate(in, cmd...)
 	default:
-		return g.standaloneJobPodTemplate(in, cmd...)
+		in = g.standaloneJobPodTemplate(in, cmd...)
 	}
+
+	in.Spec.RestartPolicy = "Never"
+
+	if len(g.WP.Spec.ImagePullSecrets) > 0 {
+		in.Spec.ImagePullSecrets = g.WP.Spec.ImagePullSecrets
+	}
+
+	if len(g.WP.Spec.ServiceAccountName) > 0 {
+		in.Spec.ServiceAccountName = g.WP.Spec.ServiceAccountName
+	} else {
+		in.Spec.ServiceAccountName = "default"
+	}
+
+	return in
 }
 
 func (g *Generator) standaloneJobPodTemplate(in *corev1.PodTemplateSpec, cmd ...string) (out *corev1.PodTemplateSpec) {
-	in.Spec.RestartPolicy = "Never"
 	in.Spec.Containers = g.ensurePHPContainer(in.Spec.Containers)
 
 	// cleanup entrypoint and enforce the requested command
@@ -123,21 +139,12 @@ func (g *Generator) standaloneJobPodTemplate(in *corev1.PodTemplateSpec, cmd ...
 		in.Spec.Containers[0].Resources.Requests[corev1.ResourceMemory] = r
 	}
 
-	// setup service account
-	if len(g.WP.Spec.ServiceAccountName) > 0 {
-		in.Spec.ServiceAccountName = g.WP.Spec.ServiceAccountName
-	} else {
-		in.Spec.ServiceAccountName = "default"
-	}
-
 	in.Spec.Volumes = g.ensureVolumes(in.Spec.Volumes)
 
 	return in
 }
 
 func (g *Generator) inlineJobPodTemplate(in *corev1.PodTemplateSpec, cmd ...string) (out *corev1.PodTemplateSpec) {
-	in.Spec.RestartPolicy = "Never"
-
 	if len(in.Spec.Containers) == 0 {
 		in.Spec.Containers = append(in.Spec.Containers, corev1.Container{Name: phpContainerName})
 	}
@@ -159,11 +166,12 @@ func (g *Generator) inlineJobPodTemplate(in *corev1.PodTemplateSpec, cmd ...stri
 	ctr.Image = "lachlanevenson/k8s-kubectl:v1.10.5"
 	ctr.ImagePullPolicy = corev1.PullIfNotPresent
 
-	// ctr.Args = []string{"/usr/local/bin/kubectl", "get", "po"}
+	// find pod candidates using these labels
+	l := g.Labels()
+	l["app.kubernetes.io/component"] = "web"
+	l["app.kubernetes.io/tier"] = "front"
 
-	labels := g.Labels()
-	labels["app.kubernetes.io/tier"] = "front"
-	getPodCmd := fmt.Sprintf("kubectl get pod --namespace $MY_POD_NAMESPACE --sort-by=.status.startTime --field-selector=status.phase==Running -o name -l %s | cut -d'/' -f2 | tail -n1", labels)
+	getPodCmd := fmt.Sprintf("kubectl get pod --namespace $MY_POD_NAMESPACE --sort-by=.status.startTime --field-selector=status.phase==Running -o name -l %s | cut -d'/' -f2 | tail -n1", l)
 	shCmd := fmt.Sprintf("kubectl exec $(%s) -c wordpress -- %s", getPodCmd, shellquote.Join(cmd...))
 	ctr.Command = []string{"/bin/sh"}
 	ctr.Args = []string{"-c", shCmd}
@@ -172,11 +180,6 @@ func (g *Generator) inlineJobPodTemplate(in *corev1.PodTemplateSpec, cmd ...stri
 
 	in.Spec.Volumes = []corev1.Volume{}
 
-	if len(g.WP.Spec.ServiceAccountName) > 0 {
-		in.Spec.ServiceAccountName = g.WP.Spec.ServiceAccountName
-	} else {
-		in.Spec.ServiceAccountName = "default"
-	}
 	return in
 }
 

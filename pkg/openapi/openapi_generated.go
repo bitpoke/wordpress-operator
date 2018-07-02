@@ -216,6 +216,25 @@ func schema_pkg_apis_wordpress_v1alpha1_WordpressSpec(ref common.ReferenceCallba
 							Format:      "",
 						},
 					},
+					"imagePullSecrets": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-patch-merge-key": "name",
+								"x-kubernetes-patch-strategy":  "merge",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "ImagePullSecrets is an optional list of references to secrets in the same namespace to use for pulling any of the images used by this PodSpec. If specified, these secrets will be passed to individual puller implementations for them to use. For example, in the case of docker, only DockerConfig type secrets are honored. More info: https://kubernetes.io/docs/concepts/containers/images#specifying-imagepullsecrets-on-a-pod",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("k8s.io/api/core/v1.LocalObjectReference"),
+									},
+								},
+							},
+						},
+					},
 					"replicas": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
@@ -301,7 +320,7 @@ func schema_pkg_apis_wordpress_v1alpha1_WordpressSpec(ref common.ReferenceCallba
 			},
 		},
 		Dependencies: []string{
-			"github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1.WordpressVolumeSpec", "k8s.io/api/core/v1.Affinity", "k8s.io/api/core/v1.EnvVar", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/api/core/v1.ServiceSpec", "k8s.io/api/core/v1.Toleration"},
+			"github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1.WordpressVolumeSpec", "k8s.io/api/core/v1.Affinity", "k8s.io/api/core/v1.EnvVar", "k8s.io/api/core/v1.LocalObjectReference", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/api/core/v1.ServiceSpec", "k8s.io/api/core/v1.Toleration"},
 	}
 }
 

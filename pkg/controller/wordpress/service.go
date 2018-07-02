@@ -37,6 +37,7 @@ func (c *Controller) syncService(wp *wpapi.Wordpress) error {
 		DefaultRuntimeImage: c.RuntimeImage,
 	}
 	labels := wpf.Labels()
+	labels["app.kubernetes.io/component"] = "web"
 	labels["app.kubernetes.io/tier"] = "front"
 
 	meta := c.objectMeta(wp, serviceName)

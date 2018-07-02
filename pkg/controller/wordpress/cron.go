@@ -29,6 +29,10 @@ const (
 	cronName = "%s-wp-cron"
 )
 
+var (
+	cronStartingDeadlineSeconds int64 = 10
+)
+
 func (c *Controller) syncCron(wp *wpapi.Wordpress) error {
 	glog.Infof("Syncing wp-cron for %s/%s", wp.ObjectMeta.Namespace, wp.ObjectMeta.Name)
 
@@ -37,25 +41,27 @@ func (c *Controller) syncCron(wp *wpapi.Wordpress) error {
 		DefaultRuntimeImage: c.RuntimeImage,
 	}
 	labels := wpf.Labels()
-	labels["app.kubernetes.io/tier"] = "wp-cron"
+	labels["app.kubernetes.io/component"] = "wp-cron"
 
 	meta := c.objectMeta(wp, cronName)
 	meta.Labels = labels
 
-	var backoffLimit int32 = 1
-	var activeDeadlineSeconds int64 = 30
+	var backoffLimit int32 = 0
+	var activeDeadlineSeconds int64 = 10
 
 	_, _, err := batch_util.CreateOrPatchCronJob(c.KubeClient, meta, func(in *batchv1beta1.CronJob) *batchv1beta1.CronJob {
 		in.ObjectMeta = c.ensureControllerReference(in.ObjectMeta, wp)
 
 		in.Spec.Schedule = "* * * * *"
 		in.Spec.ConcurrencyPolicy = "Forbid"
+		in.Spec.StartingDeadlineSeconds = &cronStartingDeadlineSeconds
 
 		in.Spec.JobTemplate.ObjectMeta.Labels = labels
 		in.Spec.JobTemplate.Spec.BackoffLimit = &backoffLimit
 		in.Spec.JobTemplate.Spec.ActiveDeadlineSeconds = &activeDeadlineSeconds
 
 		cmd := []string{"wp", "cron", "event", "run", "--due-now"}
+		// cmd := []string{"sleep", "15"}
 		in.Spec.JobTemplate.Spec.Template = *wpf.JobPodTemplateSpec(&in.Spec.JobTemplate.Spec.Template, cmd...)
 		in.Spec.JobTemplate.Spec.Template.ObjectMeta.Labels = labels
 
