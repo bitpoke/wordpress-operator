@@ -30,7 +30,7 @@ import (
 
 func (c *Controller) syncPVC(wp *wpapi.Wordpress) error {
 	wpf := wordpress.Generator{
-		WP:                  wp.WithDefaults(),
+		WP:                  wp,
 		DefaultRuntimeImage: c.RuntimeImage,
 	}
 	labels := wpf.Labels()

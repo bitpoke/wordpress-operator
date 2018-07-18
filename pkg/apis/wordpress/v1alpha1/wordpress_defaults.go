@@ -17,13 +17,25 @@ limitations under the License.
 package v1alpha1
 
 import (
-// corev1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 )
 
 func (wp *Wordpress) WithDefaults() (d *Wordpress) {
-	d = wp.DeepCopy()
-	if len(d.Spec.CLIDriver) == 0 {
-		d.Spec.CLIDriver = "standalone"
+	d = wp
+	if len(d.Spec.VolumeMountsSpec) == 0 {
+		d.Spec.VolumeMountsSpec = []corev1.VolumeMount{
+			corev1.VolumeMount{
+				Name:      "content",
+				MountPath: "/var/www/html/wp-content",
+				SubPath:   "wp-content",
+			},
+		}
+		if d.Spec.MediaVolumeSpec != nil {
+			d.Spec.VolumeMountsSpec = append(d.Spec.VolumeMountsSpec, corev1.VolumeMount{
+				Name:      "media",
+				MountPath: "/var/www/html/wp-content/uploads",
+			})
+		}
 	}
 	return
 }

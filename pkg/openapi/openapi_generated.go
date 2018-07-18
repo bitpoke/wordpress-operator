@@ -143,6 +143,13 @@ func schema_pkg_apis_wordpress_v1alpha1_WordpressSpec(ref common.ReferenceCallba
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Properties: map[string]spec.Schema{
+					"replicas": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Number of desired web pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
 					"domains": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Domains for this this site answers. The first item is set as the \"main domain\" (WP_HOME and WP_SITEURL constants).",
@@ -166,21 +173,27 @@ func schema_pkg_apis_wordpress_v1alpha1_WordpressSpec(ref common.ReferenceCallba
 					},
 					"contentVolumeSpec": {
 						SchemaProps: spec.SchemaProps{
-							Description: "ContentVolumeSpec defines how wp-content is mounted.",
+							Description: "ContentVolumeSpec defines the volume for storing wp-content.",
 							Ref:         ref("github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1.WordpressVolumeSpec"),
 						},
 					},
 					"mediaVolumeSpec": {
 						SchemaProps: spec.SchemaProps{
-							Description: "MediaVolumeSpec if specified, defines the volume for storing media files.",
+							Description: "MediaVolumeSpec if specified, defines a separate volume for storing media files.",
 							Ref:         ref("github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1.WordpressVolumeSpec"),
 						},
 					},
-					"secretRef": {
+					"volumeMountsSpec": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The secret name which contain credentials and customizations for this WordPress site. The secret is mounted as a volume, and the following keys get special treatment: - wp-config.php\n  Custom wp-config\n- php.ini\n  Contains custom php.ini definitions\n- id_rsa\n  Is the SSH key used to access the code repository\n- netrc\n  Is the .netrc file used for cloning the code repository. It can be used\n  for granting access to repos over HTTP\n- google_service_account.json\n  Google Service Account key file, for accessing Google Cloud Services\n  from within the WordPress site\n- aws_credentials - aws_config\n  The ~/.aws/credentials and ~/.aws/config files, used for accessing AWS\n  Services from within the WordPress site\n- nginx-server.conf\n  nginx customizations to include in nginx http {  } config block\n- nginx-vhost.conf\n  nginx customizations to include in nginx server {  } config block",
-							Type:        []string{"string"},
-							Format:      "",
+							Description: "VolumeMountsSpec defines the mount structure for mounting volumes into pods. Each container in WebPodTemplate and CLIPodTemplate will get this structure mounted. If undefined, the /wp-content folder from ContentVolume gets mounted into /var/www/wp-content/ and if defined, the MediaVolume gets mounted into /var/www/wp-content/uploads",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("k8s.io/api/core/v1.VolumeMount"),
+									},
+								},
+							},
 						},
 					},
 					"env": {
@@ -191,7 +204,7 @@ func schema_pkg_apis_wordpress_v1alpha1_WordpressSpec(ref common.ReferenceCallba
 							},
 						},
 						SchemaProps: spec.SchemaProps{
-							Description: "List of environment variables to set in the PHP container.",
+							Description: "Env represents the environment variables which is made available to every container in the spec.",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -202,97 +215,16 @@ func schema_pkg_apis_wordpress_v1alpha1_WordpressSpec(ref common.ReferenceCallba
 							},
 						},
 					},
-					"image": {
+					"webPodTemplate": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Image is the docker image to use as basis for the execution environment of this WordPress site.",
-							Type:        []string{"string"},
-							Format:      "",
+							Description: "WebPodTemplate is the pod template for the WordPress web frontend.\n\n*The globally defined volume mounts* are injected into all containers\n\n*The globally defined env* is injected into all containers",
+							Ref:         ref("k8s.io/api/core/v1.PodTemplateSpec"),
 						},
 					},
-					"imagePullPolicy": {
+					"cliPodTemplate": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"imagePullSecrets": {
-						VendorExtensible: spec.VendorExtensible{
-							Extensions: spec.Extensions{
-								"x-kubernetes-patch-merge-key": "name",
-								"x-kubernetes-patch-strategy":  "merge",
-							},
-						},
-						SchemaProps: spec.SchemaProps{
-							Description: "ImagePullSecrets is an optional list of references to secrets in the same namespace to use for pulling any of the images used by this PodSpec. If specified, these secrets will be passed to individual puller implementations for them to use. For example, in the case of docker, only DockerConfig type secrets are honored. More info: https://kubernetes.io/docs/concepts/containers/images#specifying-imagepullsecrets-on-a-pod",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Ref: ref("k8s.io/api/core/v1.LocalObjectReference"),
-									},
-								},
-							},
-						},
-					},
-					"replicas": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
-							Type:        []string{"integer"},
-							Format:      "int32",
-						},
-					},
-					"cliDriver": {
-						SchemaProps: spec.SchemaProps{
-							Description: "CLI driver to use for running wp cron, database upgrades: * standalone (default)\n  spawns a standalone pod when running a cli command\n* inline\n  uses kubectl to exec into a running pod, and executes the cli commands\n  there. These jobs tend to fail more often and are more fragile, but\n  they work in cases where standalone driver cannot be used (eg. content\n  must be shred by pods running wordpress and pods running jobs)",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"resources": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Compute Resources required by this Wordpress instance.",
-							Ref:         ref("k8s.io/api/core/v1.ResourceRequirements"),
-						},
-					},
-					"nodeSelector": {
-						SchemaProps: spec.SchemaProps{
-							Description: "NodeSelector is a selector which must be true for the pod to fit on a node. Selector which must match a node's labels for the pod to be scheduled on that node. More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
-									},
-								},
-							},
-						},
-					},
-					"tolerations": {
-						SchemaProps: spec.SchemaProps{
-							Description: "If specified, the pod's tolerations.",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Ref: ref("k8s.io/api/core/v1.Toleration"),
-									},
-								},
-							},
-						},
-					},
-					"affinity": {
-						SchemaProps: spec.SchemaProps{
-							Description: "If specified, the pod's scheduling constraints.",
-							Ref:         ref("k8s.io/api/core/v1.Affinity"),
-						},
-					},
-					"serviceAccountName": {
-						SchemaProps: spec.SchemaProps{
-							Description: "ServiceAccount to use for running pods.",
-							Type:        []string{"string"},
-							Format:      "",
+							Description: "CLIPodTemplate is the pod template for running wp-cli commands (eg. wp-cron, wp database upgrades, etc.)\n\n*The globally defined volume mounts* are injected into all containers\n\n*The globally defined env* is injected into all containers\n\nThe pod restart policy is set `Never`, regardless of the spec",
+							Ref:         ref("k8s.io/api/core/v1.PodTemplateSpec"),
 						},
 					},
 					"ingressAnnotations": {
@@ -316,11 +248,11 @@ func schema_pkg_apis_wordpress_v1alpha1_WordpressSpec(ref common.ReferenceCallba
 						},
 					},
 				},
-				Required: []string{"domains", "secretRef"},
+				Required: []string{"domains"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1.WordpressVolumeSpec", "k8s.io/api/core/v1.Affinity", "k8s.io/api/core/v1.EnvVar", "k8s.io/api/core/v1.LocalObjectReference", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/api/core/v1.ServiceSpec", "k8s.io/api/core/v1.Toleration"},
+			"github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1.WordpressVolumeSpec", "k8s.io/api/core/v1.EnvVar", "k8s.io/api/core/v1.PodTemplateSpec", "k8s.io/api/core/v1.ServiceSpec", "k8s.io/api/core/v1.VolumeMount"},
 	}
 }
 
@@ -329,13 +261,6 @@ func schema_pkg_apis_wordpress_v1alpha1_WordpressVolumeSpec(ref common.Reference
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Properties: map[string]spec.Schema{
-					"readOnly": {
-						SchemaProps: spec.SchemaProps{
-							Description: "ReadOnly specifies if the volume should be mounted read only. WARNING: It still can be mounted read-write for initialization for example. Defaults to false.",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
 					"emptyDir": {
 						SchemaProps: spec.SchemaProps{
 							Description: "EmptyDir to use if no PersistentVolumeClaim or HostPath is specified",

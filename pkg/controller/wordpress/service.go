@@ -33,15 +33,13 @@ func (c *Controller) syncService(wp *wpapi.Wordpress) error {
 	glog.Infof("Syncing service for %s/%s", wp.ObjectMeta.Namespace, wp.ObjectMeta.Name)
 
 	wpf := wordpress.Generator{
-		WP:                  wp.WithDefaults(),
+		WP:                  wp,
 		DefaultRuntimeImage: c.RuntimeImage,
 	}
-	labels := wpf.Labels()
-	labels["app.kubernetes.io/component"] = "web"
-	labels["app.kubernetes.io/tier"] = "front"
+	l := wpf.WebPodLabels()
 
 	meta := c.objectMeta(wp, serviceName)
-	meta.Labels = labels
+	meta.Labels = l
 
 	_, _, err := core_util.CreateOrPatchService(c.KubeClient, meta, func(in *corev1.Service) *corev1.Service {
 		in.ObjectMeta = c.ensureControllerReference(in.ObjectMeta, wp)
@@ -83,7 +81,7 @@ func (c *Controller) syncService(wp *wpapi.Wordpress) error {
 			in.Spec.Type = corev1.ServiceTypeClusterIP
 		}
 
-		in.Spec.Selector = labels
+		in.Spec.Selector = l
 
 		in.Spec.Ports = core_util.MergeServicePorts(in.Spec.Ports, []corev1.ServicePort{
 			corev1.ServicePort{

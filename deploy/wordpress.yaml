@@ -20,27 +20,12 @@ spec:
       properties:
         spec:
           properties:
-            affinity: {}
-            cliDriver:
-              description: |-
-                CLI driver to use for running wp cron, database upgrades: * standalone (default)
-                  spawns a standalone pod when running a cli command
-                * inline
-                  uses kubectl to exec into a running pod, and executes the cli commands
-                  there. These jobs tend to fail more often and are more fragile, but
-                  they work in cases where standalone driver cannot be used (eg. content
-                  must be shred by pods running wordpress and pods running jobs)
-              type: string
+            cliPodTemplate: {}
             contentVolumeSpec:
               properties:
                 emptyDir: {}
                 hostPath: {}
                 persistentVolumeClaim: {}
-                readOnly:
-                  description: 'ReadOnly specifies if the volume should be mounted
-                    read only. WARNING: It still can be mounted read-write for initialization
-                    for example. Defaults to false.'
-                  type: boolean
             domains:
               description: Domains for this this site answers. The first item is set
                 as the "main domain" (WP_HOME and WP_SITEURL constants).
@@ -48,25 +33,8 @@ spec:
                 type: string
               type: array
             env:
-              description: List of environment variables to set in the PHP container.
-              items: {}
-              type: array
-            image:
-              description: Image is the docker image to use as basis for the execution
-                environment of this WordPress site.
-              type: string
-            imagePullPolicy:
-              description: 'Image pull policy. One of Always, Never, IfNotPresent.
-                Defaults to Always if :latest tag is specified, or IfNotPresent otherwise.
-                Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images'
-              type: string
-            imagePullSecrets:
-              description: 'ImagePullSecrets is an optional list of references to
-                secrets in the same namespace to use for pulling any of the images
-                used by this PodSpec. If specified, these secrets will be passed to
-                individual puller implementations for them to use. For example, in
-                the case of docker, only DockerConfig type secrets are honored. More
-                info: https://kubernetes.io/docs/concepts/containers/images#specifying-imagepullsecrets-on-a-pod'
+              description: Env represents the environment variables which is made
+                available to every container in the spec.
               items: {}
               type: array
             ingressAnnotations:
@@ -78,59 +46,27 @@ spec:
                 emptyDir: {}
                 hostPath: {}
                 persistentVolumeClaim: {}
-                readOnly:
-                  description: 'ReadOnly specifies if the volume should be mounted
-                    read only. WARNING: It still can be mounted read-write for initialization
-                    for example. Defaults to false.'
-                  type: boolean
-            nodeSelector:
-              description: 'NodeSelector is a selector which must be true for the
-                pod to fit on a node. Selector which must match a node''s labels for
-                the pod to be scheduled on that node. More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/'
-              type: object
             replicas:
-              description: Number of desired pods. This is a pointer to distinguish
+              description: Number of desired web pods. This is a pointer to distinguish
                 between explicit zero and not specified. Defaults to 1.
               format: int32
               type: integer
-            resources: {}
-            secretRef:
-              description: |-
-                The secret name which contain credentials and customizations for this WordPress site. The secret is mounted as a volume, and the following keys get special treatment: - wp-config.php
-                  Custom wp-config
-                - php.ini
-                  Contains custom php.ini definitions
-                - id_rsa
-                  Is the SSH key used to access the code repository
-                - netrc
-                  Is the .netrc file used for cloning the code repository. It can be used
-                  for granting access to repos over HTTP
-                - google_service_account.json
-                  Google Service Account key file, for accessing Google Cloud Services
-                  from within the WordPress site
-                - aws_credentials - aws_config
-                  The ~/.aws/credentials and ~/.aws/config files, used for accessing AWS
-                  Services from within the WordPress site
-                - nginx-server.conf
-                  nginx customizations to include in nginx http {  } config block
-                - nginx-vhost.conf
-                  nginx customizations to include in nginx server {  } config block
-              type: string
-            serviceAccountName:
-              description: ServiceAccount to use for running pods.
-              type: string
             serviceSpec: {}
             tlsSecretRef:
               description: TLSSecretRef a secret containing the TLS certificates for
                 this site.
               type: string
-            tolerations:
-              description: If specified, the pod's tolerations.
+            volumeMountsSpec:
+              description: VolumeMountsSpec defines the mount structure for mounting
+                volumes into pods. Each container in WebPodTemplate and CLIPodTemplate
+                will get this structure mounted. If undefined, the /wp-content folder
+                from ContentVolume gets mounted into /var/www/wp-content/ and if defined,
+                the MediaVolume gets mounted into /var/www/wp-content/uploads
               items: {}
               type: array
+            webPodTemplate: {}
           required:
           - domains
-          - secretRef
       required:
       - spec
   version: v1alpha1

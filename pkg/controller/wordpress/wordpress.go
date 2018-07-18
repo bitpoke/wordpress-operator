@@ -64,7 +64,7 @@ func (c *Controller) reconcileWordpress(key string) error {
 	}
 	if exists {
 		glog.Infof("Sync/Add/Update for Wordpress %s", key)
-		wp := obj.(*wpapi.Wordpress).DeepCopy()
+		wp := obj.(*wpapi.Wordpress).DeepCopy().WithDefaults()
 
 		if err := c.syncService(wp); err != nil {
 			return err
@@ -82,13 +82,13 @@ func (c *Controller) reconcileWordpress(key string) error {
 			return err
 		}
 
-		if err := c.syncCron(wp); err != nil {
-			return err
-		}
+		// if err := c.syncCron(wp); err != nil {
+		// 	return err
+		// }
 
-		if err := c.syncDBMigrate(wp); err != nil {
-			return err
-		}
+		// if err := c.syncDBMigrate(wp); err != nil {
+		// 	return err
+		// }
 	}
 	return nil
 }

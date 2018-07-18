@@ -19,6 +19,7 @@ package wordpress
 import (
 	"crypto/md5"
 	"fmt"
+	"strings"
 
 	"github.com/golang/glog"
 	batchv1 "k8s.io/api/batch/v1"
@@ -37,17 +38,25 @@ func (c *Controller) syncDBMigrate(wp *wpapi.Wordpress) error {
 	glog.Infof("Syncing db migration job for %s/%s", wp.ObjectMeta.Namespace, wp.ObjectMeta.Name)
 
 	wpf := wordpress.Generator{
-		WP:                  wp.WithDefaults(),
+		WP:                  wp,
 		DefaultRuntimeImage: c.RuntimeImage,
 	}
 	labels := wpf.Labels()
 	labels["app.kubernetes.io/component"] = "db-migrate"
 
+	var images []string
+
+	for _, c := range wp.Spec.WebPodTemplate.Spec.Containers {
+		images = append(images, c.Image)
+	}
+
+	image := strings.Join(images, ",")
+
 	meta := c.objectMeta(wp, dbMigrateJobName)
-	meta.Name = fmt.Sprintf("%s-%x", meta.Name, md5.Sum([]byte(wpf.WP.Spec.Image)))
+	meta.Name = fmt.Sprintf("%s-%x", meta.Name, md5.Sum([]byte(image)))
 	meta.Labels = labels
 	meta.Annotations = map[string]string{
-		"wordpress.presslabs.org/db-upgrade-for": wpf.WP.Spec.Image,
+		"wordpress.presslabs.org/db-upgrade-for": image,
 	}
 
 	// After release of kubernetes 1.10.5 increase backoff limit

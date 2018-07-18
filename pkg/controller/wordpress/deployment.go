@@ -34,22 +34,19 @@ func (c *Controller) syncDeployment(wp *wpapi.Wordpress) error {
 	glog.Infof("Syncing deployment for %s/%s", wp.ObjectMeta.Namespace, wp.ObjectMeta.Name)
 
 	wpf := wordpress.Generator{
-		WP:                  wp.WithDefaults(),
+		WP:                  wp,
 		DefaultRuntimeImage: c.RuntimeImage,
 	}
-	labels := wpf.Labels()
-	labels["app.kubernetes.io/component"] = "web"
-	labels["app.kubernetes.io/tier"] = "front"
+	l := wpf.WebPodLabels()
 
 	meta := c.objectMeta(wp, deploymentName)
-	meta.Labels = labels
+	meta.Labels = l
 
 	_, _, err := apps_util.CreateOrPatchDeployment(c.KubeClient, meta, func(in *appsv1.Deployment) *appsv1.Deployment {
 		in.ObjectMeta = c.ensureControllerReference(in.ObjectMeta, wp)
 
-		in.Spec.Selector = metav1.SetAsLabelSelector(labels)
-		in.Spec.Template = *wpf.PodTemplateSpec(&in.Spec.Template)
-		in.Spec.Template.ObjectMeta.Labels = labels
+		in.Spec.Selector = metav1.SetAsLabelSelector(l)
+		in.Spec.Template = *wpf.WebPodTemplateSpec(&in.Spec.Template)
 
 		if wp.Spec.Replicas != nil {
 			in.Spec.Replicas = wp.Spec.Replicas
