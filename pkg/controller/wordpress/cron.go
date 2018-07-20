@@ -25,10 +25,6 @@ import (
 	"github.com/presslabs/wordpress-operator/pkg/factory/wordpress"
 )
 
-const (
-	cronName = "%s-wp-cron"
-)
-
 var (
 	cronStartingDeadlineSeconds int64 = 10
 )
@@ -36,14 +32,12 @@ var (
 func (c *Controller) syncCron(wp *wpapi.Wordpress) error {
 	glog.Infof("Syncing wp-cron for %s/%s", wp.ObjectMeta.Namespace, wp.ObjectMeta.Name)
 
-	wpf := wordpress.Generator{
-		WP:                  wp.WithDefaults(),
-		DefaultRuntimeImage: c.RuntimeImage,
-	}
+	wpf := wordpress.Generator{WP: wp}
+
 	labels := wpf.Labels()
 	labels["app.kubernetes.io/component"] = "wp-cron"
 
-	meta := c.objectMeta(wp, cronName)
+	meta := c.objectMeta(wp, wpf.WPCronName())
 	meta.Labels = labels
 
 	var backoffLimit int32 = 0

@@ -26,20 +26,13 @@ import (
 	"github.com/presslabs/wordpress-operator/pkg/factory/wordpress"
 )
 
-const (
-	deploymentName = "%s"
-)
-
 func (c *Controller) syncDeployment(wp *wpapi.Wordpress) error {
 	glog.Infof("Syncing deployment for %s/%s", wp.ObjectMeta.Namespace, wp.ObjectMeta.Name)
 
-	wpf := wordpress.Generator{
-		WP:                  wp,
-		DefaultRuntimeImage: c.RuntimeImage,
-	}
+	wpf := wordpress.Generator{WP: wp}
 	l := wpf.WebPodLabels()
 
-	meta := c.objectMeta(wp, deploymentName)
+	meta := c.objectMeta(wp, wpf.DeploymentName())
 	meta.Labels = l
 
 	_, _, err := apps_util.CreateOrPatchDeployment(c.KubeClient, meta, func(in *appsv1.Deployment) *appsv1.Deployment {

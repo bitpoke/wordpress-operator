@@ -28,22 +28,22 @@ import (
 )
 
 const (
-	wordpressContainerName = "wordpress"
-	contentVolumeName      = "content"
-	mediaVolumeName        = "media"
-	tempVolumeName         = "temp"
-	tempVolumeSize         = 128 * 1024 * 1024
-	contentPVCName         = "%s"
-	mediaPVCName           = "%s-media"
-	documentRoot           = "/var/www/html"
+	cronName       = "%s-wp-cron"
+	deploymentName = "%s"
+	serviceName    = "%s"
+	ingressName    = "%s"
+	contentPVCName = "%s"
+	mediaPVCName   = "%s-media"
+
+	contentVolumeName = "content"
+	mediaVolumeName   = "media"
 )
 
 var contentMountPaths = []string{"root", "themes", "plugins", "mu-plugins", "languages", "upgrade"}
 var tempMountPaths = []string{"run", "tmp"}
 
 type Generator struct {
-	WP                  *wpapi.Wordpress
-	DefaultRuntimeImage string
+	WP *wpapi.Wordpress
 }
 
 // Labels returns a general label set to apply to objects, relative to the
@@ -64,12 +64,28 @@ func (g *Generator) WebPodLabels() labels.Set {
 	return l
 }
 
-func (g *Generator) ContentVolumeName() string {
-	return fmt.Sprintf(contentPVCName, g.WP.ObjectMeta.Name)
+func (g *Generator) DeploymentName() string {
+	return fmt.Sprintf(deploymentName, g.WP.Name)
 }
 
-func (g *Generator) MediaVolumeName() string {
-	return fmt.Sprintf(mediaPVCName, g.WP.ObjectMeta.Name)
+func (g *Generator) ContentPVCName() string {
+	return fmt.Sprintf(contentPVCName, g.WP.Name)
+}
+
+func (g *Generator) MediaPVCName() string {
+	return fmt.Sprintf(mediaPVCName, g.WP.Name)
+}
+
+func (g *Generator) ServiceName() string {
+	return fmt.Sprintf(serviceName, g.WP.Name)
+}
+
+func (g *Generator) IngressName() string {
+	return fmt.Sprintf(ingressName, g.WP.Name)
+}
+
+func (g *Generator) WPCronName() string {
+	return fmt.Sprintf(cronName, g.WP.Name)
 }
 
 // PodTemplateSpec generates a pod template spec suitable for use in Wordpress
@@ -201,13 +217,4 @@ func (g *Generator) ensureContainerDefaults(ctr *corev1.Container) {
 	if len(ctr.Resources.Requests) == 0 {
 		ctr.Resources.Requests = make(corev1.ResourceList)
 	}
-}
-
-func (g *Generator) getContainerImage(name string, in []corev1.Container) string {
-	for _, container := range in {
-		if container.Name == name {
-			return container.Image
-		}
-	}
-	return ""
 }

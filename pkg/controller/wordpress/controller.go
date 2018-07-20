@@ -17,8 +17,6 @@ limitations under the License.
 package wordpress
 
 import (
-	"fmt"
-
 	apiextenstions_util "github.com/appscode/kutil/apiextensions/v1beta1"
 	"github.com/golang/glog"
 	apiextenstions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
@@ -124,9 +122,9 @@ func (c *Controller) ensureControllerReference(in metav1.ObjectMeta, wp *wpapi.W
 	return in
 }
 
-func (c *Controller) objectMeta(wp *wpapi.Wordpress, nameTemplate string) metav1.ObjectMeta {
+func (c *Controller) objectMeta(wp *wpapi.Wordpress, name string) metav1.ObjectMeta {
 	return metav1.ObjectMeta{
-		Name:      fmt.Sprintf(nameTemplate, wp.ObjectMeta.Name),
+		Name:      name,
 		Namespace: wp.ObjectMeta.Namespace,
 	}
 }

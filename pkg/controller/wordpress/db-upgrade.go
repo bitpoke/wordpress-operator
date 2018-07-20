@@ -37,10 +37,8 @@ const (
 func (c *Controller) syncDBMigrate(wp *wpapi.Wordpress) error {
 	glog.Infof("Syncing db migration job for %s/%s", wp.ObjectMeta.Namespace, wp.ObjectMeta.Name)
 
-	wpf := wordpress.Generator{
-		WP:                  wp,
-		DefaultRuntimeImage: c.RuntimeImage,
-	}
+	wpf := wordpress.Generator{WP: wp}
+
 	labels := wpf.Labels()
 	labels["app.kubernetes.io/component"] = "db-migrate"
 

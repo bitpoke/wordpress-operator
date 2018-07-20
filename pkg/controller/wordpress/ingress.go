@@ -17,31 +17,28 @@ limitations under the License.
 package wordpress
 
 import (
-	"fmt"
-
 	ext_util "github.com/appscode/kutil/extensions/v1beta1"
 	"github.com/golang/glog"
 	extv1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	wpapi "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
-)
-
-const (
-	ingressName = "%s"
+	"github.com/presslabs/wordpress-operator/pkg/factory/wordpress"
 )
 
 func (c *Controller) syncIngress(wp *wpapi.Wordpress) error {
 	glog.Infof("Syncing ingress for %s/%s", wp.ObjectMeta.Namespace, wp.ObjectMeta.Name)
 
-	meta := c.objectMeta(wp, ingressName)
+	wpf := wordpress.Generator{WP: wp}
+
+	meta := c.objectMeta(wp, wpf.IngressName())
 
 	_, _, err := ext_util.CreateOrPatchIngress(c.KubeClient, meta, func(in *extv1.Ingress) *extv1.Ingress {
 		in.ObjectMeta = c.ensureControllerReference(in.ObjectMeta, wp)
 		in.ObjectMeta.Annotations = wp.Spec.IngressAnnotations
 
 		bk := extv1.IngressBackend{
-			ServiceName: fmt.Sprintf(serviceName, wp.Name),
+			ServiceName: wpf.ServiceName(),
 			ServicePort: intstr.FromString("http"),
 		}
 		bkpaths := []extv1.HTTPIngressPath{

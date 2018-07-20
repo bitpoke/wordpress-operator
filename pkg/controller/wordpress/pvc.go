@@ -29,14 +29,11 @@ import (
 )
 
 func (c *Controller) syncPVC(wp *wpapi.Wordpress) error {
-	wpf := wordpress.Generator{
-		WP:                  wp,
-		DefaultRuntimeImage: c.RuntimeImage,
-	}
+	wpf := wordpress.Generator{WP: wp}
 	labels := wpf.Labels()
 
 	if wp.Spec.ContentVolumeSpec.PersistentVolumeClaim != nil {
-		meta := c.objectMeta(wp, wpf.ContentVolumeName())
+		meta := c.objectMeta(wp, wpf.ContentPVCName())
 		meta.Labels = labels
 		_, _, err := core_util.CreateOrPatchPVC(c.KubeClient, meta, func(in *corev1.PersistentVolumeClaim) *corev1.PersistentVolumeClaim {
 			if wp.Spec.ContentVolumeSpec.PersistentVolumeClaim != nil {
@@ -58,7 +55,7 @@ func (c *Controller) syncPVC(wp *wpapi.Wordpress) error {
 		return nil
 	}
 	if wp.Spec.MediaVolumeSpec.PersistentVolumeClaim != nil {
-		meta := c.objectMeta(wp, wpf.MediaVolumeName())
+		meta := c.objectMeta(wp, wpf.MediaPVCName())
 		meta.Labels = labels
 		_, _, err := core_util.CreateOrPatchPVC(c.KubeClient, meta, func(in *corev1.PersistentVolumeClaim) *corev1.PersistentVolumeClaim {
 			if wp.Spec.MediaVolumeSpec.PersistentVolumeClaim != nil {

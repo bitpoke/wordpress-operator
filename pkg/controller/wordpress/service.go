@@ -25,20 +25,15 @@ import (
 	"github.com/presslabs/wordpress-operator/pkg/factory/wordpress"
 )
 
-const (
-	serviceName = "%s"
-)
+const ()
 
 func (c *Controller) syncService(wp *wpapi.Wordpress) error {
 	glog.Infof("Syncing service for %s/%s", wp.ObjectMeta.Namespace, wp.ObjectMeta.Name)
 
-	wpf := wordpress.Generator{
-		WP:                  wp,
-		DefaultRuntimeImage: c.RuntimeImage,
-	}
+	wpf := wordpress.Generator{WP: wp}
 	l := wpf.WebPodLabels()
 
-	meta := c.objectMeta(wp, serviceName)
+	meta := c.objectMeta(wp, wpf.ServiceName())
 	meta.Labels = l
 
 	_, _, err := core_util.CreateOrPatchService(c.KubeClient, meta, func(in *corev1.Service) *corev1.Service {
