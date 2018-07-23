@@ -20,6 +20,11 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
+var (
+	DefaultWebImage string = "docker.io/library/wordpress:latest"
+	DefaultCLIImage string = "docker.io/library/wordpress:cli"
+)
+
 func (wp *Wordpress) WithDefaults() (d *Wordpress) {
 	d = wp
 	if len(d.Spec.VolumeMountsSpec) == 0 {
@@ -37,5 +42,39 @@ func (wp *Wordpress) WithDefaults() (d *Wordpress) {
 			})
 		}
 	}
+
+	if d.Spec.WebPodTemplate == nil {
+		d.Spec.WebPodTemplate = &corev1.PodTemplateSpec{
+			Spec: corev1.PodSpec{
+				Containers: []corev1.Container{
+					corev1.Container{
+						Name:  "wordpress",
+						Image: DefaultWebImage,
+						Ports: []corev1.ContainerPort{
+							corev1.ContainerPort{
+								Name:          "http",
+								ContainerPort: 80,
+								Protocol:      corev1.ProtocolTCP,
+							},
+						},
+					},
+				},
+			},
+		}
+	}
+
+	if d.Spec.CLIPodTemplate == nil {
+		d.Spec.CLIPodTemplate = &corev1.PodTemplateSpec{
+			Spec: corev1.PodSpec{
+				Containers: []corev1.Container{
+					corev1.Container{
+						Name:  "wp-cli",
+						Image: DefaultCLIImage,
+					},
+				},
+			},
+		}
+	}
+
 	return
 }
