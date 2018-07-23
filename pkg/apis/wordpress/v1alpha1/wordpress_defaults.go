@@ -23,10 +23,17 @@ import (
 var (
 	DefaultWebImage string = "docker.io/library/wordpress:latest"
 	DefaultCLIImage string = "docker.io/library/wordpress:cli"
+
+	oneReplica int32 = 1
 )
 
 func (wp *Wordpress) WithDefaults() (d *Wordpress) {
 	d = wp
+
+	if d.Spec.Replicas == nil || *d.Spec.Replicas < 1 {
+		d.Spec.Replicas = &oneReplica
+	}
+
 	if len(d.Spec.VolumeMountsSpec) == 0 {
 		d.Spec.VolumeMountsSpec = []corev1.VolumeMount{
 			corev1.VolumeMount{
