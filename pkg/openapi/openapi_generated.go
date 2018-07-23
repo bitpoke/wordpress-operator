@@ -204,12 +204,25 @@ func schema_pkg_apis_wordpress_v1alpha1_WordpressSpec(ref common.ReferenceCallba
 							},
 						},
 						SchemaProps: spec.SchemaProps{
-							Description: "Env represents the environment variables which is made available to every container in the spec.",
+							Description: "Env that gets injected into every container of WebPodTemplate and CLIPodTemplate",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Ref: ref("k8s.io/api/core/v1.EnvVar"),
+									},
+								},
+							},
+						},
+					},
+					"envFrom": {
+						SchemaProps: spec.SchemaProps{
+							Description: "EnvFrom gets injected into every container of WebPodTemplate and CLIPodTemplate",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("k8s.io/api/core/v1.EnvFromSource"),
 									},
 								},
 							},
@@ -243,7 +256,7 @@ func schema_pkg_apis_wordpress_v1alpha1_WordpressSpec(ref common.ReferenceCallba
 					},
 					"serviceSpec": {
 						SchemaProps: spec.SchemaProps{
-							Description: "ServiceSpec is the specification for the service created for this WordPress Site.",
+							Description: "ServiceSpec is the specification for the service created for this WordPress Site",
 							Ref:         ref("k8s.io/api/core/v1.ServiceSpec"),
 						},
 					},
@@ -252,7 +265,7 @@ func schema_pkg_apis_wordpress_v1alpha1_WordpressSpec(ref common.ReferenceCallba
 			},
 		},
 		Dependencies: []string{
-			"github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1.WordpressVolumeSpec", "k8s.io/api/core/v1.EnvVar", "k8s.io/api/core/v1.PodTemplateSpec", "k8s.io/api/core/v1.ServiceSpec", "k8s.io/api/core/v1.VolumeMount"},
+			"github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1.WordpressVolumeSpec", "k8s.io/api/core/v1.EnvFromSource", "k8s.io/api/core/v1.EnvVar", "k8s.io/api/core/v1.PodTemplateSpec", "k8s.io/api/core/v1.ServiceSpec", "k8s.io/api/core/v1.VolumeMount"},
 	}
 }
 

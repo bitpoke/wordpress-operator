@@ -33,8 +33,13 @@ spec:
                 type: string
               type: array
             env:
-              description: Env represents the environment variables which is made
-                available to every container in the spec.
+              description: Env that gets injected into every container of WebPodTemplate
+                and CLIPodTemplate
+              items: {}
+              type: array
+            envFrom:
+              description: EnvFrom gets injected into every container of WebPodTemplate
+                and CLIPodTemplate
               items: {}
               type: array
             ingressAnnotations:

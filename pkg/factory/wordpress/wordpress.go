@@ -153,6 +153,7 @@ func (g *Generator) ensureWordpressEnv(ctr *corev1.Container) {
 	}
 
 	ctr.Env = core_util.UpsertEnvVars(ctr.Env, env...)
+	ctr.EnvFrom = append(g.WP.Spec.EnvFrom, ctr.EnvFrom...)
 }
 
 func (g *Generator) ensureWordpressVolumeMounts(ctr *corev1.Container) {

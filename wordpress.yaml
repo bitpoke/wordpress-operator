@@ -1,0 +1,88 @@
+apiVersion: wordpress.presslabs.org/v1alpha1
+kind: Wordpress
+metadata:
+  name: mysite
+spec:
+  image: quay.io/presslabs/wordpress:4.9.5-r148-php71
+  replicas: 1
+  domains:
+    - "example.com"
+    - "www.example.com"
+  secretRef: mysite
+  tlsSecretRef: mysite-tls
+  contentVolumeSpec:
+  mediaVolumeSpec:
+  env:
+    - name: WORDPRESS_DB_PASSWORD
+      valueFrom:
+        secretKeyRef: mysite-mysql
+        key: PASSWORD
+
+  webPodSpec:
+    imagePullPolicy: ...
+    imagePullSecrets: []
+    serviceAccountName: ...
+    nodeSelector: []
+    affinity: {}
+    tolerations: {}
+    resources: {}
+    env: []
+    volumes: []
+    containers: []
+    initContainers: []
+
+  cliPodSpec:
+    imagePullPolicy: ...
+    imagePullSecrets: []
+    serviceAccountName: ...
+    nodeSelector: []
+    affinity: {}
+    tolerations: {}
+    resources: {}
+
+  # resources:
+  #   required:
+  #     nginx/cpu: ...
+  #     nginx/memory: ...
+  #     php/cpu: ...
+  #     php/memory: ...
+  #     php/workers: 4
+  #     php/worker-memory: 128Mi
+  #     php/max-execution-seconds: 30
+  #   limits:
+  #     nginx/cpu: ...
+  #     nginx/memory: ...
+
+
+---
+apiVersion: wordpress.presslabs.org/v1alpha1
+kind: WordpressPreset
+metadata:
+  name: mysite-job-1
+spec:
+  wordpressRef: mysite
+  args: [wp, core, db, upgrade]
+---
+apiVersion: wordpress.presslabs.org/v1alpha1
+kind: WordpressPolicy
+metadata:
+  name: mysite-memory
+spec:
+  applyMode: enforce/default
+  weight: 100
+  selector:
+    matchNamespace: ...
+    matchName: mysite
+    matchLabels: {}
+    matchExpressions: []
+  policySpec:
+    image: ...
+    imagePullPolicy: ...
+    imagePullSecrets: []
+    serviceAccountName: ...
+    nodeSelector: []
+    affinity: {}
+    tolerations: {}
+    resources: {}
+    volumes: []
+    containers: []

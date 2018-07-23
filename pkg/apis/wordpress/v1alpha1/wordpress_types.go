@@ -84,12 +84,16 @@ type WordpressSpec struct {
 	// the MediaVolume gets mounted into /var/www/wp-content/uploads
 	// +optional
 	VolumeMountsSpec []corev1.VolumeMount `json:"volumeMountsSpec,omitempty"`
-	// Env represents the environment variables which is made available to every
-	// container in the spec.
+	// Env that gets injected into every container of WebPodTemplate and
+	// CLIPodTemplate
 	// +optional
 	// +patchMergeKey=name
 	// +patchStrategy=merge
 	Env []corev1.EnvVar `json:"env,omitempty" patchStrategy:"merge" patchMergeKey:"name"`
+	// EnvFrom gets injected into every container of WebPodTemplate and
+	// CLIPodTemplate
+	// +optional
+	EnvFrom []corev1.EnvFromSource `json:"envFrom,omitempty"`
 	// WebPodTemplate is the pod template for the WordPress web frontend.
 	//
 	// *The globally defined volume mounts* are injected into all containers
@@ -110,7 +114,8 @@ type WordpressSpec struct {
 	// this Wordpress Site.
 	// +optional
 	IngressAnnotations map[string]string `json:"ingressAnnotations,omitempty"`
-	// ServiceSpec is the specification for the service created for this WordPress Site.
+	// ServiceSpec is the specification for the service created for this
+	// WordPress Site
 	// +optional
 	ServiceSpec *corev1.ServiceSpec `json:"serviceSpec,omitempty"`
 }

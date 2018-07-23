@@ -26,61 +26,46 @@ kind: Wordpress
 metadata:
   name: mysite
 spec:
-  image: quay.io/presslabs/wordpress:4.9.5-r148-php71
   replicas: 1
-  domains:
-    - "example.com"
-    - "www.example.com"
-  tlsSecretRef: mysite-tls
   contentVolumeSpec:
-    # readOnly: true
-    # one of the following
+    # by default, it's /wp-content/ gets mounted into /var/www/html/wp-content
+    # one of the following (by default, emptyDir{}):
+
     # persistentVolumeClaim: {}
     # hostPath: {}
     # emptyDir: {}
+
   mediaVolumeSpec:
-    # readOnly: true
-    # one of the following
+    # if it's defined, by default, it's root gets mounted into /var/www/html/wp-content/uploads
+    # one of the following:
+
     # persistentVolumeClaim: {}
     # hostPath: {}
     # emptyDir: {}
-  secretRef: mysite
-    # wp-config.php
-    # php.ini
-    # nginx-vhost.conf
-    # nginx-server.conf
-    # id_rsa
-    # netrc
-    # service_account.json
-    # aws_credentials
-    # aws_config
+
+  volumeMounts: []
+    # overrides default mounts for contentVolumeSpec and mediaVolumeSpec
+
   env:
+      # gets injected into every container and initContainer in
+      # webPodTemplate and cliPodTemplate
     - name: WORDPRESS_DB_PASSWORD
       valueFrom:
         secretKeyRef: mysite-mysql
         key: PASSWORD
-  resources:
-    required:
-      nginx/cpu: ...
-      nginx/memory: ...
-      php/cpu: ...
-      php/memory: ...
-      php/workers: 4
-      php/worker-memory: 128Mi
-      php/max-execution-seconds: 30
-    limits:
-      nginx/cpu: ...
-      nginx/memory: ...
-      php/cpu: ...
-      php/memory: ...
-      php/workers: 4
-      php/worker-memory: 256Mi
-      php/max-execution-seconds: 30
-      ingress/max-body-size: 100Mi
-  nodeSelector: {}
-  tolerations: {}
-  affinity: {}
+  envFrom:
+      # gets injected into every container and initContainer in
+      # webPodTemplate and cliPodTemplate
+    - prefix: "WORDPRESS_"
+      secretRef:
+        name: mysite-salt
+  webPodTemplate: {}
+  cliPodTemplate: {}
   serviceSpec: {}
+  domains:
+    - "example.com"
+    - "www.example.com"
+  tlsSecretRef: mysite-tls
   ingressAnnotations: {}
 ```
 
