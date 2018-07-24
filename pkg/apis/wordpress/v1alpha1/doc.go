@@ -1,5 +1,5 @@
 /*
-Copyright 2018 Pressinfra SRL
+Copyright 2018 Pressinfra SRL.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,12 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package v1alpha1 contains API Schema definitions for the wordpress v1alpha1 API group
+// +k8s:openapi-gen=true
 // +k8s:deepcopy-gen=package,register
 // +k8s:conversion-gen=github.com/presslabs/wordpress-operator/pkg/apis/wordpress
-// +k8s:openapi-gen=true
 // +k8s:defaulter-gen=TypeMeta
-
-// Package v1alpha1 is the v1alpha1 version of the Presslabs Wordpress Operator resources
 // +groupName=wordpress.presslabs.org
-
 package v1alpha1

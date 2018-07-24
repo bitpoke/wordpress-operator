@@ -1,0 +1,83 @@
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  creationTimestamp: null
+  labels:
+    controller-tools.k8s.io: "1.0"
+  name: wordpresses.wordpress.presslabs.org
+spec:
+  group: wordpress.presslabs.org
+  names:
+    kind: Wordpress
+    plural: wordpresses
+  scope: Namespaced
+  validation:
+    openAPIV3Schema:
+      properties:
+        apiVersion:
+          type: string
+        kind:
+          type: string
+        metadata:
+          type: object
+        spec:
+          properties:
+            cliPodTemplate:
+              type: object
+            contentVolumeSpec:
+              properties:
+                emptyDir:
+                  type: object
+                hostPath:
+                  type: object
+                persistentVolumeClaim:
+                  type: object
+              type: object
+            domains:
+              items:
+                type: string
+              type: array
+            env:
+              items:
+                type: object
+              type: array
+            envFrom:
+              items:
+                type: object
+              type: array
+            ingressAnnotations:
+              type: object
+            mediaVolumeSpec:
+              properties:
+                emptyDir:
+                  type: object
+                hostPath:
+                  type: object
+                persistentVolumeClaim:
+                  type: object
+              type: object
+            replicas:
+              format: int32
+              type: integer
+            serviceSpec:
+              type: object
+            tlsSecretRef:
+              type: string
+            volumeMountsSpec:
+              items:
+                type: object
+              type: array
+            webPodTemplate:
+              type: object
+          required:
+          - domains
+          type: object
+        status:
+          type: object
+      type: object
+  version: v1alpha1
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: null
