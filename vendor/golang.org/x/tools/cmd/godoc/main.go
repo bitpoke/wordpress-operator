@@ -82,7 +82,7 @@ var (
 
 	// file system roots
 	// TODO(gri) consider the invariant that goroot always end in '/'
-	goroot = flag.String("goroot", runtime.GOROOT(), "Go root directory")
+	goroot = flag.String("goroot", findGOROOT(), "Go root directory")
 
 	// layout control
 	tabWidth       = flag.Int("tabwidth", 4, "tab width")
@@ -250,6 +250,10 @@ func main() {
 		}
 	}
 
+	// Initialize the version info before readTemplates, which saves
+	// the map value in a method value.
+	corpus.InitVersionInfo()
+
 	pres = godoc.NewPresentation(corpus)
 	pres.TabWidth = *tabWidth
 	pres.ShowTimestamps = *showTimestamps
@@ -356,6 +360,7 @@ func main() {
 		return
 	}
 
+	build.Default.GOROOT = *goroot
 	if err := godoc.CommandLine(os.Stdout, fs, pres, flag.Args()); err != nil {
 		log.Print(err)
 	}

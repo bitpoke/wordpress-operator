@@ -1,10 +1,17 @@
-FROM alpine:3.7
+# Build the manager binary
+FROM golang:1.10.3 as builder
 
-RUN apk add --no-cache ca-certificates
+# Copy in the go src
+WORKDIR /go/src/github.com/presslabs/wordpress-operator
+COPY pkg/    pkg/
+COPY cmd/    cmd/
+COPY vendor/ vendor/
 
-ADD bin/dashboard-controller_linux_amd64 /usr/local/bin/dashboard-controller
+# Build
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager github.com/presslabs/wordpress-operator/cmd/manager
 
-ENTRYPOINT ["/usr/local/bin/dashboard-controller"]
-ARG VCS_REF
-LABEL org.label-schema.vcs-ref=$VCS_REF \
-      org.label-schema.vcs-url="https://github.com/presslabs/dashboard.git" \
+# Copy the controller-manager into a thin image
+FROM ubuntu:latest
+WORKDIR /root/
+COPY --from=builder /go/src/github.com/presslabs/wordpress-operator/manager .
+ENTRYPOINT ["./manager"]

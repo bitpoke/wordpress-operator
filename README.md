@@ -27,13 +27,13 @@ metadata:
   name: mysite
 spec:
   replicas: 1
-  contentVolumeSpec:
-    # by default, it's /wp-content/ gets mounted into /var/www/html/wp-content
-    # one of the following (by default, emptyDir{}):
+  webrootVolumeSpec:
+    # by default, it gets mounted into /var/www/html
+    # one of the following:
 
     # persistentVolumeClaim: {}
     # hostPath: {}
-    # emptyDir: {}
+    # emptyDir: {} (default)
 
   mediaVolumeSpec:
     # if it's defined, by default, it's root gets mounted into /var/www/html/wp-content/uploads
@@ -44,7 +44,7 @@ spec:
     # emptyDir: {}
 
   volumeMounts: []
-    # overrides default mounts for contentVolumeSpec and mediaVolumeSpec
+    # overrides default mounts for webrootVolumeSpec and mediaVolumeSpec
 
   env:
       # gets injected into every container and initContainer in

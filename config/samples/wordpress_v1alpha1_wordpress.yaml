@@ -1,0 +1,9 @@
+apiVersion: wordpress.presslabs.org/v1alpha1
+kind: Wordpress
+metadata:
+  labels:
+    controller-tools.k8s.io: "1.0"
+  name: wordpress-sample
+spec:
+  # Add fields here
+  foo: bar

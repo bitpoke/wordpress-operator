@@ -1,5 +1,5 @@
 /*
-Copyright 2018 Pressinfra SRL
+Copyright 2018 Pressinfra SRL.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,43 +21,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const (
-	ResourceKindWordpress = "Wordpress"
-)
-
+// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 // SecretRef represents a reference to a Secret
 type SecretRef string
-
-// URL represents a valid URL string
-type URL string
 
 // Domain represents a valid domain name
 type Domain string
 
-// +k8s:openapi-gen=true
-
-// +genclient
-// +k8s:openapi-gen=true
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
-type Wordpress struct {
-	// +k8s:openapi-gen=false
-	metav1.TypeMeta `json:",inline"`
-	// +k8s:openapi-gen=false
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	Spec WordpressSpec `json:"spec"`
-}
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
-type WordpressList struct {
-	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
-
-	Items []Wordpress `json:"items"`
-}
-
+// WordpressSpec defines the desired state of Wordpress
 type WordpressSpec struct {
 	// Number of desired web pods. This is a pointer to distinguish between
 	// explicit zero and not specified. Defaults to 1.
@@ -69,9 +40,10 @@ type WordpressSpec struct {
 	// TLSSecretRef a secret containing the TLS certificates for this site.
 	// +optional
 	TLSSecretRef SecretRef `json:"tlsSecretRef,omitempty"`
-	// ContentVolumeSpec defines the volume for storing wp-content.
+	// WebrootVolumeSpec defines the volume for storing the wordpress
+	// installation.
 	// +optional
-	ContentVolumeSpec WordpressVolumeSpec `json:"contentVolumeSpec,omitempty"`
+	WebrootVolumeSpec WordpressVolumeSpec `json:"webrootVolumeSpec,omitempty"`
 	// MediaVolumeSpec if specified, defines a separate volume for storing
 	// media files.
 	// +optional
@@ -79,9 +51,8 @@ type WordpressSpec struct {
 	// VolumeMountsSpec defines the mount structure for mounting volumes into
 	// pods. Each container in WebPodTemplate and CLIPodTemplate will get this
 	// structure mounted.
-	// If undefined, the /wp-content folder from ContentVolume gets mounted into
-	// /var/www/wp-content/ and if defined,
-	// the MediaVolume gets mounted into /var/www/wp-content/uploads
+	// If undefined, WebrootVolume gets mounted into /var/www/html/ and
+	// if defined, the MediaVolume gets mounted into /var/www/html/wp-content/uploads
 	// +optional
 	VolumeMountsSpec []corev1.VolumeMount `json:"volumeMountsSpec,omitempty"`
 	// Env that gets injected into every container of WebPodTemplate and
@@ -120,6 +91,7 @@ type WordpressSpec struct {
 	ServiceSpec *corev1.ServiceSpec `json:"serviceSpec,omitempty"`
 }
 
+// WordpressVolumeSpec is the desired spec of a wordpress volume
 type WordpressVolumeSpec struct {
 	// EmptyDir to use if no PersistentVolumeClaim or HostPath is specified
 	// +optional
@@ -131,4 +103,34 @@ type WordpressVolumeSpec struct {
 	// followed by HostPath and EmptyDir
 	// +optional
 	PersistentVolumeClaim *corev1.PersistentVolumeClaimSpec `json:"persistentVolumeClaim,omitempty"`
+}
+
+// WordpressStatus defines the observed state of Wordpress
+type WordpressStatus struct {
+}
+
+// +genclient
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// Wordpress is the Schema for the wordpresses API
+// +k8s:openapi-gen=true
+type Wordpress struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec   WordpressSpec   `json:"spec,omitempty"`
+	Status WordpressStatus `json:"status,omitempty"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// WordpressList contains a list of Wordpress
+type WordpressList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+	Items           []Wordpress `json:"items"`
+}
+
+func init() {
+	SchemeBuilder.Register(&Wordpress{}, &WordpressList{})
 }
