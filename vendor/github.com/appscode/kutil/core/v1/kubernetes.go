@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"fmt"
+
 	"github.com/appscode/go/types"
 	"github.com/appscode/mergo"
 	"github.com/json-iterator/go"
@@ -77,14 +79,22 @@ func UpsertContainer(containers []core.Container, upsert core.Container) []core.
 	return append(containers, upsert)
 }
 
-func UpsertVolume(volumes []core.Volume, nv core.Volume) []core.Volume {
-	for i, vol := range volumes {
-		if vol.Name == nv.Name {
-			volumes[i] = nv
-			return volumes
+func UpsertVolume(volumes []core.Volume, nv ...core.Volume) []core.Volume {
+	upsert := func(v core.Volume) {
+		for i, vol := range volumes {
+			if vol.Name == v.Name {
+				volumes[i] = v
+				return
+			}
 		}
+		volumes = append(volumes, v)
 	}
-	return append(volumes, nv)
+
+	for _, volume := range nv {
+		upsert(volume)
+	}
+	return volumes
+
 }
 
 func UpsertVolumeClaim(volumeClaims []core.PersistentVolumeClaim, upsert core.PersistentVolumeClaim) []core.PersistentVolumeClaim {
@@ -106,14 +116,21 @@ func EnsureVolumeDeleted(volumes []core.Volume, name string) []core.Volume {
 	return volumes
 }
 
-func UpsertVolumeMount(mounts []core.VolumeMount, nv core.VolumeMount) []core.VolumeMount {
-	for i, vol := range mounts {
-		if vol.Name == nv.Name {
-			mounts[i] = nv
-			return mounts
+func UpsertVolumeMount(mounts []core.VolumeMount, nv ...core.VolumeMount) []core.VolumeMount {
+	upsert := func(m core.VolumeMount) {
+		for i, vol := range mounts {
+			if vol.Name == m.Name {
+				mounts[i] = m
+				return
+			}
 		}
+		mounts = append(mounts, m)
 	}
-	return append(mounts, nv)
+
+	for _, mount := range nv {
+		upsert(mount)
+	}
+	return mounts
 }
 
 func EnsureVolumeMountDeleted(mounts []core.VolumeMount, name string) []core.VolumeMount {
@@ -203,6 +220,9 @@ func EnsureOwnerReference(meta metav1.ObjectMeta, owner *core.ObjectReference) m
 		owner.Name == "" ||
 		owner.UID == "" {
 		return meta
+	}
+	if meta.Namespace != owner.Namespace {
+		panic(fmt.Errorf("owner %s %s must be from the same namespace as object %s", owner.Kind, owner.Name, meta.Name))
 	}
 
 	fi := -1

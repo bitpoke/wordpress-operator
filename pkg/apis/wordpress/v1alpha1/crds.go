@@ -33,8 +33,10 @@ const (
 var (
 	// ResourceWordpress contains the definition bits for Wordpress CRD
 	ResourceWordpress = kutil.Config{
-		Group:   SchemeGroupVersion.Group,
-		Version: SchemeGroupVersion.Version,
+		Group: SchemeGroupVersion.Group,
+		Versions: []apiextensions.CustomResourceDefinitionVersion{
+			{Name: SchemeGroupVersion.Version},
+		},
 
 		Kind:       ResourceKindWordpress,
 		Plural:     "wordpresses",
