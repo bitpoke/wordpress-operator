@@ -62,6 +62,11 @@ func (s *DBUpgradeJobSyncer) T(in runtime.Object) (runtime.Object, error) {
 		activeDeadlineSeconds int64 = 10
 	)
 	out := in.(*batchv1.Job)
+
+	if !out.CreationTimestamp.IsZero() {
+		return out, nil
+	}
+
 	ver := s.wp.GetWPVersion()
 	verhash := fmt.Sprintf("%x", md5.Sum([]byte(ver)))
 	l := s.wp.LabelsForComponent("db-migrate")
@@ -82,7 +87,8 @@ func (s *DBUpgradeJobSyncer) T(in runtime.Object) (runtime.Object, error) {
 
 	cmd := []string{"/bin/sh", "-c", "wp core update-db --network || wp core update-db && wp cache flush"}
 	out.Spec.Template = *s.wp.JobPodTemplateSpec(cmd...)
-	out.Spec.Template.ObjectMeta.Labels = l
+
+	out.Spec.Template.Labels = l
 
 	return out, nil
 }
