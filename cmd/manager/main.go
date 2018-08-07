@@ -18,45 +18,55 @@ package main
 
 import (
 	"flag"
-	"log"
+	"fmt"
+	"os"
 
 	"github.com/presslabs/wordpress-operator/pkg/apis"
 	"github.com/presslabs/wordpress-operator/pkg/controller"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 )
 
+var log = logf.Log.WithName("wordpress-operator")
+
 func main() {
 	flag.Parse()
+	logf.SetLogger(logf.ZapLogger(true))
+
+	fmt.Fprintln(os.Stderr, "Starting wordpress-operator...")
 
 	// Get a config to talk to the apiserver
 	cfg, err := config.GetConfig()
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err, "unable to get configuration")
+		os.Exit(1)
 	}
 
 	// Create a new Cmd to provide shared dependencies and start components
 	mgr, err := manager.New(cfg, manager.Options{})
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err, "unable to create a new manager")
+		os.Exit(1)
 	}
-
-	log.Printf("Registering Components.")
 
 	// Setup Scheme for all resources
 	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
-		log.Fatal(err)
+		log.Error(err, "unable to register types to scheme")
+		os.Exit(1)
 	}
 
 	// Setup all Controllers
 	if err := controller.AddToManager(mgr); err != nil {
-		log.Fatal(err)
+		log.Error(err, "unable to setup controllers")
+		os.Exit(1)
 	}
 
-	log.Printf("Starting the Cmd.")
-
 	// Start the Cmd
-	log.Fatal(mgr.Start(signals.SetupSignalHandler()))
+	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
+		log.Error(err, "unable to start the manager")
+		os.Exit(1)
+	}
 }

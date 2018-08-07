@@ -18,7 +18,7 @@ package wordpress
 
 import (
 	"context"
-	"log"
+	"fmt"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -31,11 +31,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 	"github.com/presslabs/wordpress-operator/pkg/controller/wordpress/sync"
 )
+
+var log = logf.Log.WithName(controllerName)
 
 const controllerName = "wordpress-controller"
 
@@ -147,7 +150,7 @@ func (r *ReconcileWordpress) sync(wp *wordpressv1alpha1.Wordpress, syncers []syn
 		op, err := controllerutil.CreateOrUpdate(context.TODO(), r.Client, key, existing, s.T)
 		reason := string(s.GetErrorEventReason(err))
 
-		log.Printf("%T %s/%s %s", existing, key.Namespace, key.Name, op)
+		log.Info(fmt.Sprintf("%T %s/%s %s", existing, key.Namespace, key.Name, op))
 
 		if err != nil {
 			r.recorder.Eventf(wp, eventWarning, reason, "%T %s/%s failed syncing: %s", existing, key.Namespace, key.Name, err)
