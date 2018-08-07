@@ -33,19 +33,21 @@ const (
 type DeploymentSyncer struct {
 	scheme   *runtime.Scheme
 	wp       *wordpressv1alpha1.Wordpress
+	rt       *wordpressv1alpha1.WordpressRuntime
 	key      types.NamespacedName
 	existing *appsv1.Deployment
 }
 
 var _ Interface = &DeploymentSyncer{}
 
-func NewDeploymentSyncer(wp *wordpressv1alpha1.Wordpress, r *runtime.Scheme) *DeploymentSyncer {
+func NewDeploymentSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, r *runtime.Scheme) *DeploymentSyncer {
 	return &DeploymentSyncer{
 		scheme:   r,
 		wp:       wp,
+		rt:       rt,
 		existing: &appsv1.Deployment{},
 		key: types.NamespacedName{
-			Name:      wp.GetDeploymentName(),
+			Name:      wp.GetDeploymentName(rt),
 			Namespace: wp.Namespace,
 		},
 	}
@@ -65,7 +67,7 @@ func (s *DeploymentSyncer) T(in runtime.Object) (runtime.Object, error) {
 	}
 
 	out.Spec.Selector = metav1.SetAsLabelSelector(s.wp.WebPodLabels())
-	out.Spec.Template = *s.wp.WebPodTemplateSpec()
+	out.Spec.Template = *s.wp.WebPodTemplateSpec(s.rt)
 	if s.wp.Spec.Replicas != nil {
 		out.Spec.Replicas = s.wp.Spec.Replicas
 	}

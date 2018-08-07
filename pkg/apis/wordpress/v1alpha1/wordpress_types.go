@@ -30,65 +30,61 @@ type Domain string
 
 // WordpressSpec defines the desired state of Wordpress
 type WordpressSpec struct {
+	// WordpressRuntime to use
+	// +kubebuilder:validation:MinLength=1
+	Runtime string `json:"runtime"`
 	// Number of desired web pods. This is a pointer to distinguish between
 	// explicit zero and not specified. Defaults to 1.
 	// +optional
 	Replicas *int32 `json:"replicas,omitempty"`
-	// Domains for this this site answers. The first item is set as the "main
-	// domain" (WP_HOME and WP_SITEURL constants).
+	// Image overrides WordpressRuntime spec.defaultImage
+	// +optional
+	Image string `json:"image,omitempty"`
+	// ImagePullPolicy overrides WordpressRuntime spec.imagePullPolicy
+	// +kubebuilder:validation:Enum=Always,IfNotPresent,Never
+	// +optional
+	ImagePullPolicy corev1.PullPolicy `json:"imagePullPolicy,omitempty"`
+	// ImagePullSecrets defines additional secrets to use when pulling images
+	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
+	// ServiceAccountName is the name of the ServiceAccount to use to run this
+	// site's pods
+	// More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+	// +optional
+	ServiceAccountName string `json:"serviceAccountName,omitempty"`
+	// Domains for which this this site answers.
+	// The first item is set as the "main domain" (eg. WP_HOME and WP_SITEURL constants).
+	// +kubebuilder:validation:MinItems=1
 	Domains []Domain `json:"domains"`
 	// TLSSecretRef a secret containing the TLS certificates for this site.
 	// +optional
 	TLSSecretRef SecretRef `json:"tlsSecretRef,omitempty"`
-	// WebrootVolumeSpec defines the volume for storing the wordpress
-	// installation.
+	// WebrootVolumeSpec overrides WordpressRuntime spec.webrootVolumeSpec
+	// This field is immutable.
 	// +optional
-	WebrootVolumeSpec WordpressVolumeSpec `json:"webrootVolumeSpec,omitempty"`
-	// MediaVolumeSpec if specified, defines a separate volume for storing
-	// media files.
+	WebrootVolumeSpec *WordpressVolumeSpec `json:"webrootVolumeSpec,omitempty"`
+	// MediaVolumeSpec overrides WordpressRuntime spec.mediaVolumeSpec
+	// This field is immutable.
 	// +optional
 	MediaVolumeSpec *WordpressVolumeSpec `json:"mediaVolumeSpec,omitempty"`
-	// VolumeMountsSpec defines the mount structure for mounting volumes into
-	// pods. Each container in WebPodTemplate and CLIPodTemplate will get this
-	// structure mounted.
-	// If undefined, WebrootVolume gets mounted into /var/www/html/ and
-	// if defined, the MediaVolume gets mounted into /var/www/html/wp-content/uploads
+	// VolumeMountsSpec defines additional mounts which get injected into web
+	// and cli pods.
 	// +optional
 	VolumeMountsSpec []corev1.VolumeMount `json:"volumeMountsSpec,omitempty"`
-	// Env that gets injected into every container of WebPodTemplate and
-	// CLIPodTemplate
+	// Env defines additional environment variables which get injected into web
+	// and cli pods
 	// +optional
 	// +patchMergeKey=name
 	// +patchStrategy=merge
 	Env []corev1.EnvVar `json:"env,omitempty" patchStrategy:"merge" patchMergeKey:"name"`
-	// EnvFrom gets injected into every container of WebPodTemplate and
-	// CLIPodTemplate
+	// EnvFrom defines additional envFrom's which get injected into web
+	// and cli pods
 	// +optional
 	EnvFrom []corev1.EnvFromSource `json:"envFrom,omitempty"`
-	// WebPodTemplate is the pod template for the WordPress web frontend.
-	//
-	// *The globally defined volume mounts* are injected into all containers
-	//
-	// *The globally defined env* is injected into all containers
-	WebPodTemplate *corev1.PodTemplateSpec `json:"webPodTemplate,omitempty"`
-	// CLIPodTemplate is the pod template for running wp-cli commands (eg.
-	// wp-cron, wp database upgrades, etc.)
-	//
-	// *The globally defined volume mounts* are injected into all containers
-	//
-	// *The globally defined env* is injected into all containers
-	//
-	// The pod restart policy is set `Never`, regardless of the spec
-	//
-	CLIPodTemplate *corev1.PodTemplateSpec `json:"cliPodTemplate,omitempty"`
-	// If specified apply these annotations to the Ingress resource created for
-	// this Wordpress Site.
+	// IngressAnnotations for this Wordpress site
 	// +optional
 	IngressAnnotations map[string]string `json:"ingressAnnotations,omitempty"`
-	// ServiceSpec is the specification for the service created for this
-	// WordPress Site
-	// +optional
-	ServiceSpec *corev1.ServiceSpec `json:"serviceSpec,omitempty"`
+	// Labels to apply to generated resources
+	Labels map[string]string `json:"labels,omitempty"`
 }
 
 // WordpressVolumeSpec is the desired spec of a wordpress volume

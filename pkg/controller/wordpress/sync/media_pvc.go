@@ -34,19 +34,21 @@ const (
 type MediaPVCSyncer struct {
 	scheme   *runtime.Scheme
 	wp       *wordpressv1alpha1.Wordpress
+	rt       *wordpressv1alpha1.WordpressRuntime
 	key      types.NamespacedName
 	existing *corev1.PersistentVolumeClaim
 }
 
 var _ Interface = &MediaPVCSyncer{}
 
-func NewMediaPVCSyncer(wp *wordpressv1alpha1.Wordpress, r *runtime.Scheme) *MediaPVCSyncer {
+func NewMediaPVCSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, r *runtime.Scheme) *MediaPVCSyncer {
 	return &MediaPVCSyncer{
 		scheme:   r,
 		wp:       wp,
+		rt:       rt,
 		existing: &corev1.PersistentVolumeClaim{},
 		key: types.NamespacedName{
-			Name:      wp.GetMediaPVCName(),
+			Name:      wp.GetMediaPVCName(rt),
 			Namespace: wp.Namespace,
 		},
 	}
@@ -70,7 +72,12 @@ func (s *MediaPVCSyncer) T(in runtime.Object) (runtime.Object, error) {
 		return out, nil
 	}
 
-	out.Spec = *s.wp.Spec.MediaVolumeSpec.PersistentVolumeClaim
+	volSpec := s.rt.Spec.MediaVolumeSpec
+	if s.wp.Spec.MediaVolumeSpec != nil {
+		volSpec = s.wp.Spec.MediaVolumeSpec
+	}
+
+	out.Spec = *volSpec.PersistentVolumeClaim
 
 	return out, nil
 }

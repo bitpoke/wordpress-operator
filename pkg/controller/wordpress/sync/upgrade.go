@@ -35,19 +35,21 @@ const (
 type DBUpgradeJobSyncer struct {
 	scheme   *runtime.Scheme
 	wp       *wordpressv1alpha1.Wordpress
+	rt       *wordpressv1alpha1.WordpressRuntime
 	key      types.NamespacedName
 	existing *batchv1.Job
 }
 
 var _ Interface = &DBUpgradeJobSyncer{}
 
-func NewDBUpgradeJobSyncer(wp *wordpressv1alpha1.Wordpress, r *runtime.Scheme) *DBUpgradeJobSyncer {
+func NewDBUpgradeJobSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, r *runtime.Scheme) *DBUpgradeJobSyncer {
 	return &DBUpgradeJobSyncer{
 		scheme:   r,
 		wp:       wp,
+		rt:       rt,
 		existing: &batchv1.Job{},
 		key: types.NamespacedName{
-			Name:      wp.GetDBUpgradeJobName(),
+			Name:      wp.GetDBUpgradeJobName(rt),
 			Namespace: wp.Namespace,
 		},
 	}
@@ -64,10 +66,11 @@ func (s *DBUpgradeJobSyncer) T(in runtime.Object) (runtime.Object, error) {
 	out := in.(*batchv1.Job)
 
 	if !out.CreationTimestamp.IsZero() {
+		// TODO(calind): handle the case that the existing job is failed
 		return out, nil
 	}
 
-	ver := s.wp.GetWPVersion()
+	ver := s.wp.GetWPVersion(s.rt)
 	verhash := fmt.Sprintf("%x", md5.Sum([]byte(ver)))
 	l := s.wp.LabelsForComponent("db-migrate")
 	l["wordpress.presslabs.org/db-upgrade-for-hash"] = verhash
@@ -86,7 +89,7 @@ func (s *DBUpgradeJobSyncer) T(in runtime.Object) (runtime.Object, error) {
 	out.Spec.ActiveDeadlineSeconds = &activeDeadlineSeconds
 
 	cmd := []string{"/bin/sh", "-c", "wp core update-db --network || wp core update-db && wp cache flush"}
-	out.Spec.Template = *s.wp.JobPodTemplateSpec(cmd...)
+	out.Spec.Template = *s.wp.JobPodTemplateSpec(s.rt, cmd...)
 
 	out.Spec.Template.Labels = l
 

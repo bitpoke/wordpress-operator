@@ -32,19 +32,21 @@ const (
 type WPCronSyncer struct {
 	scheme   *runtime.Scheme
 	wp       *wordpressv1alpha1.Wordpress
+	rt       *wordpressv1alpha1.WordpressRuntime
 	key      types.NamespacedName
 	existing *batchv1beta1.CronJob
 }
 
 var _ Interface = &WPCronSyncer{}
 
-func NewWPCronSyncer(wp *wordpressv1alpha1.Wordpress, r *runtime.Scheme) *WPCronSyncer {
+func NewWPCronSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, r *runtime.Scheme) *WPCronSyncer {
 	return &WPCronSyncer{
 		scheme:   r,
 		wp:       wp,
+		rt:       rt,
 		existing: &batchv1beta1.CronJob{},
 		key: types.NamespacedName{
-			Name:      wp.GetWPCronName(),
+			Name:      wp.GetWPCronName(rt),
 			Namespace: wp.Namespace,
 		},
 	}
@@ -81,7 +83,7 @@ func (s *WPCronSyncer) T(in runtime.Object) (runtime.Object, error) {
 	out.Spec.JobTemplate.Spec.ActiveDeadlineSeconds = &activeDeadlineSeconds
 
 	cmd := []string{"wp", "cron", "event", "run", "--due-now"}
-	out.Spec.JobTemplate.Spec.Template = *s.wp.JobPodTemplateSpec(cmd...)
+	out.Spec.JobTemplate.Spec.Template = *s.wp.JobPodTemplateSpec(s.rt, cmd...)
 	out.Spec.JobTemplate.Spec.Template.ObjectMeta.Labels = s.wp.LabelsForComponent("wp-cron")
 
 	return out, nil

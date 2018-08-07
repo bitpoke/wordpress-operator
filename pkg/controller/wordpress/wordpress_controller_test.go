@@ -39,7 +39,7 @@ import (
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
-const timeout = time.Second * 5
+const timeout = time.Second * 2
 
 var _ = Describe("Wordpress controller", func() {
 	var (
@@ -69,29 +69,72 @@ var _ = Describe("Wordpress controller", func() {
 		close(stop)
 	})
 
-	Describe("when creating a new object", func() {
+	Describe("when creating a new Wordpress resource", func() {
 		var expectedRequest reconcile.Request
 		var dependantKey types.NamespacedName
-		var instance *wordpressv1alpha1.Wordpress
+		var wp *wordpressv1alpha1.Wordpress
+		var rt *wordpressv1alpha1.WordpressRuntime
 
 		BeforeEach(func() {
-			name := fmt.Sprintf("wp-%d", rand.Int31())
+			r := rand.Int31()
+			name := fmt.Sprintf("wp-%d", r)
+			runtimeName := fmt.Sprintf("rt-%d", r)
 			domain := wordpressv1alpha1.Domain(fmt.Sprintf("%s.example.com", name))
 
 			expectedRequest = reconcile.Request{NamespacedName: types.NamespacedName{Name: name, Namespace: "default"}}
 			dependantKey = types.NamespacedName{Name: name, Namespace: "default"}
-			instance = &wordpressv1alpha1.Wordpress{
+			rt = &wordpressv1alpha1.WordpressRuntime{
+				ObjectMeta: metav1.ObjectMeta{Name: runtimeName},
+				Spec: wordpressv1alpha1.WordpressRuntimeSpec{
+					DefaultImage: "docker.io/library/hello-world",
+					WebPodTemplate: &corev1.PodTemplateSpec{
+						Spec: corev1.PodSpec{
+							Containers: []corev1.Container{
+								corev1.Container{
+									Name:  "wordpress",
+									Image: "image",
+									Ports: []corev1.ContainerPort{
+										corev1.ContainerPort{
+											Name:          "http",
+											ContainerPort: 80,
+											Protocol:      corev1.ProtocolTCP,
+										},
+									},
+								},
+							},
+						},
+					},
+					CLIPodTemplate: &corev1.PodTemplateSpec{
+						Spec: corev1.PodSpec{
+							Containers: []corev1.Container{
+								corev1.Container{
+									Name:  "wp-cli",
+									Image: "cli-image",
+								},
+							},
+						},
+					},
+				},
+			}
+			wp = &wordpressv1alpha1.Wordpress{
 				ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "default"},
 				Spec: wordpressv1alpha1.WordpressSpec{
+					Runtime: rt.Name,
 					Domains: []wordpressv1alpha1.Domain{domain},
 				},
 			}
+
+			Expect(c.Create(context.TODO(), rt)).To(Succeed())
+		})
+
+		AfterEach(func() {
+			c.Delete(context.TODO(), rt)
 		})
 
 		It("reconciles the deployment", func() {
 			// Create the Wordpress object and expect the Reconcile and Deployment to be created
-			Expect(c.Create(context.TODO(), instance)).To(Succeed())
-			defer c.Delete(context.TODO(), instance)
+			Expect(c.Create(context.TODO(), wp)).To(Succeed())
+			defer c.Delete(context.TODO(), wp)
 
 			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
 
@@ -111,8 +154,8 @@ var _ = Describe("Wordpress controller", func() {
 
 		It("reconciles the service", func() {
 			// Create the Wordpress object and expect the Reconcile and Service to be created
-			Expect(c.Create(context.TODO(), instance)).To(Succeed())
-			defer c.Delete(context.TODO(), instance)
+			Expect(c.Create(context.TODO(), wp)).To(Succeed())
+			defer c.Delete(context.TODO(), wp)
 
 			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
 
@@ -132,8 +175,8 @@ var _ = Describe("Wordpress controller", func() {
 
 		It("reconciles the ingress", func() {
 			// Create the Wordpress object and expect the Reconcile and ingress to be created
-			Expect(c.Create(context.TODO(), instance)).To(Succeed())
-			defer c.Delete(context.TODO(), instance)
+			Expect(c.Create(context.TODO(), wp)).To(Succeed())
+			defer c.Delete(context.TODO(), wp)
 
 			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
 
@@ -152,7 +195,9 @@ var _ = Describe("Wordpress controller", func() {
 		})
 
 		It("reconciles the webroot pvc", func() {
-			instance.Spec.WebrootVolumeSpec.PersistentVolumeClaim = &corev1.PersistentVolumeClaimSpec{
+			dependantKey.Name = fmt.Sprintf("%s-webroot", wp.Name)
+			wp.Spec.WebrootVolumeSpec = &wordpressv1alpha1.WordpressVolumeSpec{}
+			wp.Spec.WebrootVolumeSpec.PersistentVolumeClaim = &corev1.PersistentVolumeClaimSpec{
 				AccessModes: []corev1.PersistentVolumeAccessMode{
 					corev1.ReadWriteOnce,
 				},
@@ -164,8 +209,8 @@ var _ = Describe("Wordpress controller", func() {
 			}
 
 			// Create the Wordpress object and expect the Reconcile and pvc to be created
-			Expect(c.Create(context.TODO(), instance)).To(Succeed())
-			defer c.Delete(context.TODO(), instance)
+			Expect(c.Create(context.TODO(), wp)).To(Succeed())
+			defer c.Delete(context.TODO(), wp)
 
 			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
 
@@ -184,9 +229,9 @@ var _ = Describe("Wordpress controller", func() {
 		})
 
 		It("reconciles the media pvc", func() {
-			dependantKey.Name = instance.GetMediaPVCName()
-			instance.Spec.MediaVolumeSpec = &wordpressv1alpha1.WordpressVolumeSpec{}
-			instance.Spec.MediaVolumeSpec.PersistentVolumeClaim = &corev1.PersistentVolumeClaimSpec{
+			dependantKey.Name = fmt.Sprintf("%s-media", wp.Name)
+			wp.Spec.MediaVolumeSpec = &wordpressv1alpha1.WordpressVolumeSpec{}
+			wp.Spec.MediaVolumeSpec.PersistentVolumeClaim = &corev1.PersistentVolumeClaimSpec{
 				AccessModes: []corev1.PersistentVolumeAccessMode{
 					corev1.ReadWriteOnce,
 				},
@@ -198,8 +243,8 @@ var _ = Describe("Wordpress controller", func() {
 			}
 
 			// Create the Wordpress object and expect the Reconcile and pvc to be created
-			Expect(c.Create(context.TODO(), instance)).To(Succeed())
-			defer c.Delete(context.TODO(), instance)
+			Expect(c.Create(context.TODO(), wp)).To(Succeed())
+			defer c.Delete(context.TODO(), wp)
 
 			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
 
@@ -219,15 +264,15 @@ var _ = Describe("Wordpress controller", func() {
 
 		It("reconciles the wp-cron", func() {
 			// Create the Wordpress object and expect the Reconcile and WPCron to be created
-			Expect(c.Create(context.TODO(), instance)).To(Succeed())
-			defer c.Delete(context.TODO(), instance)
+			Expect(c.Create(context.TODO(), wp)).To(Succeed())
+			defer c.Delete(context.TODO(), wp)
 
 			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
 
 			cron := &batchv1beta1.CronJob{}
 			dependantKey := types.NamespacedName{
-				Name:      instance.GetWPCronName(),
-				Namespace: instance.Namespace,
+				Name:      wp.GetWPCronName(rt),
+				Namespace: wp.Namespace,
 			}
 			Eventually(func() error { return c.Get(context.TODO(), dependantKey, cron) }, timeout).Should(Succeed())
 

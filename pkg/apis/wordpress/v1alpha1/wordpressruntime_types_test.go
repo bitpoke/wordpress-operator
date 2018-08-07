@@ -13,7 +13,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-
 package v1alpha1_test
 
 import (
@@ -21,24 +20,29 @@ import (
 	. "github.com/onsi/gomega"
 
 	"golang.org/x/net/context"
+	corev1 "k8s.io/api/core/v1"
 	// metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
 	. "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
-var _ = Describe("Wordpress CRUD", func() {
-	var created *Wordpress
+var _ = Describe("WordpressRuntime CRUD", func() {
+	var created *WordpressRuntime
 	var key types.NamespacedName
 
 	BeforeEach(func() {
-		key = types.NamespacedName{Name: "foo", Namespace: "default"}
+		key = types.NamespacedName{Name: "foo"}
+		defaultImage := "docker.io/library/wordpress:latest"
 
-		created = &Wordpress{}
+		created = &WordpressRuntime{
+			Spec: WordpressRuntimeSpec{
+				DefaultImage:   defaultImage,
+				WebPodTemplate: &corev1.PodTemplateSpec{},
+				CLIPodTemplate: &corev1.PodTemplateSpec{},
+			},
+		}
 		created.Name = key.Name
-		created.Namespace = key.Namespace
-		created.Spec.Runtime = "default"
-		created.Spec.Domains = []Domain{"example.com"}
 	})
 
 	AfterEach(func() {
@@ -48,7 +52,7 @@ var _ = Describe("Wordpress CRUD", func() {
 	Describe("when sending a storage request", func() {
 		Context("for a valid config", func() {
 			It("should provide CRUD access to the object", func() {
-				fetched := &Wordpress{}
+				fetched := &WordpressRuntime{}
 
 				By("returning success from the create request")
 				Expect(c.Create(context.TODO(), created)).Should(Succeed())

@@ -4,13 +4,13 @@ metadata:
   creationTimestamp: null
   labels:
     controller-tools.k8s.io: "1.0"
-  name: wordpresses.wordpress.presslabs.org
+  name: wordpressruntimes.wordpress.presslabs.org
 spec:
   group: wordpress.presslabs.org
   names:
-    kind: Wordpress
-    plural: wordpresses
-  scope: Namespaced
+    kind: WordpressRuntime
+    plural: wordpressruntimes
+  scope: Cluster
   validation:
     openAPIV3Schema:
       properties:
@@ -22,34 +22,18 @@ spec:
           type: object
         spec:
           properties:
-            domains:
-              items:
-                type: string
-              minItems: 1
-              type: array
-            env:
-              items:
-                type: object
-              type: array
-            envFrom:
-              items:
-                type: object
-              type: array
-            image:
+            cliPodTemplate:
+              type: object
+            defaultImage:
+              minLength: 1
               type: string
-            imagePullPolicy:
+            defaultImagePullPolicy:
               enum:
               - Always
               - IfNotPresent
               - Never
               type: string
-            imagePullSecrets:
-              items:
-                type: object
-              type: array
             ingressAnnotations:
-              type: object
-            labels:
               type: object
             mediaVolumeSpec:
               properties:
@@ -60,20 +44,10 @@ spec:
                 persistentVolumeClaim:
                   type: object
               type: object
-            replicas:
-              format: int32
-              type: integer
-            runtime:
-              minLength: 1
-              type: string
-            serviceAccountName:
-              type: string
-            tlsSecretRef:
-              type: string
-            volumeMountsSpec:
-              items:
-                type: object
-              type: array
+            serviceSpec:
+              type: object
+            webPodTemplate:
+              type: object
             webrootVolumeSpec:
               properties:
                 emptyDir:
@@ -84,8 +58,9 @@ spec:
                   type: object
               type: object
           required:
-          - runtime
-          - domains
+          - defaultImage
+          - webPodTemplate
+          - cliPodTemplate
           type: object
         status:
           type: object

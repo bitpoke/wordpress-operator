@@ -23,7 +23,6 @@ import (
 	core_util "github.com/appscode/kutil/core/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 const (
@@ -31,7 +30,7 @@ const (
 	deploymentName   = "%s"
 	serviceName      = "%s"
 	ingressName      = "%s"
-	webrootPVCName   = "%s"
+	webrootPVCName   = "%s-webroot"
 	mediaPVCName     = "%s-media"
 	dbUpgradeJobName = "%s-db-upgrade"
 
@@ -40,113 +39,61 @@ const (
 )
 
 var (
-	DefaultWebImage string = "docker.io/library/wordpress:latest"
-	DefaultCLIImage string = "docker.io/library/wordpress:cli"
-
-	oneReplica int32 = 1
+	defaultImage       = "defaultImage"
+	oneReplica   int32 = 1
 )
 
-func (wp *Wordpress) GetWebrootPVCName() string { return fmt.Sprintf(webrootPVCName, wp.Name) }
-func (wp *Wordpress) GetWPCronName() string     { return fmt.Sprintf(wpCronName, wp.Name) }
-func (wp *Wordpress) GetDeploymentName() string { return fmt.Sprintf(deploymentName, wp.Name) }
-func (wp *Wordpress) GetIngressName() string    { return fmt.Sprintf(ingressName, wp.Name) }
-func (wp *Wordpress) GetMediaPVCName() string   { return fmt.Sprintf(mediaPVCName, wp.Name) }
-func (wp *Wordpress) GetServiceName() string    { return fmt.Sprintf(serviceName, wp.Name) }
-func (wp *Wordpress) GetDBUpgradeJobName() string {
-	ver := wp.GetWPVersion()
+func (wp *Wordpress) GetWebrootPVCName(rt *WordpressRuntime) string {
+	return fmt.Sprintf(webrootPVCName, wp.Name)
+}
+func (wp *Wordpress) GetWPCronName(rt *WordpressRuntime) string {
+	return fmt.Sprintf(wpCronName, wp.Name)
+}
+func (wp *Wordpress) GetDeploymentName(rt *WordpressRuntime) string {
+	return fmt.Sprintf(deploymentName, wp.Name)
+}
+func (wp *Wordpress) GetIngressName(rt *WordpressRuntime) string {
+	return fmt.Sprintf(ingressName, wp.Name)
+}
+func (wp *Wordpress) GetMediaPVCName(rt *WordpressRuntime) string {
+	return fmt.Sprintf(mediaPVCName, wp.Name)
+}
+func (wp *Wordpress) GetServiceName(rt *WordpressRuntime) string {
+	return fmt.Sprintf(serviceName, wp.Name)
+}
+func (wp *Wordpress) GetDBUpgradeJobName(rt *WordpressRuntime) string {
+	ver := wp.GetWPVersion(rt)
 	prefix := fmt.Sprintf("%s-%x", wp.Name, md5.Sum([]byte(ver)))
 	return fmt.Sprintf(dbUpgradeJobName, prefix)
 }
-func (wp *Wordpress) GetWPVersion() string {
-	var images []string
-
-	for _, c := range wp.Spec.WebPodTemplate.Spec.Containers {
-		images = append(images, c.Image)
+func (wp *Wordpress) GetWPVersion(rt *WordpressRuntime) string {
+	image := rt.Spec.DefaultImage
+	if len(wp.Spec.Image) > 0 {
+		image = wp.Spec.Image
 	}
-
-	return strings.Join(images, ",")
+	return image
 }
 
-// WithDefaults returns a Wordpress object with defaults filled in
-// Controller should always apply defaults before dowing work
-func (wp *Wordpress) WithDefaults() (d *Wordpress) {
-	d = wp
-
-	if d.Spec.Replicas == nil || *d.Spec.Replicas < 1 {
-		d.Spec.Replicas = &oneReplica
+// SetDefaults mutates a Wordpress object and sets default values
+// Controller should always apply defaults before passing it down to workers
+func (wp *Wordpress) SetDefaults() {
+	if wp.Spec.Replicas == nil || *wp.Spec.Replicas < 1 {
+		wp.Spec.Replicas = &oneReplica
 	}
-
-	if len(d.Spec.VolumeMountsSpec) == 0 {
-		d.Spec.VolumeMountsSpec = []corev1.VolumeMount{
-			corev1.VolumeMount{
-				Name:      webrootVolumeName,
-				MountPath: "/var/www/html",
-			},
-		}
-		if d.Spec.MediaVolumeSpec != nil {
-			d.Spec.VolumeMountsSpec = append(d.Spec.VolumeMountsSpec, corev1.VolumeMount{
-				Name:      mediaVolumeName,
-				MountPath: "/var/www/html/wp-content/uploads",
-			})
-		}
-	}
-
-	if d.Spec.WebPodTemplate == nil {
-		d.Spec.WebPodTemplate = &corev1.PodTemplateSpec{
-			Spec: corev1.PodSpec{
-				Containers: []corev1.Container{
-					corev1.Container{
-						Name:  "wordpress",
-						Image: DefaultWebImage,
-						Ports: []corev1.ContainerPort{
-							corev1.ContainerPort{
-								Name:          "http",
-								ContainerPort: 80,
-								Protocol:      corev1.ProtocolTCP,
-							},
-						},
-					},
-				},
-			},
-		}
-	}
-
-	if d.Spec.CLIPodTemplate == nil {
-		d.Spec.CLIPodTemplate = &corev1.PodTemplateSpec{
-			Spec: corev1.PodSpec{
-				Containers: []corev1.Container{
-					corev1.Container{
-						Name:  "wp-cli",
-						Image: DefaultCLIImage,
-					},
-				},
-			},
-		}
-	}
-
-	if d.Spec.ServiceSpec == nil {
-		d.Spec.ServiceSpec = &corev1.ServiceSpec{
-			Ports: []corev1.ServicePort{
-				corev1.ServicePort{
-					Name:       "http",
-					Port:       80,
-					TargetPort: intstr.FromString("http"),
-				},
-			},
-		}
-	}
-
-	return
 }
 
 // LabelsSet returns a general label set to apply to objects, relative to the
 // Wordpress API object
 func (wp *Wordpress) LabelsSet() labels.Set {
-	return labels.Set{
-		"app.kubernetes.io/name":           "wordpress",
-		"app.kubernetes.io/app-instance":   wp.Name,
-		"app.kubernetes.io/deploy-manager": "wordpress-operator",
+	l := labels.Set{}
+	for k, v := range wp.Spec.Labels {
+		l[k] = v
 	}
+	l["app.kubernetes.io/name"] = "wordpress"
+	l["app.kubernetes.io/app-instance"] = wp.Name
+	l["app.kubernetes.io/deploy-manager"] = "wordpress-operator"
+
+	return l
 }
 
 // LabelsForTier returns a label set object with tier label filled in
@@ -173,50 +120,58 @@ func (wp *Wordpress) WebPodLabels() labels.Set {
 
 // WebPodTemplateSpec generates a pod template spec suitable for use in Wordpress
 // deployment
-func (wp *Wordpress) WebPodTemplateSpec() (out *corev1.PodTemplateSpec) {
-	if wp.Spec.WebPodTemplate != nil {
-		out = wp.Spec.WebPodTemplate.DeepCopy()
+func (wp *Wordpress) WebPodTemplateSpec(rt *WordpressRuntime) (out *corev1.PodTemplateSpec) {
+	if rt.Spec.WebPodTemplate != nil {
+		out = rt.Spec.WebPodTemplate.DeepCopy()
 	} else {
 		out = &corev1.PodTemplateSpec{}
 	}
 
 	out.ObjectMeta.Labels = wp.WebPodLabels()
 
-	out.Spec.Volumes = wp.ensureWordpressVolumes(out.Spec.Volumes)
+	out.Spec.Volumes = wp.ensureWordpressVolumes(out.Spec.Volumes, rt)
 
 	for i := range out.Spec.InitContainers {
 		wp.ensureWordpressEnv(&out.Spec.InitContainers[i])
 		wp.ensureWordpressVolumeMounts(&out.Spec.InitContainers[i])
+		wp.setContainerImage(&out.Spec.InitContainers[i], rt)
 	}
 	for i := range out.Spec.Containers {
 		wp.ensureWordpressEnv(&out.Spec.Containers[i])
 		wp.ensureWordpressVolumeMounts(&out.Spec.Containers[i])
+		wp.setContainerImage(&out.Spec.Containers[i], rt)
 	}
 
+	out.Spec.ImagePullSecrets = append(out.Spec.ImagePullSecrets, wp.Spec.ImagePullSecrets...)
+	if len(wp.Spec.ServiceAccountName) > 0 {
+		out.Spec.ServiceAccountName = wp.Spec.ServiceAccountName
+	}
 	return
 }
 
 // JobPodTemplate generates a pod template spec suitable for WP CLI background
 // jobs
-func (wp *Wordpress) JobPodTemplateSpec(cmd ...string) (out *corev1.PodTemplateSpec) {
-	if wp.Spec.WebPodTemplate != nil {
-		out = wp.Spec.CLIPodTemplate.DeepCopy()
+func (wp *Wordpress) JobPodTemplateSpec(rt *WordpressRuntime, cmd ...string) (out *corev1.PodTemplateSpec) {
+	if rt.Spec.CLIPodTemplate != nil {
+		out = rt.Spec.CLIPodTemplate.DeepCopy()
 	} else {
 		out = &corev1.PodTemplateSpec{}
 	}
 
 	out.ObjectMeta.Labels = wp.WebPodLabels()
 
-	out.Spec.Volumes = wp.ensureWordpressVolumes(out.Spec.Volumes)
+	out.Spec.Volumes = wp.ensureWordpressVolumes(out.Spec.Volumes, rt)
 	out.Spec.RestartPolicy = corev1.RestartPolicyNever
 
 	for i := range out.Spec.InitContainers {
 		wp.ensureWordpressEnv(&out.Spec.InitContainers[i])
 		wp.ensureWordpressVolumeMounts(&out.Spec.InitContainers[i])
+		wp.setContainerImage(&out.Spec.InitContainers[i], rt)
 	}
 	for i := range out.Spec.Containers {
 		wp.ensureWordpressEnv(&out.Spec.Containers[i])
 		wp.ensureWordpressVolumeMounts(&out.Spec.Containers[i])
+		wp.setContainerImage(&out.Spec.Containers[i], rt)
 	}
 
 	for i, c := range out.Spec.Containers {
@@ -225,6 +180,10 @@ func (wp *Wordpress) JobPodTemplateSpec(cmd ...string) (out *corev1.PodTemplateS
 		}
 	}
 
+	out.Spec.ImagePullSecrets = append(out.Spec.ImagePullSecrets, wp.Spec.ImagePullSecrets...)
+	if len(wp.Spec.ServiceAccountName) > 0 {
+		out.Spec.ServiceAccountName = wp.Spec.ServiceAccountName
+	}
 	return
 }
 
@@ -252,53 +211,68 @@ func (wp *Wordpress) ensureWordpressVolumeMounts(ctr *corev1.Container) {
 	}
 }
 
-func (wp *Wordpress) ensureWordpressVolumes(in []corev1.Volume) []corev1.Volume {
-	var v corev1.Volume
-
-	// content (plugins, themes, etc.)
-	v = corev1.Volume{Name: webrootVolumeName}
-	if wp.Spec.WebrootVolumeSpec.PersistentVolumeClaim != nil {
-		v.VolumeSource = corev1.VolumeSource{
-			PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-				ClaimName: wp.GetWebrootPVCName(),
-			},
-		}
-	} else if wp.Spec.WebrootVolumeSpec.HostPath != nil {
-		v.VolumeSource = corev1.VolumeSource{HostPath: wp.Spec.WebrootVolumeSpec.HostPath}
-	} else {
-		d := wp.Spec.WebrootVolumeSpec.EmptyDir
-		if d == nil {
-			d = &corev1.EmptyDirVolumeSource{}
-		}
-		v.VolumeSource = corev1.VolumeSource{EmptyDir: d}
-	}
-	in = core_util.UpsertVolume(in, v)
-
-	// media files
-	if wp.Spec.MediaVolumeSpec == nil {
-		in = core_util.EnsureVolumeDeleted(in, mediaVolumeName)
-		// Return is MediaVolumeSpec is not defined
+func ensureVolume(name, pvcName string, volSpec *WordpressVolumeSpec, in []corev1.Volume) []corev1.Volume {
+	if volSpec == nil {
 		return in
 	}
+	v := corev1.Volume{Name: name}
 
-	v = corev1.Volume{Name: mediaVolumeName}
-	if wp.Spec.MediaVolumeSpec.PersistentVolumeClaim != nil {
+	if volSpec.PersistentVolumeClaim != nil {
 		v.VolumeSource = corev1.VolumeSource{
 			PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-				ClaimName: wp.GetMediaPVCName(),
+				ClaimName: pvcName,
 			},
 		}
-	} else if wp.Spec.MediaVolumeSpec.HostPath != nil {
-		v.VolumeSource = corev1.VolumeSource{HostPath: wp.Spec.MediaVolumeSpec.HostPath}
+	} else if volSpec.HostPath != nil {
+		v.VolumeSource = corev1.VolumeSource{HostPath: volSpec.HostPath}
 	} else {
-		d := wp.Spec.MediaVolumeSpec.EmptyDir
+		d := volSpec.EmptyDir
 		if d == nil {
 			d = &corev1.EmptyDirVolumeSource{}
 		}
 		v.VolumeSource = corev1.VolumeSource{EmptyDir: d}
 	}
+
 	in = core_util.UpsertVolume(in, v)
 	return in
+}
+
+func (wp *Wordpress) ensureWordpressVolumes(in []corev1.Volume, rt *WordpressRuntime) []corev1.Volume {
+	// webroot (plugins, themes, etc.)
+	volSpec := rt.Spec.WebrootVolumeSpec
+	if wp.Spec.WebrootVolumeSpec != nil {
+		volSpec = wp.Spec.WebrootVolumeSpec
+	}
+	in = ensureVolume(webrootVolumeName, wp.GetWebrootPVCName(rt), volSpec, in)
+
+	volSpec = rt.Spec.MediaVolumeSpec
+	if wp.Spec.MediaVolumeSpec != nil {
+		volSpec = wp.Spec.MediaVolumeSpec
+	}
+	in = ensureVolume(mediaVolumeName, wp.GetMediaPVCName(rt), volSpec, in)
+
+	return in
+}
+
+func (wp *Wordpress) setContainerImage(ctr *corev1.Container, rt *WordpressRuntime) {
+	if ctr.Image != defaultImage {
+		return
+	}
+
+	image := rt.Spec.DefaultImage
+	if len(wp.Spec.Image) > 0 {
+		image = wp.Spec.Image
+	}
+
+	imagePullPolicy := rt.Spec.DefaultImagePullPolicy
+	if len(wp.Spec.ImagePullPolicy) > 0 {
+		imagePullPolicy = wp.Spec.ImagePullPolicy
+	}
+
+	ctr.Image = image
+	if len(imagePullPolicy) > 0 {
+		ctr.ImagePullPolicy = imagePullPolicy
+	}
 }
 
 func (wp *Wordpress) ensureContainerDefaults(ctr *corev1.Container) {

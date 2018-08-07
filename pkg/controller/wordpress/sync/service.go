@@ -32,19 +32,21 @@ const (
 type ServiceSyncer struct {
 	scheme   *runtime.Scheme
 	wp       *wordpressv1alpha1.Wordpress
+	rt       *wordpressv1alpha1.WordpressRuntime
 	key      types.NamespacedName
 	existing *corev1.Service
 }
 
 var _ Interface = &ServiceSyncer{}
 
-func NewServiceSyncer(wp *wordpressv1alpha1.Wordpress, r *runtime.Scheme) *ServiceSyncer {
+func NewServiceSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, r *runtime.Scheme) *ServiceSyncer {
 	return &ServiceSyncer{
 		scheme:   r,
 		wp:       wp,
+		rt:       rt,
 		existing: &corev1.Service{},
 		key: types.NamespacedName{
-			Name:      wp.GetServiceName(),
+			Name:      wp.GetServiceName(rt),
 			Namespace: wp.Namespace,
 		},
 	}
@@ -65,7 +67,7 @@ func (s *ServiceSyncer) T(in runtime.Object) (runtime.Object, error) {
 
 	inspec := out.Spec.DeepCopy()
 
-	out.Spec = *s.wp.Spec.ServiceSpec
+	out.Spec = *s.rt.Spec.ServiceSpec
 
 	// Spec.ClusterIP of an service is immutable
 	if len(inspec.ClusterIP) > 0 {

@@ -34,19 +34,21 @@ const (
 type WebrootPVCSyncer struct {
 	scheme   *runtime.Scheme
 	wp       *wordpressv1alpha1.Wordpress
+	rt       *wordpressv1alpha1.WordpressRuntime
 	key      types.NamespacedName
 	existing *corev1.PersistentVolumeClaim
 }
 
 var _ Interface = &WebrootPVCSyncer{}
 
-func NewWebrootPVCSyncer(wp *wordpressv1alpha1.Wordpress, r *runtime.Scheme) *WebrootPVCSyncer {
+func NewWebrootPVCSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, r *runtime.Scheme) *WebrootPVCSyncer {
 	return &WebrootPVCSyncer{
 		scheme:   r,
 		wp:       wp,
+		rt:       rt,
 		existing: &corev1.PersistentVolumeClaim{},
 		key: types.NamespacedName{
-			Name:      wp.GetWebrootPVCName(),
+			Name:      wp.GetWebrootPVCName(rt),
 			Namespace: wp.Namespace,
 		},
 	}
@@ -70,7 +72,12 @@ func (s *WebrootPVCSyncer) T(in runtime.Object) (runtime.Object, error) {
 		return out, nil
 	}
 
-	out.Spec = *s.wp.Spec.WebrootVolumeSpec.PersistentVolumeClaim
+	volSpec := s.rt.Spec.WebrootVolumeSpec
+	if s.wp.Spec.WebrootVolumeSpec != nil {
+		volSpec = s.wp.Spec.WebrootVolumeSpec
+	}
+
+	out.Spec = *volSpec.PersistentVolumeClaim
 
 	return out, nil
 }

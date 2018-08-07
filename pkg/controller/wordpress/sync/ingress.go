@@ -33,19 +33,21 @@ const (
 type IngressSyncer struct {
 	scheme   *runtime.Scheme
 	wp       *wordpressv1alpha1.Wordpress
+	rt       *wordpressv1alpha1.WordpressRuntime
 	key      types.NamespacedName
 	existing *extv1beta1.Ingress
 }
 
 var _ Interface = &IngressSyncer{}
 
-func NewIngressSyncer(wp *wordpressv1alpha1.Wordpress, r *runtime.Scheme) *IngressSyncer {
+func NewIngressSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, r *runtime.Scheme) *IngressSyncer {
 	return &IngressSyncer{
 		scheme:   r,
 		wp:       wp,
+		rt:       rt,
 		existing: &extv1beta1.Ingress{},
 		key: types.NamespacedName{
-			Name:      wp.GetIngressName(),
+			Name:      wp.GetIngressName(rt),
 			Namespace: wp.Namespace,
 		},
 	}
@@ -64,12 +66,16 @@ func (s *IngressSyncer) T(in runtime.Object) (runtime.Object, error) {
 		return nil, err
 	}
 
+	for k, v := range s.rt.Spec.IngressAnnotations {
+		out.ObjectMeta.Annotations[k] = v
+	}
+
 	for k, v := range s.wp.Spec.IngressAnnotations {
 		out.ObjectMeta.Annotations[k] = v
 	}
 
 	bk := extv1beta1.IngressBackend{
-		ServiceName: s.wp.GetServiceName(),
+		ServiceName: s.wp.GetServiceName(s.rt),
 		ServicePort: intstr.FromString("http"),
 	}
 	bkpaths := []extv1beta1.HTTPIngressPath{
