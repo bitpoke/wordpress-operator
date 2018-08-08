@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package sync
 
 import (
@@ -27,11 +28,13 @@ import (
 )
 
 const (
-	EventReasonMediaPVCFailed  EventReason = "MediaPVCFailed"
+	// EventReasonMediaPVCFailed is the event reason for a failed media PVC reconcile
+	EventReasonMediaPVCFailed EventReason = "MediaPVCFailed"
+	// EventReasonMediaPVCUpdated is the event reason for a successful media PVC reconcile
 	EventReasonMediaPVCUpdated EventReason = "MediaPVCUpdated"
 )
 
-type MediaPVCSyncer struct {
+type mediaPVCSyncer struct {
 	scheme   *runtime.Scheme
 	wp       *wordpressv1alpha1.Wordpress
 	rt       *wordpressv1alpha1.WordpressRuntime
@@ -39,25 +42,24 @@ type MediaPVCSyncer struct {
 	existing *corev1.PersistentVolumeClaim
 }
 
-var _ Interface = &MediaPVCSyncer{}
-
-func NewMediaPVCSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, r *runtime.Scheme) *MediaPVCSyncer {
-	return &MediaPVCSyncer{
+// NewMediaPVCSyncer returns a new sync.Interface for reconciling media PVC
+func NewMediaPVCSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, r *runtime.Scheme) Interface {
+	return &mediaPVCSyncer{
 		scheme:   r,
 		wp:       wp,
 		rt:       rt,
 		existing: &corev1.PersistentVolumeClaim{},
 		key: types.NamespacedName{
-			Name:      wp.GetMediaPVCName(rt),
+			Name:      wp.GetMediaPVCName(),
 			Namespace: wp.Namespace,
 		},
 	}
 }
 
-func (s *MediaPVCSyncer) GetKey() types.NamespacedName                 { return s.key }
-func (s *MediaPVCSyncer) GetExistingObjectPlaceholder() runtime.Object { return s.existing }
+func (s *mediaPVCSyncer) GetKey() types.NamespacedName                 { return s.key }
+func (s *mediaPVCSyncer) GetExistingObjectPlaceholder() runtime.Object { return s.existing }
 
-func (s *MediaPVCSyncer) T(in runtime.Object) (runtime.Object, error) {
+func (s *mediaPVCSyncer) T(in runtime.Object) (runtime.Object, error) {
 	out := in.(*corev1.PersistentVolumeClaim)
 
 	out.Name = s.key.Name
@@ -82,10 +84,9 @@ func (s *MediaPVCSyncer) T(in runtime.Object) (runtime.Object, error) {
 	return out, nil
 }
 
-func (s *MediaPVCSyncer) GetErrorEventReason(err error) EventReason {
-	if err == nil {
-		return EventReasonMediaPVCUpdated
-	} else {
+func (s *mediaPVCSyncer) GetErrorEventReason(err error) EventReason {
+	if err != nil {
 		return EventReasonMediaPVCFailed
 	}
+	return EventReasonMediaPVCUpdated
 }

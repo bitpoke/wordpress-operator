@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package sync
 
 import (
@@ -25,11 +26,13 @@ import (
 )
 
 const (
-	EventReasonWPCronFailed  EventReason = "WPCronFailed"
+	// EventReasonWPCronFailed is the event reason for a failed wp-cron CronJob reconcile
+	EventReasonWPCronFailed EventReason = "WPCronFailed"
+	// EventReasonWPCronUpdated is the event reason for a successful wp-cron CronJob reconcile
 	EventReasonWPCronUpdated EventReason = "WPCronUpdated"
 )
 
-type WPCronSyncer struct {
+type wpCronSyncer struct {
 	scheme   *runtime.Scheme
 	wp       *wordpressv1alpha1.Wordpress
 	rt       *wordpressv1alpha1.WordpressRuntime
@@ -37,28 +40,27 @@ type WPCronSyncer struct {
 	existing *batchv1beta1.CronJob
 }
 
-var _ Interface = &WPCronSyncer{}
-
-func NewWPCronSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, r *runtime.Scheme) *WPCronSyncer {
-	return &WPCronSyncer{
+// NewWPCronSyncer returns a new sync.Interface for reconciling wp-cron CronJob
+func NewWPCronSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, r *runtime.Scheme) Interface {
+	return &wpCronSyncer{
 		scheme:   r,
 		wp:       wp,
 		rt:       rt,
 		existing: &batchv1beta1.CronJob{},
 		key: types.NamespacedName{
-			Name:      wp.GetWPCronName(rt),
+			Name:      wp.GetWPCronName(),
 			Namespace: wp.Namespace,
 		},
 	}
 }
 
-func (s *WPCronSyncer) GetKey() types.NamespacedName                 { return s.key }
-func (s *WPCronSyncer) GetExistingObjectPlaceholder() runtime.Object { return s.existing }
+func (s *wpCronSyncer) GetKey() types.NamespacedName                 { return s.key }
+func (s *wpCronSyncer) GetExistingObjectPlaceholder() runtime.Object { return s.existing }
 
-func (s *WPCronSyncer) T(in runtime.Object) (runtime.Object, error) {
+func (s *wpCronSyncer) T(in runtime.Object) (runtime.Object, error) {
 	var (
 		cronStartingDeadlineSeconds int64 = 10
-		backoffLimit                int32 = 0
+		backoffLimit                int32
 		activeDeadlineSeconds       int64 = 10
 		successfulJobsHistoryLimit  int32 = 3
 		failedJobsHistoryLimit      int32 = 1
@@ -89,10 +91,9 @@ func (s *WPCronSyncer) T(in runtime.Object) (runtime.Object, error) {
 	return out, nil
 }
 
-func (s *WPCronSyncer) GetErrorEventReason(err error) EventReason {
-	if err == nil {
-		return EventReasonWPCronUpdated
-	} else {
+func (s *wpCronSyncer) GetErrorEventReason(err error) EventReason {
+	if err != nil {
 		return EventReasonWPCronFailed
 	}
+	return EventReasonWPCronUpdated
 }

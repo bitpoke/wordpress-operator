@@ -13,11 +13,12 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package v1alpha1
 
 import (
-	"crypto/md5"
 	"fmt"
+	"hash/fnv"
 	"strings"
 
 	core_util "github.com/appscode/kutil/core/v1"
@@ -43,35 +44,55 @@ var (
 	oneReplica   int32 = 1
 )
 
-func (wp *Wordpress) GetWebrootPVCName(rt *WordpressRuntime) string {
+// GetWebrootPVCName returns webroot Persistent Volume Claim name relative to Wordpress resource
+func (wp *Wordpress) GetWebrootPVCName() string {
 	return fmt.Sprintf(webrootPVCName, wp.Name)
 }
-func (wp *Wordpress) GetWPCronName(rt *WordpressRuntime) string {
+
+// GetWPCronName returns wp-cron CronJob name relative to Wordpress resource
+func (wp *Wordpress) GetWPCronName() string {
 	return fmt.Sprintf(wpCronName, wp.Name)
 }
-func (wp *Wordpress) GetDeploymentName(rt *WordpressRuntime) string {
+
+// GetDeploymentName returns wordpress Deployment name relative to Wordpress resource
+func (wp *Wordpress) GetDeploymentName() string {
 	return fmt.Sprintf(deploymentName, wp.Name)
 }
-func (wp *Wordpress) GetIngressName(rt *WordpressRuntime) string {
+
+// GetIngressName returns Ingress name relative to Wordpress resource
+func (wp *Wordpress) GetIngressName() string {
 	return fmt.Sprintf(ingressName, wp.Name)
 }
-func (wp *Wordpress) GetMediaPVCName(rt *WordpressRuntime) string {
+
+// GetMediaPVCName returns media Persistent Volume Claim name relative to Wordpress resource
+func (wp *Wordpress) GetMediaPVCName() string {
 	return fmt.Sprintf(mediaPVCName, wp.Name)
 }
-func (wp *Wordpress) GetServiceName(rt *WordpressRuntime) string {
+
+// GetServiceName returns web Service name relative to Wordpress resource
+func (wp *Wordpress) GetServiceName() string {
 	return fmt.Sprintf(serviceName, wp.Name)
 }
+
+// GetDBUpgradeJobName returns database migration Job name relative to Wordpress resource
 func (wp *Wordpress) GetDBUpgradeJobName(rt *WordpressRuntime) string {
-	ver := wp.GetWPVersion(rt)
-	prefix := fmt.Sprintf("%s-%x", wp.Name, md5.Sum([]byte(ver)))
+	prefix := fmt.Sprintf("%s-%s", wp.Name, wp.GetVersionHash(rt))
 	return fmt.Sprintf(dbUpgradeJobName, prefix)
 }
-func (wp *Wordpress) GetWPVersion(rt *WordpressRuntime) string {
+
+// GetImage return the image for the Wordpress resource relative to the WordpressRuntime
+func (wp *Wordpress) GetImage(rt *WordpressRuntime) string {
 	image := rt.Spec.DefaultImage
 	if len(wp.Spec.Image) > 0 {
 		image = wp.Spec.Image
 	}
 	return image
+}
+
+// GetVersionHash returns the Wordpress image version hash which can be used in kubernetes resource names
+func (wp *Wordpress) GetVersionHash(rt *WordpressRuntime) string {
+	image := wp.GetImage(rt)
+	return fmt.Sprintf("%x", fnv.New32a().Sum([]byte(image)))[:32]
 }
 
 // SetDefaults mutates a Wordpress object and sets default values
@@ -118,8 +139,7 @@ func (wp *Wordpress) WebPodLabels() labels.Set {
 	return l
 }
 
-// WebPodTemplateSpec generates a pod template spec suitable for use in Wordpress
-// deployment
+// WebPodTemplateSpec generates a pod template spec suitable for use in Wordpress deployment
 func (wp *Wordpress) WebPodTemplateSpec(rt *WordpressRuntime) (out *corev1.PodTemplateSpec) {
 	if rt.Spec.WebPodTemplate != nil {
 		out = rt.Spec.WebPodTemplate.DeepCopy()
@@ -146,11 +166,10 @@ func (wp *Wordpress) WebPodTemplateSpec(rt *WordpressRuntime) (out *corev1.PodTe
 	if len(wp.Spec.ServiceAccountName) > 0 {
 		out.Spec.ServiceAccountName = wp.Spec.ServiceAccountName
 	}
-	return
+	return out
 }
 
-// JobPodTemplate generates a pod template spec suitable for WP CLI background
-// jobs
+// JobPodTemplateSpec generates a pod template spec suitable for WP CLI background jobs
 func (wp *Wordpress) JobPodTemplateSpec(rt *WordpressRuntime, cmd ...string) (out *corev1.PodTemplateSpec) {
 	if rt.Spec.CLIPodTemplate != nil {
 		out = rt.Spec.CLIPodTemplate.DeepCopy()
@@ -184,7 +203,7 @@ func (wp *Wordpress) JobPodTemplateSpec(rt *WordpressRuntime, cmd ...string) (ou
 	if len(wp.Spec.ServiceAccountName) > 0 {
 		out.Spec.ServiceAccountName = wp.Spec.ServiceAccountName
 	}
-	return
+	return out
 }
 
 func (wp *Wordpress) ensureWordpressEnv(ctr *corev1.Container) {
@@ -243,13 +262,13 @@ func (wp *Wordpress) ensureWordpressVolumes(in []corev1.Volume, rt *WordpressRun
 	if wp.Spec.WebrootVolumeSpec != nil {
 		volSpec = wp.Spec.WebrootVolumeSpec
 	}
-	in = ensureVolume(webrootVolumeName, wp.GetWebrootPVCName(rt), volSpec, in)
+	in = ensureVolume(webrootVolumeName, wp.GetWebrootPVCName(), volSpec, in)
 
 	volSpec = rt.Spec.MediaVolumeSpec
 	if wp.Spec.MediaVolumeSpec != nil {
 		volSpec = wp.Spec.MediaVolumeSpec
 	}
-	in = ensureVolume(mediaVolumeName, wp.GetMediaPVCName(rt), volSpec, in)
+	in = ensureVolume(mediaVolumeName, wp.GetMediaPVCName(), volSpec, in)
 
 	return in
 }
@@ -259,11 +278,7 @@ func (wp *Wordpress) setContainerImage(ctr *corev1.Container, rt *WordpressRunti
 		return
 	}
 
-	image := rt.Spec.DefaultImage
-	if len(wp.Spec.Image) > 0 {
-		image = wp.Spec.Image
-	}
-
+	image := wp.GetImage(rt)
 	imagePullPolicy := rt.Spec.DefaultImagePullPolicy
 	if len(wp.Spec.ImagePullPolicy) > 0 {
 		imagePullPolicy = wp.Spec.ImagePullPolicy

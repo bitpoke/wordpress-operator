@@ -13,12 +13,10 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package sync
 
 import (
-	"crypto/md5"
-	"fmt"
-
 	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -28,11 +26,13 @@ import (
 )
 
 const (
-	EventReasonDBUpgradeJobFailed  EventReason = "DBUpgradeJobFailed"
+	// EventReasonDBUpgradeJobFailed is the event reason for a failed database upgrade Job reconcile
+	EventReasonDBUpgradeJobFailed EventReason = "DBUpgradeJobFailed"
+	// EventReasonDBUpgradeJobUpdated is the event reason for a successful database upgrade Job reconcile
 	EventReasonDBUpgradeJobUpdated EventReason = "DBUpgradeJobUpdated"
 )
 
-type DBUpgradeJobSyncer struct {
+type dbUpgradeJobSyncer struct {
 	scheme   *runtime.Scheme
 	wp       *wordpressv1alpha1.Wordpress
 	rt       *wordpressv1alpha1.WordpressRuntime
@@ -40,10 +40,9 @@ type DBUpgradeJobSyncer struct {
 	existing *batchv1.Job
 }
 
-var _ Interface = &DBUpgradeJobSyncer{}
-
-func NewDBUpgradeJobSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, r *runtime.Scheme) *DBUpgradeJobSyncer {
-	return &DBUpgradeJobSyncer{
+// NewDBUpgradeJobSyncer returns a new sync.Interface for reconciling database upgrade Job
+func NewDBUpgradeJobSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, r *runtime.Scheme) Interface {
+	return &dbUpgradeJobSyncer{
 		scheme:   r,
 		wp:       wp,
 		rt:       rt,
@@ -55,12 +54,12 @@ func NewDBUpgradeJobSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha
 	}
 }
 
-func (s *DBUpgradeJobSyncer) GetKey() types.NamespacedName                 { return s.key }
-func (s *DBUpgradeJobSyncer) GetExistingObjectPlaceholder() runtime.Object { return s.existing }
+func (s *dbUpgradeJobSyncer) GetKey() types.NamespacedName                 { return s.key }
+func (s *dbUpgradeJobSyncer) GetExistingObjectPlaceholder() runtime.Object { return s.existing }
 
-func (s *DBUpgradeJobSyncer) T(in runtime.Object) (runtime.Object, error) {
+func (s *dbUpgradeJobSyncer) T(in runtime.Object) (runtime.Object, error) {
 	var (
-		backoffLimit          int32 = 0
+		backoffLimit          int32
 		activeDeadlineSeconds int64 = 10
 	)
 	out := in.(*batchv1.Job)
@@ -70,8 +69,8 @@ func (s *DBUpgradeJobSyncer) T(in runtime.Object) (runtime.Object, error) {
 		return out, nil
 	}
 
-	ver := s.wp.GetWPVersion(s.rt)
-	verhash := fmt.Sprintf("%x", md5.Sum([]byte(ver)))
+	image := s.wp.GetImage(s.rt)
+	verhash := s.wp.GetVersionHash(s.rt)
 	l := s.wp.LabelsForComponent("db-migrate")
 	l["wordpress.presslabs.org/db-upgrade-for-hash"] = verhash
 
@@ -79,7 +78,7 @@ func (s *DBUpgradeJobSyncer) T(in runtime.Object) (runtime.Object, error) {
 	out.Namespace = s.key.Namespace
 	out.Labels = l
 	out.Annotations = map[string]string{
-		"wordpress.presslabs.org/db-upgrade-for-version": ver,
+		"wordpress.presslabs.org/db-upgrade-for": image,
 	}
 	if err := controllerutil.SetControllerReference(s.wp, out, s.scheme); err != nil {
 		return nil, err
@@ -96,10 +95,9 @@ func (s *DBUpgradeJobSyncer) T(in runtime.Object) (runtime.Object, error) {
 	return out, nil
 }
 
-func (s *DBUpgradeJobSyncer) GetErrorEventReason(err error) EventReason {
-	if err == nil {
-		return EventReasonDBUpgradeJobUpdated
-	} else {
+func (s *dbUpgradeJobSyncer) GetErrorEventReason(err error) EventReason {
+	if err != nil {
 		return EventReasonDBUpgradeJobFailed
 	}
+	return EventReasonDBUpgradeJobUpdated
 }

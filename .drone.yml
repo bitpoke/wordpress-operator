@@ -6,6 +6,8 @@ pipeline:
   test:
     image: golang:1.10
     commands:
+      - make dependencies
+      - make lint
       - make test
 
 #  publish:

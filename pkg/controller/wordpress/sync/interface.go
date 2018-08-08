@@ -21,15 +21,14 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-type State string
-
+// EventReason is a type for storing kubernetes event reasons
 type EventReason string
 
 // Interface is the Wordpress syncer interface
 type Interface interface {
 	// GetKey returns the client.ObjectKey for looking up the dependant object
 	GetKey() types.NamespacedName
-	// GetExistingObjectPlaceholder returns a placeholder for exising object
+	// GetExistingObjectPlaceholder returns a placeholder for existing object
 	GetExistingObjectPlaceholder() runtime.Object
 	// T transforms an objects to it's desired state
 	T(in runtime.Object) (runtime.Object, error)

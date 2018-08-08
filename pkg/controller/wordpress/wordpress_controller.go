@@ -93,6 +93,9 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 			return reconciles
 		}),
 	})
+	if err != nil {
+		return err
+	}
 
 	// Watch for Deployment changes
 	err = c.Watch(&source.Kind{Type: &appsv1.Deployment{}}, &handler.EnqueueRequestForOwner{
@@ -128,7 +131,7 @@ type ReconcileWordpress struct {
 
 // Reconcile reads that state of the cluster for a Wordpress object and makes changes based on the state read
 // and what is in the Wordpress.Spec
-
+//
 // Automatically generate RBAC rules to allow the Controller to read and write Deployments
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=wordpress.presslabs.org,resources=wordpresses,verbs=get;list;watch;create;update;patch;delete

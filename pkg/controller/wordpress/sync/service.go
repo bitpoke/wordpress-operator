@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package sync
 
 import (
@@ -25,11 +26,13 @@ import (
 )
 
 const (
-	EventReasonServiceFailed  EventReason = "ServiceFailed"
+	// EventReasonServiceFailed is the event reason for a failed Service reconcile
+	EventReasonServiceFailed EventReason = "ServiceFailed"
+	// EventReasonServiceUpdated is the event reason for a successful Service reconcile
 	EventReasonServiceUpdated EventReason = "ServiceUpdated"
 )
 
-type ServiceSyncer struct {
+type serviceSyncer struct {
 	scheme   *runtime.Scheme
 	wp       *wordpressv1alpha1.Wordpress
 	rt       *wordpressv1alpha1.WordpressRuntime
@@ -37,25 +40,24 @@ type ServiceSyncer struct {
 	existing *corev1.Service
 }
 
-var _ Interface = &ServiceSyncer{}
-
-func NewServiceSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, r *runtime.Scheme) *ServiceSyncer {
-	return &ServiceSyncer{
+// NewServiceSyncer returns a new sync.Interface for reconciling web Service
+func NewServiceSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, r *runtime.Scheme) Interface {
+	return &serviceSyncer{
 		scheme:   r,
 		wp:       wp,
 		rt:       rt,
 		existing: &corev1.Service{},
 		key: types.NamespacedName{
-			Name:      wp.GetServiceName(rt),
+			Name:      wp.GetServiceName(),
 			Namespace: wp.Namespace,
 		},
 	}
 }
 
-func (s *ServiceSyncer) GetKey() types.NamespacedName                 { return s.key }
-func (s *ServiceSyncer) GetExistingObjectPlaceholder() runtime.Object { return s.existing }
+func (s *serviceSyncer) GetKey() types.NamespacedName                 { return s.key }
+func (s *serviceSyncer) GetExistingObjectPlaceholder() runtime.Object { return s.existing }
 
-func (s *ServiceSyncer) T(in runtime.Object) (runtime.Object, error) {
+func (s *serviceSyncer) T(in runtime.Object) (runtime.Object, error) {
 	out := in.(*corev1.Service)
 
 	out.Name = s.key.Name
@@ -79,10 +81,9 @@ func (s *ServiceSyncer) T(in runtime.Object) (runtime.Object, error) {
 	return out, nil
 }
 
-func (s *ServiceSyncer) GetErrorEventReason(err error) EventReason {
-	if err == nil {
-		return EventReasonServiceUpdated
-	} else {
+func (s *serviceSyncer) GetErrorEventReason(err error) EventReason {
+	if err != nil {
 		return EventReasonServiceFailed
 	}
+	return EventReasonServiceUpdated
 }

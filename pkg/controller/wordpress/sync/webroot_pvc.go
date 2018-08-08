@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package sync
 
 import (
@@ -27,11 +28,13 @@ import (
 )
 
 const (
-	EventReasonWebrootPVCFailed  EventReason = "WebrootPVCFailed"
+	// EventReasonWebrootPVCFailed is the event reason for a failed webroot PVC reconcile
+	EventReasonWebrootPVCFailed EventReason = "WebrootPVCFailed"
+	// EventReasonWebrootPVCUpdated is the event reason for a successful webroot PVC reconcile
 	EventReasonWebrootPVCUpdated EventReason = "WebrootPVCUpdated"
 )
 
-type WebrootPVCSyncer struct {
+type webrootPVCSyncer struct {
 	scheme   *runtime.Scheme
 	wp       *wordpressv1alpha1.Wordpress
 	rt       *wordpressv1alpha1.WordpressRuntime
@@ -39,25 +42,24 @@ type WebrootPVCSyncer struct {
 	existing *corev1.PersistentVolumeClaim
 }
 
-var _ Interface = &WebrootPVCSyncer{}
-
-func NewWebrootPVCSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, r *runtime.Scheme) *WebrootPVCSyncer {
-	return &WebrootPVCSyncer{
+// NewWebrootPVCSyncer returns a new sync.Interface for reconciling webroot PVC
+func NewWebrootPVCSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, r *runtime.Scheme) Interface {
+	return &webrootPVCSyncer{
 		scheme:   r,
 		wp:       wp,
 		rt:       rt,
 		existing: &corev1.PersistentVolumeClaim{},
 		key: types.NamespacedName{
-			Name:      wp.GetWebrootPVCName(rt),
+			Name:      wp.GetWebrootPVCName(),
 			Namespace: wp.Namespace,
 		},
 	}
 }
 
-func (s *WebrootPVCSyncer) GetKey() types.NamespacedName                 { return s.key }
-func (s *WebrootPVCSyncer) GetExistingObjectPlaceholder() runtime.Object { return s.existing }
+func (s *webrootPVCSyncer) GetKey() types.NamespacedName                 { return s.key }
+func (s *webrootPVCSyncer) GetExistingObjectPlaceholder() runtime.Object { return s.existing }
 
-func (s *WebrootPVCSyncer) T(in runtime.Object) (runtime.Object, error) {
+func (s *webrootPVCSyncer) T(in runtime.Object) (runtime.Object, error) {
 	out := in.(*corev1.PersistentVolumeClaim)
 
 	out.Name = s.key.Name
@@ -82,10 +84,9 @@ func (s *WebrootPVCSyncer) T(in runtime.Object) (runtime.Object, error) {
 	return out, nil
 }
 
-func (s *WebrootPVCSyncer) GetErrorEventReason(err error) EventReason {
-	if err == nil {
-		return EventReasonWebrootPVCUpdated
-	} else {
+func (s *webrootPVCSyncer) GetErrorEventReason(err error) EventReason {
+	if err != nil {
 		return EventReasonWebrootPVCFailed
 	}
+	return EventReasonWebrootPVCUpdated
 }

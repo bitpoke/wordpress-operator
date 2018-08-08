@@ -271,7 +271,7 @@ var _ = Describe("Wordpress controller", func() {
 
 			cron := &batchv1beta1.CronJob{}
 			dependantKey := types.NamespacedName{
-				Name:      wp.GetWPCronName(rt),
+				Name:      wp.GetWPCronName(),
 				Namespace: wp.Namespace,
 			}
 			Eventually(func() error { return c.Get(context.TODO(), dependantKey, cron) }, timeout).Should(Succeed())

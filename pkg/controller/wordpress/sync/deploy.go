@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package sync
 
 import (
@@ -26,11 +27,13 @@ import (
 )
 
 const (
-	EventReasonDeploymentFailed  EventReason = "DeploymentFailed"
+	// EventReasonDeploymentFailed is the event reason for a failed Deployment reconcile
+	EventReasonDeploymentFailed EventReason = "DeploymentFailed"
+	// EventReasonDeploymentUpdated is the event reason for a successful Deployment reconcile
 	EventReasonDeploymentUpdated EventReason = "DeploymentUpdated"
 )
 
-type DeploymentSyncer struct {
+type deploymentSyncer struct {
 	scheme   *runtime.Scheme
 	wp       *wordpressv1alpha1.Wordpress
 	rt       *wordpressv1alpha1.WordpressRuntime
@@ -38,25 +41,24 @@ type DeploymentSyncer struct {
 	existing *appsv1.Deployment
 }
 
-var _ Interface = &DeploymentSyncer{}
-
-func NewDeploymentSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, r *runtime.Scheme) *DeploymentSyncer {
-	return &DeploymentSyncer{
+// NewDeploymentSyncer returns a new sync.Interface for reconciling web Deployment
+func NewDeploymentSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, r *runtime.Scheme) Interface {
+	return &deploymentSyncer{
 		scheme:   r,
 		wp:       wp,
 		rt:       rt,
 		existing: &appsv1.Deployment{},
 		key: types.NamespacedName{
-			Name:      wp.GetDeploymentName(rt),
+			Name:      wp.GetDeploymentName(),
 			Namespace: wp.Namespace,
 		},
 	}
 }
 
-func (s *DeploymentSyncer) GetKey() types.NamespacedName                 { return s.key }
-func (s *DeploymentSyncer) GetExistingObjectPlaceholder() runtime.Object { return s.existing }
+func (s *deploymentSyncer) GetKey() types.NamespacedName                 { return s.key }
+func (s *deploymentSyncer) GetExistingObjectPlaceholder() runtime.Object { return s.existing }
 
-func (s *DeploymentSyncer) T(in runtime.Object) (runtime.Object, error) {
+func (s *deploymentSyncer) T(in runtime.Object) (runtime.Object, error) {
 	out := in.(*appsv1.Deployment)
 
 	out.Name = s.key.Name
@@ -75,10 +77,9 @@ func (s *DeploymentSyncer) T(in runtime.Object) (runtime.Object, error) {
 	return out, nil
 }
 
-func (s *DeploymentSyncer) GetErrorEventReason(err error) EventReason {
-	if err == nil {
-		return EventReasonDeploymentUpdated
-	} else {
+func (s *deploymentSyncer) GetErrorEventReason(err error) EventReason {
+	if err != nil {
 		return EventReasonDeploymentFailed
 	}
+	return EventReasonDeploymentUpdated
 }

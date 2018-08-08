@@ -1,6 +1,7 @@
-
 # Image URL to use all building/pushing image targets
 IMG ?= controller:latest
+
+KUBEBUILDER_VERSION ?= 1.0.0
 
 all: test manager
 
@@ -50,3 +51,41 @@ docker-build: test
 # Push the docker image
 docker-push:
 	docker push ${IMG}
+
+lint:
+	gometalinter.v2 --disable-all \
+    --deadline 5m \
+    --enable=misspell \
+    --enable=structcheck \
+    --enable=golint \
+    --enable=deadcode \
+    --enable=goimports \
+    --enable=errcheck \
+    --enable=varcheck \
+    --enable=goconst \
+    --enable=gas \
+    --enable=unparam \
+    --enable=ineffassign \
+    --enable=nakedret \
+    --enable=interfacer \
+    --enable=misspell \
+    --enable=gocyclo \
+    --line-length=170 \
+    --enable=lll \
+    --dupl-threshold=400 \
+    --enable=dupl \
+    --exclude=zz_generated.deepcopy.go \
+    ./pkg/... ./cmd/...
+
+    # TODO: Enable these as we fix them to make them pass
+    # --enable=maligned \
+    # --enable=safesql \
+
+dependencies:
+	go get -u gopkg.in/alecthomas/gometalinter.v2
+	gometalinter.v2 --install
+
+	# install Kubebuilder
+	curl -L -O https://github.com/kubernetes-sigs/kubebuilder/releases/download/v${KUBEBUILDER_VERSION}/kubebuilder_${KUBEBUILDER_VERSION}_linux_amd64.tar.gz
+	tar -zxvf kubebuilder_${KUBEBUILDER_VERSION}_linux_amd64.tar.gz
+	mv kubebuilder_${KUBEBUILDER_VERSION}_linux_amd64 -T /usr/local/kubebuilder

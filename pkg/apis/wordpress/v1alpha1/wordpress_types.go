@@ -22,6 +22,7 @@ import (
 )
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+
 // SecretRef represents a reference to a Secret
 type SecretRef string
 

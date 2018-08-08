@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package sync
 
 import (
@@ -26,11 +27,13 @@ import (
 )
 
 const (
-	EventReasonIngressFailed  EventReason = "IngressFailed"
+	// EventReasonIngressFailed is the event reason for a failed Ingress reconcile
+	EventReasonIngressFailed EventReason = "IngressFailed"
+	// EventReasonIngressUpdated is the event reason for a successful Ingress reconcile
 	EventReasonIngressUpdated EventReason = "IngressUpdated"
 )
 
-type IngressSyncer struct {
+type ingressSyncer struct {
 	scheme   *runtime.Scheme
 	wp       *wordpressv1alpha1.Wordpress
 	rt       *wordpressv1alpha1.WordpressRuntime
@@ -38,25 +41,24 @@ type IngressSyncer struct {
 	existing *extv1beta1.Ingress
 }
 
-var _ Interface = &IngressSyncer{}
-
-func NewIngressSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, r *runtime.Scheme) *IngressSyncer {
-	return &IngressSyncer{
+// NewIngressSyncer returns a new sync.Interface for reconciling web Ingress
+func NewIngressSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, r *runtime.Scheme) Interface {
+	return &ingressSyncer{
 		scheme:   r,
 		wp:       wp,
 		rt:       rt,
 		existing: &extv1beta1.Ingress{},
 		key: types.NamespacedName{
-			Name:      wp.GetIngressName(rt),
+			Name:      wp.GetIngressName(),
 			Namespace: wp.Namespace,
 		},
 	}
 }
 
-func (s *IngressSyncer) GetKey() types.NamespacedName                 { return s.key }
-func (s *IngressSyncer) GetExistingObjectPlaceholder() runtime.Object { return s.existing }
+func (s *ingressSyncer) GetKey() types.NamespacedName                 { return s.key }
+func (s *ingressSyncer) GetExistingObjectPlaceholder() runtime.Object { return s.existing }
 
-func (s *IngressSyncer) T(in runtime.Object) (runtime.Object, error) {
+func (s *ingressSyncer) T(in runtime.Object) (runtime.Object, error) {
 	out := in.(*extv1beta1.Ingress)
 
 	out.Name = s.key.Name
@@ -75,7 +77,7 @@ func (s *IngressSyncer) T(in runtime.Object) (runtime.Object, error) {
 	}
 
 	bk := extv1beta1.IngressBackend{
-		ServiceName: s.wp.GetServiceName(s.rt),
+		ServiceName: s.wp.GetServiceName(),
 		ServicePort: intstr.FromString("http"),
 	}
 	bkpaths := []extv1beta1.HTTPIngressPath{
@@ -113,10 +115,9 @@ func (s *IngressSyncer) T(in runtime.Object) (runtime.Object, error) {
 	return out, nil
 }
 
-func (s *IngressSyncer) GetErrorEventReason(err error) EventReason {
-	if err == nil {
-		return EventReasonIngressUpdated
-	} else {
+func (s *ingressSyncer) GetErrorEventReason(err error) EventReason {
+	if err != nil {
 		return EventReasonIngressFailed
 	}
+	return EventReasonIngressUpdated
 }
