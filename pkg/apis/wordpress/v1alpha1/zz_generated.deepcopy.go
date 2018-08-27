@@ -238,6 +238,13 @@ func (in *WordpressSpec) DeepCopyInto(out *WordpressSpec) {
 		*out = new(WordpressVolumeSpec)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.Volumes != nil {
+		in, out := &in.Volumes, &out.Volumes
+		*out = make([]v1.Volume, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
 	if in.VolumeMountsSpec != nil {
 		in, out := &in.VolumeMountsSpec, &out.VolumeMountsSpec
 		*out = make([]v1.VolumeMount, len(*in))

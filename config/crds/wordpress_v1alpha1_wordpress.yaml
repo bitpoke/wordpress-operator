@@ -74,6 +74,10 @@ spec:
               items:
                 type: object
               type: array
+            volumes:
+              items:
+                type: object
+              type: array
             webrootVolumeSpec:
               properties:
                 emptyDir:

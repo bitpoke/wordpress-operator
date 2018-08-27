@@ -257,6 +257,10 @@ func ensureVolume(name, pvcName string, volSpec *WordpressVolumeSpec, in []corev
 }
 
 func (wp *Wordpress) ensureWordpressVolumes(in []corev1.Volume, rt *WordpressRuntime) []corev1.Volume {
+	for _, vol := range wp.Spec.Volumes {
+		in = core_util.UpsertVolume(in, vol)
+	}
+
 	// webroot (plugins, themes, etc.)
 	volSpec := rt.Spec.WebrootVolumeSpec
 	if wp.Spec.WebrootVolumeSpec != nil {

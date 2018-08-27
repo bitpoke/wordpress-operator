@@ -67,6 +67,9 @@ type WordpressSpec struct {
 	// This field is immutable.
 	// +optional
 	MediaVolumeSpec *WordpressVolumeSpec `json:"mediaVolumeSpec,omitempty"`
+	// Volumes defines additional volumes to get injected into web and cli pods
+	// +optional
+	Volumes []corev1.Volume `json:"volumes,omitempty"`
 	// VolumeMountsSpec defines additional mounts which get injected into web
 	// and cli pods.
 	// +optional
