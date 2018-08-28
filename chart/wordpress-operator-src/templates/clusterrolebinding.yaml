@@ -1,0 +1,19 @@
+{{- if .Values.rbac.create }}
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ template "wordpress-operator.fullname" . }}
+  labels:
+    app: '{{ include "wordpress-operator.name" . }}'
+    chart: '{{ include "wordpress-operator.chart" . }}'
+    release: '{{ .Release.Name }}'
+    heritage: '{{ .Release.Service }}'
+subjects:
+  - kind: ServiceAccount
+    name: {{ template "wordpress-operator.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name: {{ template "wordpress-operator.fullname" . }}
+  apiGroup: rbac.authorization.k8s.io
+{{- end }}

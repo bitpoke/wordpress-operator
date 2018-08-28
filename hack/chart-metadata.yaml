@@ -1,0 +1,6 @@
+metadata:
+  labels:
+    app: '{{ include "wordpress-operator.name" . }}'
+    chart: '{{ include "wordpress-operator.chart" . }}'
+    release: '{{ .Release.Name }}'
+    heritage: '{{ .Release.Service }}'

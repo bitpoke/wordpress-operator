@@ -1,7 +1,19 @@
 # Image URL to use all building/pushing image targets
-IMG ?= quay.io/presslabs/wordpress-operator:latest
-
+APP_VERSION ?= $(shell git describe --abbrev=5 --dirty --tags --always)
+IMG ?= quay.io/presslabs/wordpress-operator:$(APP_VERSION)
 KUBEBUILDER_VERSION ?= 1.0.0
+
+ifneq ("$(wildcard $(shell which yq))","")
+yq := yq
+else
+yq := yq.v2
+endif
+
+ifneq ("$(wildcard $(shell which gometalinter))","")
+gometalinter := gometalinter
+else
+gometalinter := gometalinter.v2
+endif
 
 all: test manager
 
@@ -30,6 +42,27 @@ deploy: manifests
 manifests:
 	go run vendor/sigs.k8s.io/controller-tools/cmd/controller-gen/main.go all
 
+.PHONY: chart
+chart:
+	rm -rf chart/wordpress-operator
+	cp -r chart/wordpress-operator-src chart/wordpress-operator
+	$(yq) w -i chart/wordpress-operator/Chart.yaml version "$(APP_VERSION)"
+	$(yq) w -i chart/wordpress-operator/Chart.yaml appVersion "$(APP_VERSION)"
+	$(yq) w -i chart/wordpress-operator/values.yaml image "$(IMG)"
+	awk 'FNR==1 && NR!=1 {print "---"}{print}' config/crds/*.yaml > chart/wordpress-operator/templates/crds.yaml
+	$(yq) m -d'*' -i chart/wordpress-operator/templates/crds.yaml hack/chart-metadata.yaml
+	$(yq) w -d'*' -i chart/wordpress-operator/templates/crds.yaml 'metadata.annotations[helm.sh/hook]' crd-install
+	$(yq) d -d'*' -i chart/wordpress-operator/templates/crds.yaml metadata.creationTimestamp
+	$(yq) d -d'*' -i chart/wordpress-operator/templates/crds.yaml status metadata.creationTimestamp
+	cp config/rbac/rbac_role.yaml chart/wordpress-operator/templates/rbac.yaml
+	$(yq) m -d'*' -i chart/wordpress-operator/templates/rbac.yaml hack/chart-metadata.yaml
+	$(yq) d -d'*' -i chart/wordpress-operator/templates/rbac.yaml metadata.creationTimestamp
+	$(yq) w -d'*' -i chart/wordpress-operator/templates/rbac.yaml metadata.name '{{ template "wordpress-operator.fullname" . }}'
+	echo '{{- if .Values.rbac.create }}' > chart/wordpress-operator/templates/clusterrole.yaml
+	cat chart/wordpress-operator/templates/rbac.yaml >> chart/wordpress-operator/templates/clusterrole.yaml
+	echo '{{- end }}' >> chart/wordpress-operator/templates/clusterrole.yaml
+	rm chart/wordpress-operator/templates/rbac.yaml
+
 # Run go fmt against code
 fmt:
 	go fmt ./pkg/... ./cmd/...
@@ -53,7 +86,7 @@ publish:
 	docker push ${IMG}
 
 lint:
-	gometalinter.v2 --disable-all \
+	$(gometalinter) --disable-all \
     --deadline 5m \
     --enable=misspell \
     --enable=structcheck \
@@ -82,6 +115,7 @@ lint:
     # --enable=safesql \
 
 dependencies:
+	go get -u gopkg.in/mikefarah/yq.v2
 	go get -u gopkg.in/alecthomas/gometalinter.v2
 	gometalinter.v2 --install
 

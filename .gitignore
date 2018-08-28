@@ -17,3 +17,5 @@
 .idea
 bin/*
 webroot/*
+
+chart/wordpress-operator
