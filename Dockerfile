@@ -11,7 +11,7 @@ COPY vendor/ vendor/
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager github.com/presslabs/wordpress-operator/cmd/manager
 
 # Copy the controller-manager into a thin image
-FROM ubuntu:latest
-WORKDIR /root/
-COPY --from=builder /go/src/github.com/presslabs/wordpress-operator/manager .
-ENTRYPOINT ["./manager"]
+FROM scratch
+COPY --from=builder /etc/ssl/certs /etc/ssl/certs
+COPY --from=builder /go/src/github.com/presslabs/wordpress-operator/manager /
+ENTRYPOINT ["/manager"]

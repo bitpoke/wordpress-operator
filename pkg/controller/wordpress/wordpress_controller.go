@@ -18,7 +18,6 @@ package wordpress
 
 import (
 	"context"
-	"fmt"
 	gosync "sync"
 
 	appsv1 "k8s.io/api/apps/v1"

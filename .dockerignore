@@ -1,5 +1,3 @@
 .git
-vendor/*
-cmd/*
-pkg/*
 hack/*
+bin/*

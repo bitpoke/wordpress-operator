@@ -10,12 +10,27 @@ pipeline:
       - make lint
       - make test
 
-#  publish:
-#    image: plugins/docker
-#    secrets:
-#      - QUAY_TOKEN
-#    repo: quay.io/presslabs/wordpress-operator
-#    tags: [ "latest" ]
-#    when:
-#      branch: master
-#      event: push
+  publish:
+    image: plugins/docker
+    registry: quay.io
+    repo: quay.io/presslabs/wordpress-operator
+    tags: [ "latest" ]
+    username: presslabs+drone
+    secrets:
+      - source: QUAY_TOKEN
+        target: DOCKER_PASSWORD
+    when:
+      branch: master
+      event: push
+
+  publish:
+    image: plugins/docker
+    registry: quay.io
+    repo: quay.io/presslabs/wordpress-operator
+    tags: [ "${DRONE_TAG}" ]
+    username: presslabs+drone
+    secrets:
+      - source: QUAY_TOKEN
+        target: DOCKER_PASSWORD
+    when:
+      event: tag

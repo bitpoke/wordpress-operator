@@ -1,5 +1,5 @@
 # Image URL to use all building/pushing image targets
-IMG ?= controller:latest
+IMG ?= quay.io/presslabs/wordpress-operator:latest
 
 KUBEBUILDER_VERSION ?= 1.0.0
 
@@ -43,13 +43,13 @@ generate:
 	go generate ./pkg/... ./cmd/...
 
 # Build the docker image
-docker-build: test
+images: test
 	docker build . -t ${IMG}
 	@echo "updating kustomize image patch file for manager resource"
 	sed -i 's@image: .*@image: '"${IMG}"'@' ./config/default/manager_image_patch.yaml
 
 # Push the docker image
-docker-push:
+publish:
 	docker push ${IMG}
 
 lint:
