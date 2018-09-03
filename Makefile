@@ -44,18 +44,18 @@ manifests:
 chart:
 	rm -rf chart/wordpress-operator
 	cp -r chart/wordpress-operator-src chart/wordpress-operator
-	$(yq) w -i chart/wordpress-operator/Chart.yaml version "$(APP_VERSION)"
-	$(yq) w -i chart/wordpress-operator/Chart.yaml appVersion "$(APP_VERSION)"
-	$(yq) w -i chart/wordpress-operator/values.yaml image "$(IMG)"
+	yq w -i chart/wordpress-operator/Chart.yaml version "$(APP_VERSION)"
+	yq w -i chart/wordpress-operator/Chart.yaml appVersion "$(APP_VERSION)"
+	yq w -i chart/wordpress-operator/values.yaml image "$(IMG)"
 	awk 'FNR==1 && NR!=1 {print "---"}{print}' config/crds/*.yaml > chart/wordpress-operator/templates/crds.yaml
-	$(yq) m -d'*' -i chart/wordpress-operator/templates/crds.yaml hack/chart-metadata.yaml
-	$(yq) w -d'*' -i chart/wordpress-operator/templates/crds.yaml 'metadata.annotations[helm.sh/hook]' crd-install
-	$(yq) d -d'*' -i chart/wordpress-operator/templates/crds.yaml metadata.creationTimestamp
-	$(yq) d -d'*' -i chart/wordpress-operator/templates/crds.yaml status metadata.creationTimestamp
+	yq m -d'*' -i chart/wordpress-operator/templates/crds.yaml hack/chart-metadata.yaml
+	yq w -d'*' -i chart/wordpress-operator/templates/crds.yaml 'metadata.annotations[helm.sh/hook]' crd-install
+	yq d -d'*' -i chart/wordpress-operator/templates/crds.yaml metadata.creationTimestamp
+	yq d -d'*' -i chart/wordpress-operator/templates/crds.yaml status metadata.creationTimestamp
 	cp config/rbac/rbac_role.yaml chart/wordpress-operator/templates/rbac.yaml
-	$(yq) m -d'*' -i chart/wordpress-operator/templates/rbac.yaml hack/chart-metadata.yaml
-	$(yq) d -d'*' -i chart/wordpress-operator/templates/rbac.yaml metadata.creationTimestamp
-	$(yq) w -d'*' -i chart/wordpress-operator/templates/rbac.yaml metadata.name '{{ template "wordpress-operator.fullname" . }}'
+	yq m -d'*' -i chart/wordpress-operator/templates/rbac.yaml hack/chart-metadata.yaml
+	yq d -d'*' -i chart/wordpress-operator/templates/rbac.yaml metadata.creationTimestamp
+	yq w -d'*' -i chart/wordpress-operator/templates/rbac.yaml metadata.name '{{ template "wordpress-operator.fullname" . }}'
 	echo '{{- if .Values.rbac.create }}' > chart/wordpress-operator/templates/clusterrole.yaml
 	cat chart/wordpress-operator/templates/rbac.yaml >> chart/wordpress-operator/templates/clusterrole.yaml
 	echo '{{- end }}' >> chart/wordpress-operator/templates/clusterrole.yaml
