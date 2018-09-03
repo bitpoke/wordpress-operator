@@ -65,7 +65,6 @@ var _ = Describe("Wordpress controller", func() {
 	})
 
 	AfterEach(func() {
-		time.Sleep(1 * time.Second)
 		close(stop)
 	})
 
