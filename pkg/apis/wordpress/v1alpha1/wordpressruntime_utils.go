@@ -33,7 +33,7 @@ func (rt *WordpressRuntime) SetDefaults() {
 	if rt.Spec.ServiceSpec == nil {
 		rt.Spec.ServiceSpec = &corev1.ServiceSpec{
 			Ports: []corev1.ServicePort{
-				corev1.ServicePort{
+				{
 					Name:       "http",
 					Port:       80,
 					Protocol:   corev1.ProtocolTCP,
@@ -42,6 +42,4 @@ func (rt *WordpressRuntime) SetDefaults() {
 			},
 		}
 	}
-
-	return
 }

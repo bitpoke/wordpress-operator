@@ -46,6 +46,7 @@ var _ = BeforeSuite(func() {
 		CRDDirectoryPaths: []string{filepath.Join("..", "..", "..", "config", "crds")},
 	}
 
+	// nolint: errcheck
 	apis.AddToScheme(scheme.Scheme)
 
 	cfg, err = t.Start()
@@ -53,6 +54,7 @@ var _ = BeforeSuite(func() {
 })
 
 var _ = AfterSuite(func() {
+	// nolint: errcheck
 	t.Stop()
 })
 

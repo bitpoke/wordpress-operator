@@ -2,18 +2,13 @@
 APP_VERSION ?= $(shell git describe --abbrev=5 --dirty --tags --always)
 IMG ?= quay.io/presslabs/wordpress-operator:$(APP_VERSION)
 KUBEBUILDER_VERSION ?= 1.0.0
+BINDIR ?= $(PWD)/bin
 
-ifneq ("$(wildcard $(shell which yq))","")
-yq := yq
-else
-yq := yq.v2
-endif
+GOOS ?= $(shell uname -s | tr '[:upper:]' '[:lower:]')
+GOARCH ?= amd64
 
-ifneq ("$(wildcard $(shell which gometalinter))","")
-gometalinter := gometalinter
-else
-gometalinter := gometalinter.v2
-endif
+PATH := $(BINDIR):$(PATH)
+SHELL := env PATH=$(PATH) /bin/sh
 
 all: test manager
 
@@ -86,40 +81,12 @@ publish:
 	docker push ${IMG}
 
 lint:
-	$(gometalinter) --disable-all \
-    --deadline 5m \
-    --enable=misspell \
-    --enable=structcheck \
-    --enable=golint \
-    --enable=deadcode \
-    --enable=goimports \
-    --enable=errcheck \
-    --enable=varcheck \
-    --enable=goconst \
-    --enable=gas \
-    --enable=unparam \
-    --enable=ineffassign \
-    --enable=nakedret \
-    --enable=interfacer \
-    --enable=misspell \
-    --enable=gocyclo \
-    --line-length=170 \
-    --enable=lll \
-    --dupl-threshold=400 \
-    --enable=dupl \
-    --exclude=zz_generated.deepcopy.go \
-    ./pkg/... ./cmd/...
-
-    # TODO: Enable these as we fix them to make them pass
-    # --enable=maligned \
-    # --enable=safesql \
+	$(BINDIR)/golangci-lint run ./pkg/... ./cmd/...
 
 dependencies:
-	go get -u gopkg.in/mikefarah/yq.v2
-	go get -u gopkg.in/alecthomas/gometalinter.v2
-	gometalinter.v2 --install
-
-	# install Kubebuilder
-	curl -L -O https://github.com/kubernetes-sigs/kubebuilder/releases/download/v${KUBEBUILDER_VERSION}/kubebuilder_${KUBEBUILDER_VERSION}_linux_amd64.tar.gz
-	tar -zxvf kubebuilder_${KUBEBUILDER_VERSION}_linux_amd64.tar.gz
-	mv kubebuilder_${KUBEBUILDER_VERSION}_linux_amd64 -T /usr/local/kubebuilder
+	test -d $(BINDIR) || mkdir $(BINDIR)
+	GOBIN=$(BINDIR) go install ./vendor/github.com/onsi/ginkgo/ginkgo
+	GOBIN=$(BINDIR) go get -u gopkg.in/mikefarah/yq.v2 && mv $(BINDIR)/yq.v2 $(BINDIR)/yq
+	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $(BINDIR) v1.10.2
+	curl -sL https://github.com/kubernetes-sigs/kubebuilder/releases/download/v$(KUBEBUILDER_VERSION)/kubebuilder_$(KUBEBUILDER_VERSION)_$(GOOS)_$(GOARCH).tar.gz | \
+		tar -zx -C $(BINDIR) --strip-components=2

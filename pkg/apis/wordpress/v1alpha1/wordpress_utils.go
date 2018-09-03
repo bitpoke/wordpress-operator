@@ -56,11 +56,15 @@ func (wp *Wordpress) GetWPCronName() string {
 
 // GetDeploymentName returns wordpress Deployment name relative to Wordpress resource
 func (wp *Wordpress) GetDeploymentName() string {
+	// nolint: megacheck
+	// we could have just returned wp.Name, but we are breaking this lint rule for consistency
 	return fmt.Sprintf(deploymentName, wp.Name)
 }
 
 // GetIngressName returns Ingress name relative to Wordpress resource
 func (wp *Wordpress) GetIngressName() string {
+	// nolint: megacheck
+	// we could have just returned wp.Name, but we are breaking this lint rule for consistency
 	return fmt.Sprintf(ingressName, wp.Name)
 }
 
@@ -71,6 +75,8 @@ func (wp *Wordpress) GetMediaPVCName() string {
 
 // GetServiceName returns web Service name relative to Wordpress resource
 func (wp *Wordpress) GetServiceName() string {
+	// nolint: megacheck
+	// we could have just returned wp.Name, but we are breaking this lint rule for consistency
 	return fmt.Sprintf(serviceName, wp.Name)
 }
 
@@ -209,12 +215,12 @@ func (wp *Wordpress) JobPodTemplateSpec(rt *WordpressRuntime, cmd ...string) (ou
 func (wp *Wordpress) ensureWordpressEnv(ctr *corev1.Container) {
 	ctr.Env = core_util.UpsertEnvVars(ctr.Env, wp.Spec.Env...)
 
-	var domains []string
-	for _, d := range wp.Spec.Domains {
-		domains = append(domains, string(d))
+	domains := make([]string, len(wp.Spec.Domains))
+	for i, d := range wp.Spec.Domains {
+		domains[i] = string(d)
 	}
 	env := []corev1.EnvVar{
-		corev1.EnvVar{
+		{
 			Name:  "WORDPRESS_DOMAINS",
 			Value: strings.Join(domains, ","),
 		},
@@ -291,14 +297,5 @@ func (wp *Wordpress) setContainerImage(ctr *corev1.Container, rt *WordpressRunti
 	ctr.Image = image
 	if len(imagePullPolicy) > 0 {
 		ctr.ImagePullPolicy = imagePullPolicy
-	}
-}
-
-func (wp *Wordpress) ensureContainerDefaults(ctr *corev1.Container) {
-	if len(ctr.Resources.Limits) == 0 {
-		ctr.Resources.Limits = make(corev1.ResourceList)
-	}
-	if len(ctr.Resources.Requests) == 0 {
-		ctr.Resources.Requests = make(corev1.ResourceList)
 	}
 }

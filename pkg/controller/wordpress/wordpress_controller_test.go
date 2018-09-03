@@ -90,11 +90,11 @@ var _ = Describe("Wordpress controller", func() {
 					WebPodTemplate: &corev1.PodTemplateSpec{
 						Spec: corev1.PodSpec{
 							Containers: []corev1.Container{
-								corev1.Container{
+								{
 									Name:  "wordpress",
 									Image: "image",
 									Ports: []corev1.ContainerPort{
-										corev1.ContainerPort{
+										{
 											Name:          "http",
 											ContainerPort: 80,
 											Protocol:      corev1.ProtocolTCP,
@@ -107,7 +107,7 @@ var _ = Describe("Wordpress controller", func() {
 					CLIPodTemplate: &corev1.PodTemplateSpec{
 						Spec: corev1.PodSpec{
 							Containers: []corev1.Container{
-								corev1.Container{
+								{
 									Name:  "wp-cli",
 									Image: "cli-image",
 								},
@@ -128,12 +128,14 @@ var _ = Describe("Wordpress controller", func() {
 		})
 
 		AfterEach(func() {
+			// nolint: errcheck
 			c.Delete(context.TODO(), rt)
 		})
 
 		It("reconciles the deployment", func() {
 			// Create the Wordpress object and expect the Reconcile and Deployment to be created
 			Expect(c.Create(context.TODO(), wp)).To(Succeed())
+			// nolint: errcheck
 			defer c.Delete(context.TODO(), wp)
 
 			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
@@ -155,6 +157,7 @@ var _ = Describe("Wordpress controller", func() {
 		It("reconciles the service", func() {
 			// Create the Wordpress object and expect the Reconcile and Service to be created
 			Expect(c.Create(context.TODO(), wp)).To(Succeed())
+			// nolint: errcheck
 			defer c.Delete(context.TODO(), wp)
 
 			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
@@ -176,6 +179,7 @@ var _ = Describe("Wordpress controller", func() {
 		It("reconciles the ingress", func() {
 			// Create the Wordpress object and expect the Reconcile and ingress to be created
 			Expect(c.Create(context.TODO(), wp)).To(Succeed())
+			// nolint: errcheck
 			defer c.Delete(context.TODO(), wp)
 
 			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
@@ -210,6 +214,7 @@ var _ = Describe("Wordpress controller", func() {
 
 			// Create the Wordpress object and expect the Reconcile and pvc to be created
 			Expect(c.Create(context.TODO(), wp)).To(Succeed())
+			// nolint: errcheck
 			defer c.Delete(context.TODO(), wp)
 
 			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
@@ -244,6 +249,7 @@ var _ = Describe("Wordpress controller", func() {
 
 			// Create the Wordpress object and expect the Reconcile and pvc to be created
 			Expect(c.Create(context.TODO(), wp)).To(Succeed())
+			// nolint: errcheck
 			defer c.Delete(context.TODO(), wp)
 
 			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
@@ -265,6 +271,7 @@ var _ = Describe("Wordpress controller", func() {
 		It("reconciles the wp-cron", func() {
 			// Create the Wordpress object and expect the Reconcile and WPCron to be created
 			Expect(c.Create(context.TODO(), wp)).To(Succeed())
+			// nolint: errcheck
 			defer c.Delete(context.TODO(), wp)
 
 			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))

@@ -42,6 +42,7 @@ var _ = Describe("Wordpress CRUD", func() {
 	})
 
 	AfterEach(func() {
+		// nolint: errcheck
 		c.Delete(context.TODO(), created)
 	})
 

@@ -46,6 +46,7 @@ var _ = Describe("WordpressRuntime CRUD", func() {
 	})
 
 	AfterEach(func() {
+		// nolint: errcheck
 		c.Delete(context.TODO(), created)
 	})
 

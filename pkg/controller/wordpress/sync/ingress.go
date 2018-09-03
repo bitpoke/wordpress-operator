@@ -81,7 +81,7 @@ func (s *ingressSyncer) T(in runtime.Object) (runtime.Object, error) {
 		ServicePort: intstr.FromString("http"),
 	}
 	bkpaths := []extv1beta1.HTTPIngressPath{
-		extv1beta1.HTTPIngressPath{
+		{
 			Path:    "/",
 			Backend: bk,
 		},
