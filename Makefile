@@ -13,15 +13,18 @@ SHELL := env PATH=$(PATH) /bin/sh
 all: test manager
 
 # Run tests
-test: generate fmt vet manifests
-	go test -v -race ./pkg/... ./cmd/... -coverprofile cover.out
+test: generate manifests
+	KUBEBUILDER_ASSETS=$(BINDIR) ginkgo \
+		--randomizeAllSpecs --randomizeSuites --failOnPending \
+		--cover --coverprofile cover.out --trace --race -v \
+		./pkg/... ./cmd/...
 
 # Build manager binary
-manager: generate fmt vet
+manager: generate
 	go build -o bin/manager github.com/presslabs/wordpress-operator/cmd/manager
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
-run: generate fmt vet
+run: generate
 	go run ./cmd/manager/main.go
 
 # Install CRDs into a cluster
@@ -57,14 +60,6 @@ chart:
 	cat chart/wordpress-operator/templates/rbac.yaml >> chart/wordpress-operator/templates/clusterrole.yaml
 	echo '{{- end }}' >> chart/wordpress-operator/templates/clusterrole.yaml
 	rm chart/wordpress-operator/templates/rbac.yaml
-
-# Run go fmt against code
-fmt:
-	go fmt ./pkg/... ./cmd/...
-
-# Run go vet against code
-vet:
-	go vet ./pkg/... ./cmd/...
 
 # Generate code
 generate:

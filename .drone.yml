@@ -2,7 +2,27 @@ workspace:
   base: /go
   path: src/github.com/presslabs/wordpress-operator
 
+clone:
+  git:
+    image: plugins/git
+    tags: true
+
 pipeline:
+  dependencies:
+    image: golang:1.10
+    commands:
+      - make dependencies
+
+  lint:
+    image: golang:1.10
+    commands:
+      - make lint
+
+  test:
+    image: golang:1.10
+    commands:
+      - make test
+
   build:
     image: golang:1.10
     environment:
@@ -12,14 +32,6 @@ pipeline:
       - make chart
     when:
       event: tag
-
-  test:
-    image: golang:1.10
-    commands:
-      - make dependencies
-      - make lint test chart
-    when:
-      event: push
 
   publish:
     group: publish
