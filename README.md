@@ -18,11 +18,11 @@ The project is in pre-alpha state.
 
 # Kubernetes resources
 
-## Wordpress Site
+## WordPress Site
 
 ```yaml
 apiVersion: wordpress.presslabs.org/v1alpha1
-kind: Wordpress
+kind: WordPress
 metadata:
   name: mysite
 spec:
