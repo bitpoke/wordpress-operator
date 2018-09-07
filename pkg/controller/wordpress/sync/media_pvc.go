@@ -20,73 +20,39 @@ import (
 	"reflect"
 
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	"github.com/presslabs/controller-util/syncer"
 
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
-const (
-	// EventReasonMediaPVCFailed is the event reason for a failed media PVC reconcile
-	EventReasonMediaPVCFailed EventReason = "MediaPVCFailed"
-	// EventReasonMediaPVCUpdated is the event reason for a successful media PVC reconcile
-	EventReasonMediaPVCUpdated EventReason = "MediaPVCUpdated"
-)
-
-type mediaPVCSyncer struct {
-	scheme   *runtime.Scheme
-	wp       *wordpressv1alpha1.Wordpress
-	rt       *wordpressv1alpha1.WordpressRuntime
-	key      types.NamespacedName
-	existing *corev1.PersistentVolumeClaim
-}
-
 // NewMediaPVCSyncer returns a new sync.Interface for reconciling media PVC
-func NewMediaPVCSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, r *runtime.Scheme) Interface {
-	return &mediaPVCSyncer{
-		scheme:   r,
-		wp:       wp,
-		rt:       rt,
-		existing: &corev1.PersistentVolumeClaim{},
-		key: types.NamespacedName{
+func NewMediaPVCSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime) syncer.Interface {
+	obj := &corev1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      wp.GetMediaPVCName(),
 			Namespace: wp.Namespace,
 		},
 	}
-}
+	return syncer.New("MediaPVC", wp, obj, func(existing runtime.Object) error {
+		out := existing.(*corev1.PersistentVolumeClaim)
 
-func (s *mediaPVCSyncer) GetKey() types.NamespacedName                 { return s.key }
-func (s *mediaPVCSyncer) GetExistingObjectPlaceholder() runtime.Object { return s.existing }
+		out.Labels = wp.LabelsForTier("front")
 
-func (s *mediaPVCSyncer) T(in runtime.Object) (runtime.Object, error) {
-	out := in.(*corev1.PersistentVolumeClaim)
+		// PVC spec is immutable
+		if !reflect.DeepEqual(out.Spec, corev1.PersistentVolumeClaimSpec{}) {
+			return nil
+		}
 
-	out.Name = s.key.Name
-	out.Namespace = s.key.Namespace
-	out.Labels = s.wp.LabelsForTier("front")
-	if err := controllerutil.SetControllerReference(s.wp, out, s.scheme); err != nil {
-		return nil, err
-	}
+		volSpec := rt.Spec.MediaVolumeSpec
+		if wp.Spec.MediaVolumeSpec != nil {
+			volSpec = wp.Spec.MediaVolumeSpec
+		}
 
-	// PVC spec is immutable
-	if !reflect.DeepEqual(out.Spec, corev1.PersistentVolumeClaimSpec{}) {
-		return out, nil
-	}
+		out.Spec = *volSpec.PersistentVolumeClaim
 
-	volSpec := s.rt.Spec.MediaVolumeSpec
-	if s.wp.Spec.MediaVolumeSpec != nil {
-		volSpec = s.wp.Spec.MediaVolumeSpec
-	}
-
-	out.Spec = *volSpec.PersistentVolumeClaim
-
-	return out, nil
-}
-
-func (s *mediaPVCSyncer) GetErrorEventReason(err error) EventReason {
-	if err != nil {
-		return EventReasonMediaPVCFailed
-	}
-	return EventReasonMediaPVCUpdated
+		return nil
+	})
 }

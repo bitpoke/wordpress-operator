@@ -20,66 +20,32 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	"github.com/presslabs/controller-util/syncer"
 
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
-const (
-	// EventReasonDeploymentFailed is the event reason for a failed Deployment reconcile
-	EventReasonDeploymentFailed EventReason = "DeploymentFailed"
-	// EventReasonDeploymentUpdated is the event reason for a successful Deployment reconcile
-	EventReasonDeploymentUpdated EventReason = "DeploymentUpdated"
-)
-
-type deploymentSyncer struct {
-	scheme   *runtime.Scheme
-	wp       *wordpressv1alpha1.Wordpress
-	rt       *wordpressv1alpha1.WordpressRuntime
-	key      types.NamespacedName
-	existing *appsv1.Deployment
-}
-
 // NewDeploymentSyncer returns a new sync.Interface for reconciling web Deployment
-func NewDeploymentSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, r *runtime.Scheme) Interface {
-	return &deploymentSyncer{
-		scheme:   r,
-		wp:       wp,
-		rt:       rt,
-		existing: &appsv1.Deployment{},
-		key: types.NamespacedName{
+func NewDeploymentSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime) syncer.Interface {
+	obj := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      wp.GetDeploymentName(),
 			Namespace: wp.Namespace,
 		},
 	}
-}
 
-func (s *deploymentSyncer) GetKey() types.NamespacedName                 { return s.key }
-func (s *deploymentSyncer) GetExistingObjectPlaceholder() runtime.Object { return s.existing }
+	return syncer.New("Deployment", wp, obj, func(existing runtime.Object) error {
+		out := existing.(*appsv1.Deployment)
 
-func (s *deploymentSyncer) T(in runtime.Object) (runtime.Object, error) {
-	out := in.(*appsv1.Deployment)
+		out.Labels = wp.WebPodLabels()
 
-	out.Name = s.key.Name
-	out.Namespace = s.key.Namespace
-	out.Labels = s.wp.WebPodLabels()
-	if err := controllerutil.SetControllerReference(s.wp, out, s.scheme); err != nil {
-		return nil, err
-	}
+		out.Spec.Selector = metav1.SetAsLabelSelector(wp.WebPodLabels())
+		out.Spec.Template = *wp.WebPodTemplateSpec(rt)
+		if wp.Spec.Replicas != nil {
+			out.Spec.Replicas = wp.Spec.Replicas
+		}
 
-	out.Spec.Selector = metav1.SetAsLabelSelector(s.wp.WebPodLabels())
-	out.Spec.Template = *s.wp.WebPodTemplateSpec(s.rt)
-	if s.wp.Spec.Replicas != nil {
-		out.Spec.Replicas = s.wp.Spec.Replicas
-	}
-
-	return out, nil
-}
-
-func (s *deploymentSyncer) GetErrorEventReason(err error) EventReason {
-	if err != nil {
-		return EventReasonDeploymentFailed
-	}
-	return EventReasonDeploymentUpdated
+		return nil
+	})
 }

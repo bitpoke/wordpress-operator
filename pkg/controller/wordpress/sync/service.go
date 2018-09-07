@@ -18,72 +18,38 @@ package sync
 
 import (
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	"github.com/presslabs/controller-util/syncer"
 
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
-const (
-	// EventReasonServiceFailed is the event reason for a failed Service reconcile
-	EventReasonServiceFailed EventReason = "ServiceFailed"
-	// EventReasonServiceUpdated is the event reason for a successful Service reconcile
-	EventReasonServiceUpdated EventReason = "ServiceUpdated"
-)
-
-type serviceSyncer struct {
-	scheme   *runtime.Scheme
-	wp       *wordpressv1alpha1.Wordpress
-	rt       *wordpressv1alpha1.WordpressRuntime
-	key      types.NamespacedName
-	existing *corev1.Service
-}
-
 // NewServiceSyncer returns a new sync.Interface for reconciling web Service
-func NewServiceSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, r *runtime.Scheme) Interface {
-	return &serviceSyncer{
-		scheme:   r,
-		wp:       wp,
-		rt:       rt,
-		existing: &corev1.Service{},
-		key: types.NamespacedName{
+func NewServiceSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime) syncer.Interface {
+	obj := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      wp.GetServiceName(),
 			Namespace: wp.Namespace,
 		},
 	}
-}
 
-func (s *serviceSyncer) GetKey() types.NamespacedName                 { return s.key }
-func (s *serviceSyncer) GetExistingObjectPlaceholder() runtime.Object { return s.existing }
+	return syncer.New("Service", wp, obj, func(existing runtime.Object) error {
+		out := existing.(*corev1.Service)
 
-func (s *serviceSyncer) T(in runtime.Object) (runtime.Object, error) {
-	out := in.(*corev1.Service)
+		clusterIP := out.Spec.ClusterIP
 
-	out.Name = s.key.Name
-	out.Namespace = s.key.Namespace
-	out.Labels = s.wp.WebPodLabels()
-	if err := controllerutil.SetControllerReference(s.wp, out, s.scheme); err != nil {
-		return nil, err
-	}
+		out.Labels = wp.WebPodLabels()
+		out.Spec = *rt.Spec.ServiceSpec
 
-	inspec := out.Spec.DeepCopy()
+		// Spec.ClusterIP of an service is immutable
+		if len(clusterIP) > 0 {
+			out.Spec.ClusterIP = clusterIP
+		}
 
-	out.Spec = *s.rt.Spec.ServiceSpec
+		out.Spec.Selector = wp.WebPodLabels()
 
-	// Spec.ClusterIP of an service is immutable
-	if len(inspec.ClusterIP) > 0 {
-		out.Spec.ClusterIP = inspec.ClusterIP
-	}
-
-	out.Spec.Selector = s.wp.WebPodLabels()
-
-	return out, nil
-}
-
-func (s *serviceSyncer) GetErrorEventReason(err error) EventReason {
-	if err != nil {
-		return EventReasonServiceFailed
-	}
-	return EventReasonServiceUpdated
+		return nil
+	})
 }

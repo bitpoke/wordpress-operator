@@ -4,9 +4,9 @@ metadata:
   creationTimestamp: null
   labels:
     controller-tools.k8s.io: "1.0"
-  name: krakens.creatures.k8s.io
+  name: krakens.creatures.testproject.org
 spec:
-  group: creatures.k8s.io
+  group: creatures.testproject.org
   names:
     kind: Kraken
     plural: krakens
@@ -24,10 +24,10 @@ spec:
           type: object
         status:
           type: object
-      type: object
   version: v2alpha1
 status:
   acceptedNames:
     kind: ""
     plural: ""
   conditions: null
+  storedVersions: null

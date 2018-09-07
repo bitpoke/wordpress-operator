@@ -18,86 +18,54 @@ package sync
 
 import (
 	batchv1 "k8s.io/api/batch/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	"github.com/presslabs/controller-util/syncer"
 
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
-const (
-	// EventReasonDBUpgradeJobFailed is the event reason for a failed database upgrade Job reconcile
-	EventReasonDBUpgradeJobFailed EventReason = "DBUpgradeJobFailed"
-	// EventReasonDBUpgradeJobUpdated is the event reason for a successful database upgrade Job reconcile
-	EventReasonDBUpgradeJobUpdated EventReason = "DBUpgradeJobUpdated"
-)
-
-type dbUpgradeJobSyncer struct {
-	scheme   *runtime.Scheme
-	wp       *wordpressv1alpha1.Wordpress
-	rt       *wordpressv1alpha1.WordpressRuntime
-	key      types.NamespacedName
-	existing *batchv1.Job
-}
-
 // NewDBUpgradeJobSyncer returns a new sync.Interface for reconciling database upgrade Job
-func NewDBUpgradeJobSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, r *runtime.Scheme) Interface {
-	return &dbUpgradeJobSyncer{
-		scheme:   r,
-		wp:       wp,
-		rt:       rt,
-		existing: &batchv1.Job{},
-		key: types.NamespacedName{
+func NewDBUpgradeJobSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime) syncer.Interface {
+	obj := &batchv1.Job{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      wp.GetDBUpgradeJobName(rt),
 			Namespace: wp.Namespace,
 		},
 	}
-}
 
-func (s *dbUpgradeJobSyncer) GetKey() types.NamespacedName                 { return s.key }
-func (s *dbUpgradeJobSyncer) GetExistingObjectPlaceholder() runtime.Object { return s.existing }
-
-func (s *dbUpgradeJobSyncer) T(in runtime.Object) (runtime.Object, error) {
 	var (
 		backoffLimit          int32
 		activeDeadlineSeconds int64 = 10
 	)
-	out := in.(*batchv1.Job)
 
-	if !out.CreationTimestamp.IsZero() {
-		// TODO(calind): handle the case that the existing job is failed
-		return out, nil
-	}
+	return syncer.New("DBUpgradeJob", wp, obj, func(existing runtime.Object) error {
+		out := existing.(*batchv1.Job)
 
-	image := s.wp.GetImage(s.rt)
-	verhash := s.wp.GetVersionHash(s.rt)
-	l := s.wp.LabelsForComponent("db-migrate")
-	l["wordpress.presslabs.org/db-upgrade-for-hash"] = verhash
+		if !out.CreationTimestamp.IsZero() {
+			// TODO(calind): handle the case that the existing job is failed
+			return nil
+		}
 
-	out.Name = s.key.Name
-	out.Namespace = s.key.Namespace
-	out.Labels = l
-	out.Annotations = map[string]string{
-		"wordpress.presslabs.org/db-upgrade-for": image,
-	}
-	if err := controllerutil.SetControllerReference(s.wp, out, s.scheme); err != nil {
-		return nil, err
-	}
+		image := wp.GetImage(rt)
+		verhash := wp.GetVersionHash(rt)
+		l := wp.LabelsForComponent("db-migrate")
+		l["wordpress.presslabs.org/db-upgrade-for-hash"] = verhash
 
-	out.Spec.BackoffLimit = &backoffLimit
-	out.Spec.ActiveDeadlineSeconds = &activeDeadlineSeconds
+		out.Labels = l
+		out.Annotations = map[string]string{
+			"wordpress.presslabs.org/db-upgrade-for": image,
+		}
 
-	cmd := []string{"/bin/sh", "-c", "wp core update-db --network || wp core update-db && wp cache flush"}
-	out.Spec.Template = *s.wp.JobPodTemplateSpec(s.rt, cmd...)
+		out.Spec.BackoffLimit = &backoffLimit
+		out.Spec.ActiveDeadlineSeconds = &activeDeadlineSeconds
 
-	out.Spec.Template.Labels = l
+		cmd := []string{"/bin/sh", "-c", "wp core update-db --network || wp core update-db && wp cache flush"}
+		out.Spec.Template = *wp.JobPodTemplateSpec(rt, cmd...)
 
-	return out, nil
-}
+		out.Spec.Template.Labels = l
 
-func (s *dbUpgradeJobSyncer) GetErrorEventReason(err error) EventReason {
-	if err != nil {
-		return EventReasonDBUpgradeJobFailed
-	}
-	return EventReasonDBUpgradeJobUpdated
+		return nil
+	})
 }

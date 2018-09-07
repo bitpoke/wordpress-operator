@@ -206,9 +206,12 @@ func (c *Controller) processNextWorkItem() bool {
 	// resource to be synced.
 	if result, err := c.Do.Reconcile(req); err != nil {
 		c.Queue.AddRateLimited(req)
-		log.Error(nil, "Reconciler error", "Controller", c.Name, "Request", req)
+		log.Error(err, "Reconciler error", "Controller", c.Name, "Request", req)
 
 		return false
+	} else if result.RequeueAfter > 0 {
+		c.Queue.AddAfter(req, result.RequeueAfter)
+		return true
 	} else if result.Requeue {
 		c.Queue.AddRateLimited(req)
 		return true

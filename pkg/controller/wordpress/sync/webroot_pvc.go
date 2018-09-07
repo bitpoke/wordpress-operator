@@ -20,73 +20,40 @@ import (
 	"reflect"
 
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	"github.com/presslabs/controller-util/syncer"
 
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
-const (
-	// EventReasonWebrootPVCFailed is the event reason for a failed webroot PVC reconcile
-	EventReasonWebrootPVCFailed EventReason = "WebrootPVCFailed"
-	// EventReasonWebrootPVCUpdated is the event reason for a successful webroot PVC reconcile
-	EventReasonWebrootPVCUpdated EventReason = "WebrootPVCUpdated"
-)
-
-type webrootPVCSyncer struct {
-	scheme   *runtime.Scheme
-	wp       *wordpressv1alpha1.Wordpress
-	rt       *wordpressv1alpha1.WordpressRuntime
-	key      types.NamespacedName
-	existing *corev1.PersistentVolumeClaim
-}
-
 // NewWebrootPVCSyncer returns a new sync.Interface for reconciling webroot PVC
-func NewWebrootPVCSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, r *runtime.Scheme) Interface {
-	return &webrootPVCSyncer{
-		scheme:   r,
-		wp:       wp,
-		rt:       rt,
-		existing: &corev1.PersistentVolumeClaim{},
-		key: types.NamespacedName{
+func NewWebrootPVCSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime) syncer.Interface {
+	obj := &corev1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      wp.GetWebrootPVCName(),
 			Namespace: wp.Namespace,
 		},
 	}
-}
 
-func (s *webrootPVCSyncer) GetKey() types.NamespacedName                 { return s.key }
-func (s *webrootPVCSyncer) GetExistingObjectPlaceholder() runtime.Object { return s.existing }
+	return syncer.New("WebrootPVC", wp, obj, func(existing runtime.Object) error {
+		out := existing.(*corev1.PersistentVolumeClaim)
 
-func (s *webrootPVCSyncer) T(in runtime.Object) (runtime.Object, error) {
-	out := in.(*corev1.PersistentVolumeClaim)
+		out.Labels = wp.LabelsForTier("front")
 
-	out.Name = s.key.Name
-	out.Namespace = s.key.Namespace
-	out.Labels = s.wp.LabelsForTier("front")
-	if err := controllerutil.SetControllerReference(s.wp, out, s.scheme); err != nil {
-		return nil, err
-	}
+		// PVC spec is immutable
+		if !reflect.DeepEqual(out.Spec, corev1.PersistentVolumeClaimSpec{}) {
+			return nil
+		}
 
-	// PVC spec is immutable
-	if !reflect.DeepEqual(out.Spec, corev1.PersistentVolumeClaimSpec{}) {
-		return out, nil
-	}
+		volSpec := rt.Spec.WebrootVolumeSpec
+		if wp.Spec.WebrootVolumeSpec != nil {
+			volSpec = wp.Spec.WebrootVolumeSpec
+		}
 
-	volSpec := s.rt.Spec.WebrootVolumeSpec
-	if s.wp.Spec.WebrootVolumeSpec != nil {
-		volSpec = s.wp.Spec.WebrootVolumeSpec
-	}
+		out.Spec = *volSpec.PersistentVolumeClaim
 
-	out.Spec = *volSpec.PersistentVolumeClaim
-
-	return out, nil
-}
-
-func (s *webrootPVCSyncer) GetErrorEventReason(err error) EventReason {
-	if err != nil {
-		return EventReasonWebrootPVCFailed
-	}
-	return EventReasonWebrootPVCUpdated
+		return nil
+	})
 }

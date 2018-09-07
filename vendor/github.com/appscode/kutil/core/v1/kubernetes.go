@@ -79,14 +79,30 @@ func UpsertContainer(containers []core.Container, upsert core.Container) []core.
 	return append(containers, upsert)
 }
 
-func UpsertVolume(volumes []core.Volume, nv core.Volume) []core.Volume {
-	for i, vol := range volumes {
-		if vol.Name == nv.Name {
-			volumes[i] = nv
-			return volumes
-		}
+func UpsertContainers(containers []core.Container, addons []core.Container) []core.Container {
+	var out = containers
+	for _, c := range addons {
+		out = UpsertContainer(out, c)
 	}
-	return append(volumes, nv)
+	return out
+}
+
+func UpsertVolume(volumes []core.Volume, nv ...core.Volume) []core.Volume {
+	upsert := func(v core.Volume) {
+		for i, vol := range volumes {
+			if vol.Name == v.Name {
+				volumes[i] = v
+				return
+			}
+		}
+		volumes = append(volumes, v)
+	}
+
+	for _, volume := range nv {
+		upsert(volume)
+	}
+	return volumes
+
 }
 
 func UpsertVolumeClaim(volumeClaims []core.PersistentVolumeClaim, upsert core.PersistentVolumeClaim) []core.PersistentVolumeClaim {
@@ -108,14 +124,21 @@ func EnsureVolumeDeleted(volumes []core.Volume, name string) []core.Volume {
 	return volumes
 }
 
-func UpsertVolumeMount(mounts []core.VolumeMount, nv core.VolumeMount) []core.VolumeMount {
-	for i, vol := range mounts {
-		if vol.Name == nv.Name {
-			mounts[i] = nv
-			return mounts
+func UpsertVolumeMount(mounts []core.VolumeMount, nv ...core.VolumeMount) []core.VolumeMount {
+	upsert := func(m core.VolumeMount) {
+		for i, vol := range mounts {
+			if vol.Name == m.Name {
+				mounts[i] = m
+				return
+			}
 		}
+		mounts = append(mounts, m)
 	}
-	return append(mounts, nv)
+
+	for _, mount := range nv {
+		upsert(mount)
+	}
+	return mounts
 }
 
 func EnsureVolumeMountDeleted(mounts []core.VolumeMount, name string) []core.VolumeMount {
@@ -182,61 +205,64 @@ func UpsertMap(maps, upsert map[string]string) map[string]string {
 	return maps
 }
 
-func MergeLocalObjectReferences(old, new []core.LocalObjectReference) []core.LocalObjectReference {
+func MergeLocalObjectReferences(l1, l2 []core.LocalObjectReference) []core.LocalObjectReference {
+	result := make([]core.LocalObjectReference, 0, len(l1)+len(l2))
 	m := make(map[string]core.LocalObjectReference)
-	for _, ref := range old {
+	for _, ref := range l1 {
 		m[ref.Name] = ref
-	}
-	for _, ref := range new {
-		m[ref.Name] = ref
-	}
-
-	result := make([]core.LocalObjectReference, 0, len(m))
-	for _, ref := range m {
 		result = append(result, ref)
+	}
+	for _, ref := range l2 {
+		if _, found := m[ref.Name]; !found {
+			result = append(result, ref)
+		}
 	}
 	return result
 }
 
-func EnsureOwnerReference(meta metav1.ObjectMeta, owner *core.ObjectReference) metav1.ObjectMeta {
+func EnsureOwnerReference(meta metav1.Object, owner *core.ObjectReference) {
 	if owner == nil ||
 		owner.APIVersion == "" ||
 		owner.Kind == "" ||
 		owner.Name == "" ||
 		owner.UID == "" {
-		return meta
+		return
 	}
-	if meta.Namespace != owner.Namespace {
-		panic(fmt.Errorf("owner %s %s must be from the same namespace as object %s", owner.Kind, owner.Name, meta.Name))
+	if meta.GetNamespace() != owner.Namespace {
+		panic(fmt.Errorf("owner %s %s must be from the same namespace as object %s", owner.Kind, owner.Name, meta.GetName()))
 	}
 
+	ownerRefs := meta.GetOwnerReferences()
+
 	fi := -1
-	for i, ref := range meta.OwnerReferences {
+	for i, ref := range ownerRefs {
 		if ref.Kind == owner.Kind && ref.Name == owner.Name {
 			fi = i
 			break
 		}
 	}
 	if fi == -1 {
-		meta.OwnerReferences = append(meta.OwnerReferences, metav1.OwnerReference{})
-		fi = len(meta.OwnerReferences) - 1
+		ownerRefs = append(ownerRefs, metav1.OwnerReference{})
+		fi = len(ownerRefs) - 1
 	}
-	meta.OwnerReferences[fi].APIVersion = owner.APIVersion
-	meta.OwnerReferences[fi].Kind = owner.Kind
-	meta.OwnerReferences[fi].Name = owner.Name
-	meta.OwnerReferences[fi].UID = owner.UID
-	if meta.OwnerReferences[fi].BlockOwnerDeletion == nil {
-		meta.OwnerReferences[fi].BlockOwnerDeletion = types.FalseP()
+	ownerRefs[fi].APIVersion = owner.APIVersion
+	ownerRefs[fi].Kind = owner.Kind
+	ownerRefs[fi].Name = owner.Name
+	ownerRefs[fi].UID = owner.UID
+	if ownerRefs[fi].BlockOwnerDeletion == nil {
+		ownerRefs[fi].BlockOwnerDeletion = types.FalseP()
 	}
-	return meta
+
+	meta.SetOwnerReferences(ownerRefs)
 }
 
-func RemoveOwnerReference(meta metav1.ObjectMeta, owner *core.ObjectReference) metav1.ObjectMeta {
-	for i, ref := range meta.OwnerReferences {
+func RemoveOwnerReference(meta metav1.Object, owner *core.ObjectReference) {
+	ownerRefs := meta.GetOwnerReferences()
+	for i, ref := range ownerRefs {
 		if ref.Kind == owner.Kind && ref.Name == owner.Name {
-			meta.OwnerReferences = append(meta.OwnerReferences[:i], meta.OwnerReferences[i+1:]...)
+			ownerRefs = append(ownerRefs[:i], ownerRefs[i+1:]...)
 			break
 		}
 	}
-	return meta
+	meta.SetOwnerReferences(ownerRefs)
 }

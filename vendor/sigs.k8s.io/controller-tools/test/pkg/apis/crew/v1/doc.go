@@ -19,5 +19,5 @@ limitations under the License.
 // +k8s:deepcopy-gen=package,register
 // +k8s:conversion-gen=sigs.k8s.io/controller-tools/test/pkg/apis/crew
 // +k8s:defaulter-gen=TypeMeta
-// +groupName=crew.k8s.io
+// +groupName=crew.testproject.org
 package v1

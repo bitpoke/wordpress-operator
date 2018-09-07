@@ -9,22 +9,22 @@ clone:
 
 pipeline:
   dependencies:
-    image: golang:1.10
+    image: golang:1.11
     commands:
       - make dependencies
 
   lint:
-    image: golang:1.10
+    image: golang:1.11
     commands:
       - make lint
 
   test:
-    image: golang:1.10
+    image: golang:1.11
     commands:
       - make test
 
   build:
-    image: golang:1.10
+    image: golang:1.11
     environment:
       - APP_VERSION=${DRONE_TAG}
     commands:

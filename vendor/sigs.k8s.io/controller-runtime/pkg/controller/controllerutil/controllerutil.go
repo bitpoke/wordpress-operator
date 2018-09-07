@@ -102,74 +102,77 @@ func referSameObject(a, b v1.OwnerReference) bool {
 	return aGV == bGV && a.Kind == b.Kind && a.Name == b.Name
 }
 
-// OperationType is the action result of a CreateOrUpdate call
-type OperationType string
+// OperationResult is the action result of a CreateOrUpdate call
+type OperationResult string
 
 const ( // They should complete the sentence "Deployment default/foo has been ..."
-	// OperationNoop means that the resource has not been changed
-	OperationNoop = "unchanged"
-	// OperationCreated means that a new resource has been created
-	OperationCreated = "created"
-	// OperationUpdated means that an existing resource has been updated
-	OperationUpdated = "updated"
+	// OperationResultNone means that the resource has not been changed
+	OperationResultNone OperationResult = "unchanged"
+	// OperationResultCreated means that a new resource is created
+	OperationResultCreated OperationResult = "created"
+	// OperationResultUpdated means that an existing resource is updated
+	OperationResultUpdated OperationResult = "updated"
 )
 
-// CreateOrUpdate creates or updates a kubernetes resource. It takes in a key and
-// a placeholder for the existing object and returns the operation executed
-func CreateOrUpdate(ctx context.Context, c client.Client, key client.ObjectKey, existing runtime.Object, t TransformFn) (OperationType, error) {
-	err := c.Get(ctx, key, existing)
-	var obj runtime.Object
+// CreateOrUpdate creates or updates the given object obj in the Kubernetes
+// cluster. The object's desired state should be reconciled with the existing
+// state using the passed in ReconcileFn. obj must be a struct pointer so that
+// obj can be updated with the content returned by the Server.
+//
+// It returns the executed operation and an error.
+func CreateOrUpdate(ctx context.Context, c client.Client, obj runtime.Object, f MutateFn) (OperationResult, error) {
+	// op is the operation we are going to attempt
+	op := OperationResultNone
+
+	// get the existing object meta
+	metaObj, ok := obj.(v1.Object)
+	if !ok {
+		return OperationResultNone, fmt.Errorf("%T does not implement metav1.Object interface", obj)
+	}
+
+	// retrieve the existing object
+	key := client.ObjectKey{
+		Name:      metaObj.GetName(),
+		Namespace: metaObj.GetNamespace(),
+	}
+	err := c.Get(ctx, key, obj)
+
+	// reconcile the existing object
+	existing := obj.DeepCopyObject()
+	existingObjMeta := existing.(v1.Object)
+	existingObjMeta.SetName(metaObj.GetName())
+	existingObjMeta.SetNamespace(metaObj.GetNamespace())
+
+	if e := f(obj); e != nil {
+		return OperationResultNone, e
+	}
+
+	if metaObj.GetName() != existingObjMeta.GetName() {
+		return OperationResultNone, fmt.Errorf("ReconcileFn cannot mutate objects name")
+	}
+
+	if metaObj.GetNamespace() != existingObjMeta.GetNamespace() {
+		return OperationResultNone, fmt.Errorf("ReconcileFn cannot mutate objects namespace")
+	}
 
 	if errors.IsNotFound(err) {
-		// Create a new zero value object so that the in parameter of
-		// TransformFn is always a "clean" object, with only Name and Namespace
-		// set
-		zero := reflect.New(reflect.TypeOf(existing).Elem()).Interface()
-
-		// Set Namespace and Name from the lookup key
-		zmeta, ok := zero.(v1.Object)
-		if !ok {
-			return OperationNoop, fmt.Errorf("is not a %T a metav1.Object, cannot call CreateOrUpdate", zero)
-		}
-		zmeta.SetNamespace(key.Namespace)
-		zmeta.SetName(key.Name)
-
-		// Apply the TransformFn
-		obj, err = t(zero.(runtime.Object))
-		if err != nil {
-			return OperationNoop, err
-		}
-
-		// Create the new object
 		err = c.Create(ctx, obj)
-		if err != nil {
-			return OperationNoop, err
+		op = OperationResultCreated
+	} else if err == nil {
+		if reflect.DeepEqual(existing, obj) {
+			return OperationResultNone, nil
 		}
-
-		return OperationCreated, err
-	} else if err != nil {
-		return OperationNoop, err
+		err = c.Update(ctx, obj)
+		op = OperationResultUpdated
 	} else {
-		obj, err = t(existing.DeepCopyObject())
-		if err != nil {
-			return OperationNoop, err
-		}
-
-		if !reflect.DeepEqual(existing, obj) {
-			err = c.Update(ctx, obj)
-			if err != nil {
-				return OperationNoop, err
-			}
-
-			return OperationUpdated, err
-		}
-
-		return OperationNoop, nil
+		return OperationResultNone, err
 	}
+
+	if err != nil {
+		op = OperationResultNone
+	}
+	return op, err
 }
 
-// TransformFn is a function which take in a kubernetes object and returns the
-// desired state of that object.
-// It is safe to mutate the object inside this function, since it's always
-// called with an object's deep copy.
-type TransformFn func(in runtime.Object) (runtime.Object, error)
+// MutateFn is a function which mutates the existing object into it's desired state.
+type MutateFn func(existing runtime.Object) error
