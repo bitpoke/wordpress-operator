@@ -75,3 +75,20 @@ pipeline:
       - GH_PASSWORD
     when:
       event: tag
+# services:
+#   kube-apiserver:
+#     image: k8s.gcr.io/hyperkube:v1.10.7
+#     command:
+#       - kube-apiserver
+#       - --etcd-servers=http://etcd:2379
+#       - --insecure-port=8080
+#       - --insecure-bind-address=0.0.0.0
+#       - --secure-port=0
+#     ports:
+#       - "8080:8080"
+#   etcd:
+#     image: k8s.gcr.io/etcd:2.2.1
+#     command:
+#       - etcd
+#       - --listen-client-urls=http://0.0.0.0:2379,http://0.0.0.0:4001
+#       - --advertise-client-urls=https://etcd:2379,https://etcd:4001
