@@ -22,6 +22,7 @@ import (
 	"time"
 
 	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 
 	"golang.org/x/net/context"
@@ -31,6 +32,7 @@ import (
 	extv1beta1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -39,7 +41,7 @@ import (
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
-const timeout = time.Second * 2
+const timeout = time.Second * 5
 
 var _ = Describe("Wordpress controller", func() {
 	var (
@@ -68,20 +70,20 @@ var _ = Describe("Wordpress controller", func() {
 		close(stop)
 	})
 
-	Describe("when creating a new Wordpress resource", func() {
-		var expectedRequest reconcile.Request
-		var dependantKey types.NamespacedName
-		var wp *wordpressv1alpha1.Wordpress
-		var rt *wordpressv1alpha1.WordpressRuntime
+	When("creating a new Wordpress resource", func() {
+		var (
+			expectedRequest reconcile.Request
+			wp              *wordpressv1alpha1.Wordpress
+			rt              *wordpressv1alpha1.WordpressRuntime
+		)
 
 		BeforeEach(func() {
 			r := rand.Int31()
 			name := fmt.Sprintf("wp-%d", r)
 			runtimeName := fmt.Sprintf("rt-%d", r)
 			domain := wordpressv1alpha1.Domain(fmt.Sprintf("%s.example.com", name))
-
 			expectedRequest = reconcile.Request{NamespacedName: types.NamespacedName{Name: name, Namespace: "default"}}
-			dependantKey = types.NamespacedName{Name: name, Namespace: "default"}
+
 			rt = &wordpressv1alpha1.WordpressRuntime{
 				ObjectMeta: metav1.ObjectMeta{Name: runtimeName},
 				Spec: wordpressv1alpha1.WordpressRuntimeSpec{
@@ -118,88 +120,13 @@ var _ = Describe("Wordpress controller", func() {
 			wp = &wordpressv1alpha1.Wordpress{
 				ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "default"},
 				Spec: wordpressv1alpha1.WordpressSpec{
-					Runtime: rt.Name,
-					Domains: []wordpressv1alpha1.Domain{domain},
+					Runtime:           rt.Name,
+					Domains:           []wordpressv1alpha1.Domain{domain},
+					WebrootVolumeSpec: &wordpressv1alpha1.WordpressVolumeSpec{},
+					MediaVolumeSpec:   &wordpressv1alpha1.WordpressVolumeSpec{},
 				},
 			}
 
-			Expect(c.Create(context.TODO(), rt)).To(Succeed())
-		})
-
-		AfterEach(func() {
-			// nolint: errcheck
-			c.Delete(context.TODO(), rt)
-		})
-
-		It("reconciles the deployment", func() {
-			// Create the Wordpress object and expect the Reconcile and Deployment to be created
-			Expect(c.Create(context.TODO(), wp)).To(Succeed())
-			// nolint: errcheck
-			defer c.Delete(context.TODO(), wp)
-
-			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
-
-			deploy := &appsv1.Deployment{}
-			Eventually(func() error { return c.Get(context.TODO(), dependantKey, deploy) }, timeout).Should(Succeed())
-
-			// Delete the Deployment and expect Reconcile to be called for Deployment deletion
-			When("deleting the deployment", func() {
-				Expect(c.Delete(context.TODO(), deploy)).To(Succeed())
-				Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
-				Eventually(func() error { return c.Get(context.TODO(), dependantKey, deploy) }, timeout).Should(Succeed())
-			})
-
-			// Manually delete Deployment since GC isn't enabled in the test control plane
-			Eventually(func() error { return c.Delete(context.TODO(), deploy) }, timeout).Should(Succeed())
-		})
-
-		It("reconciles the service", func() {
-			// Create the Wordpress object and expect the Reconcile and Service to be created
-			Expect(c.Create(context.TODO(), wp)).To(Succeed())
-			// nolint: errcheck
-			defer c.Delete(context.TODO(), wp)
-
-			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
-
-			service := &corev1.Service{}
-			Eventually(func() error { return c.Get(context.TODO(), dependantKey, service) }, timeout).Should(Succeed())
-
-			// Delete the Service and expect Reconcile to be called for Service deletion
-			When("deleting the service", func() {
-				Expect(c.Delete(context.TODO(), service)).To(Succeed())
-				Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
-				Eventually(func() error { return c.Get(context.TODO(), dependantKey, service) }, timeout).Should(Succeed())
-			})
-
-			// Manually delete Service since GC isn't enabled in the test control plane
-			Eventually(func() error { return c.Delete(context.TODO(), service) }, timeout).Should(Succeed())
-		})
-
-		It("reconciles the ingress", func() {
-			// Create the Wordpress object and expect the Reconcile and ingress to be created
-			Expect(c.Create(context.TODO(), wp)).To(Succeed())
-			// nolint: errcheck
-			defer c.Delete(context.TODO(), wp)
-
-			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
-
-			ingress := &extv1beta1.Ingress{}
-			Eventually(func() error { return c.Get(context.TODO(), dependantKey, ingress) }, timeout).Should(Succeed())
-
-			// Delete the ingress and expect Reconcile to be called for ingress deletion
-			When("deleting the ingress", func() {
-				Expect(c.Delete(context.TODO(), ingress)).To(Succeed())
-				Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
-				Eventually(func() error { return c.Get(context.TODO(), dependantKey, ingress) }, timeout).Should(Succeed())
-			})
-
-			// Manually delete ingress since GC isn't enabled in the test control plane
-			Eventually(func() error { return c.Delete(context.TODO(), ingress) }, timeout).Should(Succeed())
-		})
-
-		It("reconciles the webroot pvc", func() {
-			dependantKey.Name = fmt.Sprintf("%s-webroot", wp.Name)
-			wp.Spec.WebrootVolumeSpec = &wordpressv1alpha1.WordpressVolumeSpec{}
 			wp.Spec.WebrootVolumeSpec.PersistentVolumeClaim = &corev1.PersistentVolumeClaimSpec{
 				AccessModes: []corev1.PersistentVolumeAccessMode{
 					corev1.ReadWriteOnce,
@@ -211,30 +138,6 @@ var _ = Describe("Wordpress controller", func() {
 				},
 			}
 
-			// Create the Wordpress object and expect the Reconcile and pvc to be created
-			Expect(c.Create(context.TODO(), wp)).To(Succeed())
-			// nolint: errcheck
-			defer c.Delete(context.TODO(), wp)
-
-			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
-
-			pvc := &corev1.PersistentVolumeClaim{}
-			Eventually(func() error { return c.Get(context.TODO(), dependantKey, pvc) }, timeout).Should(Succeed())
-
-			// Delete the pvc and expect Reconcile to be called for pvc deletion
-			When("deleting the pvc", func() {
-				Expect(c.Delete(context.TODO(), pvc)).To(Succeed())
-				Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
-				Eventually(func() error { return c.Get(context.TODO(), dependantKey, pvc) }, timeout).Should(Succeed())
-			})
-
-			// Manually delete pvc since GC isn't enabled in the test control plane
-			Eventually(func() error { return c.Delete(context.TODO(), pvc) }, timeout).Should(Succeed())
-		})
-
-		It("reconciles the media pvc", func() {
-			dependantKey.Name = fmt.Sprintf("%s-media", wp.Name)
-			wp.Spec.MediaVolumeSpec = &wordpressv1alpha1.WordpressVolumeSpec{}
 			wp.Spec.MediaVolumeSpec.PersistentVolumeClaim = &corev1.PersistentVolumeClaimSpec{
 				AccessModes: []corev1.PersistentVolumeAccessMode{
 					corev1.ReadWriteOnce,
@@ -246,51 +149,50 @@ var _ = Describe("Wordpress controller", func() {
 				},
 			}
 
-			// Create the Wordpress object and expect the Reconcile and pvc to be created
+			Expect(c.Create(context.TODO(), rt)).To(Succeed())
 			Expect(c.Create(context.TODO(), wp)).To(Succeed())
-			// nolint: errcheck
-			defer c.Delete(context.TODO(), wp)
-
+			// We should receive the initial reconciliation request
 			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
 
-			pvc := &corev1.PersistentVolumeClaim{}
-			Eventually(func() error { return c.Get(context.TODO(), dependantKey, pvc) }, timeout).Should(Succeed())
-
-			// Delete the pvc and expect Reconcile to be called for pvc deletion
-			When("deleting the pvc", func() {
-				Expect(c.Delete(context.TODO(), pvc)).To(Succeed())
-				Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
-				Eventually(func() error { return c.Get(context.TODO(), dependantKey, pvc) }, timeout).Should(Succeed())
-			})
-
-			// Manually delete pvc since GC isn't enabled in the test control plane
-			Eventually(func() error { return c.Delete(context.TODO(), pvc) }, timeout).Should(Succeed())
-		})
-
-		It("reconciles the wp-cron", func() {
-			// Create the Wordpress object and expect the Reconcile and WPCron to be created
-			Expect(c.Create(context.TODO(), wp)).To(Succeed())
-			// nolint: errcheck
-			defer c.Delete(context.TODO(), wp)
-
-			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
-
-			cron := &batchv1beta1.CronJob{}
-			dependantKey := types.NamespacedName{
-				Name:      wp.GetWPCronName(),
-				Namespace: wp.Namespace,
+			// We need to drain the requests queue because syncing a subresource
+			// might trigger reconciliation again and we want to isolate tests
+			// to their own reconciliation requests
+			done := time.After(time.Second)
+			for {
+				select {
+				case <-requests:
+					continue
+				case <-done:
+					return
+				}
 			}
-			Eventually(func() error { return c.Get(context.TODO(), dependantKey, cron) }, timeout).Should(Succeed())
-
-			// Delete the WPCron and expect Reconcile to be called for WPCron deletion
-			When("deleting the wp-cron", func() {
-				Expect(c.Delete(context.TODO(), cron)).To(Succeed())
-				Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
-				Eventually(func() error { return c.Get(context.TODO(), dependantKey, cron) }, timeout).Should(Succeed())
-			})
-
-			// Manually delete WPCron since GC isn't enabled in the test control plane
-			Eventually(func() error { return c.Delete(context.TODO(), cron) }, timeout).Should(Succeed())
 		})
+
+		// nolint: errcheck
+		AfterEach(func() {
+			Expect(c.Delete(context.TODO(), wp)).To(Succeed())
+			Expect(c.Delete(context.TODO(), rt)).To(Succeed())
+		})
+
+		DescribeTable("the reconciler",
+			func(nameFmt string, obj runtime.Object) {
+				key := types.NamespacedName{
+					Name:      fmt.Sprintf(nameFmt, wp.Name),
+					Namespace: wp.Namespace,
+				}
+				Eventually(func() error { return c.Get(context.TODO(), key, obj) }, timeout).Should(Succeed())
+
+				// Delete the resource and expect Reconcile to be called
+				Expect(c.Delete(context.TODO(), obj)).To(Succeed())
+				Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
+				Eventually(func() error { return c.Get(context.TODO(), key, obj) }, timeout).Should(Succeed())
+			},
+			Entry("reconciles the deployment", "%s", &appsv1.Deployment{}),
+			Entry("reconciles the service", "%s", &corev1.Service{}),
+			Entry("reconciles the ingress", "%s", &extv1beta1.Ingress{}),
+			Entry("reconciles the webroot pvc", "%s-webroot", &corev1.PersistentVolumeClaim{}),
+			Entry("reconciles the media pvc", "%s-media", &corev1.PersistentVolumeClaim{}),
+			Entry("reconciles the wp-cron", "%s-wp-cron", &batchv1beta1.CronJob{}),
+		)
 	})
 })

@@ -21,7 +21,9 @@ import (
 	gosync "sync"
 
 	appsv1 "k8s.io/api/apps/v1"
+	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
+	extv1beta1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -85,25 +87,23 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	// Watch for Deployment changes
-	err = c.Watch(&source.Kind{Type: &appsv1.Deployment{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &wordpressv1alpha1.Wordpress{},
-	})
-	if err != nil {
-		return err
+	subresources := []runtime.Object{
+		&appsv1.Deployment{},
+		&batchv1beta1.CronJob{},
+		&corev1.PersistentVolumeClaim{},
+		&corev1.Service{},
+		&extv1beta1.Ingress{},
 	}
 
-	// Watch for Service changes
-	err = c.Watch(&source.Kind{Type: &corev1.Service{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &wordpressv1alpha1.Wordpress{},
-	})
-	if err != nil {
-		return err
+	for _, subresource := range subresources {
+		err = c.Watch(&source.Kind{Type: subresource}, &handler.EnqueueRequestForOwner{
+			IsController: true,
+			OwnerType:    &wordpressv1alpha1.Wordpress{},
+		})
+		if err != nil {
+			return err
+		}
 	}
-
-	// TODO(calind): watch for PVC, CronJobs, Jobs and Ingresses
 
 	return nil
 }
@@ -121,7 +121,10 @@ type ReconcileWordpress struct {
 // and what is in the Wordpress.Spec
 //
 // Automatically generate RBAC rules to allow the Controller to read and write Deployments
+// +kubebuilder:rbac:groups=,resources=services;persistentvolumeclaims,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=batch,resources=cronjobs,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=extensions,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=wordpress.presslabs.org,resources=wordpresses,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=wordpress.presslabs.org,resources=wordpressruntimes,verbs=get;list;watch;create;update;patch;delete
 func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Result, error) {
