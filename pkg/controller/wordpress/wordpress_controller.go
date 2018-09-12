@@ -38,7 +38,7 @@ import (
 	"github.com/presslabs/controller-util/syncer"
 
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
-	"github.com/presslabs/wordpress-operator/pkg/controller/wordpress/sync"
+	"github.com/presslabs/wordpress-operator/pkg/controller/wordpress/internal/sync"
 )
 
 const controllerName = "wordpress-controller"
