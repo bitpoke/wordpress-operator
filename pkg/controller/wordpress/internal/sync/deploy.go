@@ -20,6 +20,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
 
@@ -27,7 +28,7 @@ import (
 )
 
 // NewDeploymentSyncer returns a new sync.Interface for reconciling web Deployment
-func NewDeploymentSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime) syncer.Interface {
+func NewDeploymentSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, c client.Client, scheme *runtime.Scheme) syncer.Interface {
 	obj := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      wp.GetDeploymentName(),
@@ -35,7 +36,7 @@ func NewDeploymentSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.
 		},
 	}
 
-	return syncer.New("Deployment", wp, obj, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("Deployment", wp, obj, c, scheme, func(existing runtime.Object) error {
 		out := existing.(*appsv1.Deployment)
 
 		out.Labels = wp.WebPodLabels()

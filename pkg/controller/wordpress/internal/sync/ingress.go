@@ -21,6 +21,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
 
@@ -28,7 +29,7 @@ import (
 )
 
 // NewIngressSyncer returns a new sync.Interface for reconciling web Ingress
-func NewIngressSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime) syncer.Interface {
+func NewIngressSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, c client.Client, scheme *runtime.Scheme) syncer.Interface {
 	obj := &extv1beta1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      wp.GetIngressName(),
@@ -36,7 +37,7 @@ func NewIngressSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.Wor
 		},
 	}
 
-	return syncer.New("Ingress", wp, obj, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("Ingress", wp, obj, c, scheme, func(existing runtime.Object) error {
 		out := existing.(*extv1beta1.Ingress)
 
 		out.Labels = wp.WebPodLabels()

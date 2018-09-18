@@ -22,6 +22,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
 
@@ -29,7 +30,7 @@ import (
 )
 
 // NewWebrootPVCSyncer returns a new sync.Interface for reconciling webroot PVC
-func NewWebrootPVCSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime) syncer.Interface {
+func NewWebrootPVCSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, c client.Client, scheme *runtime.Scheme) syncer.Interface {
 	obj := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      wp.GetWebrootPVCName(),
@@ -37,7 +38,7 @@ func NewWebrootPVCSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.
 		},
 	}
 
-	return syncer.New("WebrootPVC", wp, obj, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("WebrootPVC", wp, obj, c, scheme, func(existing runtime.Object) error {
 		out := existing.(*corev1.PersistentVolumeClaim)
 
 		out.Labels = wp.LabelsForTier("front")

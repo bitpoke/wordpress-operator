@@ -20,6 +20,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
 
@@ -27,7 +28,7 @@ import (
 )
 
 // NewServiceSyncer returns a new sync.Interface for reconciling web Service
-func NewServiceSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime) syncer.Interface {
+func NewServiceSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, c client.Client, scheme *runtime.Scheme) syncer.Interface {
 	obj := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      wp.GetServiceName(),
@@ -35,7 +36,7 @@ func NewServiceSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.Wor
 		},
 	}
 
-	return syncer.New("Service", wp, obj, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("Service", wp, obj, c, scheme, func(existing runtime.Object) error {
 		out := existing.(*corev1.Service)
 
 		clusterIP := out.Spec.ClusterIP

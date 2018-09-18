@@ -20,6 +20,7 @@ import (
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
 
@@ -27,7 +28,7 @@ import (
 )
 
 // NewWPCronSyncer returns a new sync.Interface for reconciling wp-cron CronJob
-func NewWPCronSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime) syncer.Interface {
+func NewWPCronSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, c client.Client, scheme *runtime.Scheme) syncer.Interface {
 	obj := &batchv1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      wp.GetWPCronName(),
@@ -42,7 +43,7 @@ func NewWPCronSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.Word
 		failedJobsHistoryLimit      int32 = 1
 	)
 
-	return syncer.New("WPCron", wp, obj, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("WPCron", wp, obj, c, scheme, func(existing runtime.Object) error {
 		out := existing.(*batchv1beta1.CronJob)
 
 		out.Labels = wp.LabelsForComponent("wp-cron")

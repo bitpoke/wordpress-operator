@@ -22,6 +22,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
 
@@ -29,14 +30,14 @@ import (
 )
 
 // NewMediaPVCSyncer returns a new sync.Interface for reconciling media PVC
-func NewMediaPVCSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime) syncer.Interface {
+func NewMediaPVCSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, c client.Client, scheme *runtime.Scheme) syncer.Interface {
 	obj := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      wp.GetMediaPVCName(),
 			Namespace: wp.Namespace,
 		},
 	}
-	return syncer.New("MediaPVC", wp, obj, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("MediaPVC", wp, obj, c, scheme, func(existing runtime.Object) error {
 		out := existing.(*corev1.PersistentVolumeClaim)
 
 		out.Labels = wp.LabelsForTier("front")

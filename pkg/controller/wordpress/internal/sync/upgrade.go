@@ -20,6 +20,7 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
 
@@ -27,7 +28,7 @@ import (
 )
 
 // NewDBUpgradeJobSyncer returns a new sync.Interface for reconciling database upgrade Job
-func NewDBUpgradeJobSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime) syncer.Interface {
+func NewDBUpgradeJobSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, c client.Client, scheme *runtime.Scheme) syncer.Interface {
 	obj := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      wp.GetDBUpgradeJobName(rt),
@@ -40,7 +41,7 @@ func NewDBUpgradeJobSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha
 		activeDeadlineSeconds int64 = 10
 	)
 
-	return syncer.New("DBUpgradeJob", wp, obj, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("DBUpgradeJob", wp, obj, c, scheme, func(existing runtime.Object) error {
 		out := existing.(*batchv1.Job)
 
 		if !out.CreationTimestamp.IsZero() {

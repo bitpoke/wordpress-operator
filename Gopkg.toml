@@ -20,9 +20,11 @@ required = [
 
 [[override]]
   name="sigs.k8s.io/controller-runtime"
-  # we need CreateOrUpdate so we pin to the specific commit in master until
-  # changes get released under a tag
-  revision = "d4dff204bfca6035d3e189d295d9b78278bfe041"
+  version = "v0.1.3"
+
+[[constraint]]
+  name="github.com/presslabs/controller-util"
+  version="v0.1.0"
 
 [[constraint]]
   name = "github.com/appscode/kutil"

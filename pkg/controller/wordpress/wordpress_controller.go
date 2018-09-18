@@ -154,11 +154,11 @@ func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Res
 	rt.SetDefaults()
 
 	syncers := []syncer.Interface{
-		sync.NewDeploymentSyncer(wp, rt),
-		sync.NewServiceSyncer(wp, rt),
-		sync.NewIngressSyncer(wp, rt),
-		sync.NewWPCronSyncer(wp, rt),
-		sync.NewDBUpgradeJobSyncer(wp, rt),
+		sync.NewDeploymentSyncer(wp, rt, r.Client, r.scheme),
+		sync.NewServiceSyncer(wp, rt, r.Client, r.scheme),
+		sync.NewIngressSyncer(wp, rt, r.Client, r.scheme),
+		sync.NewWPCronSyncer(wp, rt, r.Client, r.scheme),
+		sync.NewDBUpgradeJobSyncer(wp, rt, r.Client, r.scheme),
 	}
 
 	volSpec := rt.Spec.WebrootVolumeSpec
@@ -166,7 +166,7 @@ func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Res
 		volSpec = wp.Spec.WebrootVolumeSpec
 	}
 	if volSpec.PersistentVolumeClaim != nil {
-		syncers = append(syncers, sync.NewWebrootPVCSyncer(wp, rt))
+		syncers = append(syncers, sync.NewWebrootPVCSyncer(wp, rt, r.Client, r.scheme))
 	}
 
 	volSpec = rt.Spec.MediaVolumeSpec
@@ -174,7 +174,7 @@ func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Res
 		volSpec = wp.Spec.MediaVolumeSpec
 	}
 	if volSpec != nil && volSpec.PersistentVolumeClaim != nil {
-		syncers = append(syncers, sync.NewMediaPVCSyncer(wp, rt))
+		syncers = append(syncers, sync.NewMediaPVCSyncer(wp, rt, r.Client, r.scheme))
 	}
 
 	return reconcile.Result{}, r.sync(syncers)
@@ -182,7 +182,7 @@ func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Res
 
 func (r *ReconcileWordpress) sync(syncers []syncer.Interface) error {
 	for _, s := range syncers {
-		if err := syncer.Sync(context.TODO(), s, r.Client, r.scheme, r.recorder); err != nil {
+		if err := syncer.Sync(context.TODO(), s, r.recorder); err != nil {
 			return err
 		}
 	}

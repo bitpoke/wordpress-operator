@@ -1,7 +1,7 @@
 # Image URL to use all building/pushing image targets
 APP_VERSION ?= $(shell git describe --abbrev=5 --dirty --tags --always)
 IMG ?= quay.io/presslabs/wordpress-operator:$(APP_VERSION)
-KUBEBUILDER_VERSION ?= 1.0.2
+KUBEBUILDER_VERSION ?= 1.0.4
 BINDIR ?= $(PWD)/bin
 
 GOOS ?= $(shell uname -s | tr '[:upper:]' '[:lower:]')
