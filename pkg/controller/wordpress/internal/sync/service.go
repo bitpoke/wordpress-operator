@@ -25,13 +25,14 @@ import (
 	"github.com/presslabs/controller-util/syncer"
 
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
+	"github.com/presslabs/wordpress-operator/pkg/controller/internal/wordpress"
 )
 
 // NewServiceSyncer returns a new sync.Interface for reconciling web Service
 func NewServiceSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, c client.Client, scheme *runtime.Scheme) syncer.Interface {
 	obj := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      wp.GetServiceName(),
+			Name:      wp.Name,
 			Namespace: wp.Namespace,
 		},
 	}
@@ -41,7 +42,7 @@ func NewServiceSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.Wor
 
 		clusterIP := out.Spec.ClusterIP
 
-		out.Labels = wp.WebPodLabels()
+		out.Labels = wordpress.WebPodLabels(wp)
 		out.Spec = *rt.Spec.ServiceSpec
 
 		// Spec.ClusterIP of an service is immutable
@@ -49,7 +50,7 @@ func NewServiceSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.Wor
 			out.Spec.ClusterIP = clusterIP
 		}
 
-		out.Spec.Selector = wp.WebPodLabels()
+		out.Spec.Selector = wordpress.WebPodLabels(wp)
 
 		return nil
 	})

@@ -25,13 +25,14 @@ import (
 	"github.com/presslabs/controller-util/syncer"
 
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
+	"github.com/presslabs/wordpress-operator/pkg/controller/internal/wordpress"
 )
 
 // NewDeploymentSyncer returns a new sync.Interface for reconciling web Deployment
 func NewDeploymentSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, c client.Client, scheme *runtime.Scheme) syncer.Interface {
 	obj := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      wp.GetDeploymentName(),
+			Name:      wp.Name,
 			Namespace: wp.Namespace,
 		},
 	}
@@ -39,10 +40,10 @@ func NewDeploymentSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.
 	return syncer.NewObjectSyncer("Deployment", wp, obj, c, scheme, func(existing runtime.Object) error {
 		out := existing.(*appsv1.Deployment)
 
-		out.Labels = wp.WebPodLabels()
+		out.Labels = wordpress.WebPodLabels(wp)
 
-		out.Spec.Selector = metav1.SetAsLabelSelector(wp.WebPodLabels())
-		out.Spec.Template = *wp.WebPodTemplateSpec(rt)
+		out.Spec.Selector = metav1.SetAsLabelSelector(wordpress.WebPodLabels(wp))
+		out.Spec.Template = wordpress.WebPodTemplateSpec(wp, rt)
 		if wp.Spec.Replicas != nil {
 			out.Spec.Replicas = wp.Spec.Replicas
 		}

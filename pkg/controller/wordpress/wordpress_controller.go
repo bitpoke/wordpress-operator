@@ -144,14 +144,14 @@ func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Res
 	// Add Wordpress to the runtimes map
 	rtMap.Store(request.NamespacedName, wp.Spec.Runtime)
 
-	wp.SetDefaults()
+	r.scheme.Default(wp)
 
 	rt := &wordpressv1alpha1.WordpressRuntime{}
 	err = r.Get(context.TODO(), types.NamespacedName{Name: wp.Spec.Runtime}, rt)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
-	rt.SetDefaults()
+	r.scheme.Default(rt)
 
 	syncers := []syncer.Interface{
 		sync.NewDeploymentSyncer(wp, rt, r.Client, r.scheme),

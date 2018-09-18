@@ -17,6 +17,8 @@ limitations under the License.
 package sync
 
 import (
+	"fmt"
+
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -25,13 +27,14 @@ import (
 	"github.com/presslabs/controller-util/syncer"
 
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
+	"github.com/presslabs/wordpress-operator/pkg/controller/internal/wordpress"
 )
 
 // NewWPCronSyncer returns a new sync.Interface for reconciling wp-cron CronJob
 func NewWPCronSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, c client.Client, scheme *runtime.Scheme) syncer.Interface {
 	obj := &batchv1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      wp.GetWPCronName(),
+			Name:      fmt.Sprintf("%s-wp-cron", wp.Name),
 			Namespace: wp.Namespace,
 		},
 	}
@@ -46,7 +49,7 @@ func NewWPCronSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.Word
 	return syncer.NewObjectSyncer("WPCron", wp, obj, c, scheme, func(existing runtime.Object) error {
 		out := existing.(*batchv1beta1.CronJob)
 
-		out.Labels = wp.LabelsForComponent("wp-cron")
+		out.Labels = wordpress.LabelsForComponent(wp, "wp-cron")
 
 		out.Spec.Schedule = "* * * * *"
 		out.Spec.ConcurrencyPolicy = "Forbid"
@@ -54,13 +57,13 @@ func NewWPCronSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.Word
 		out.Spec.SuccessfulJobsHistoryLimit = &successfulJobsHistoryLimit
 		out.Spec.FailedJobsHistoryLimit = &failedJobsHistoryLimit
 
-		out.Spec.JobTemplate.ObjectMeta.Labels = wp.LabelsForComponent("wp-cron")
+		out.Spec.JobTemplate.ObjectMeta.Labels = wordpress.LabelsForComponent(wp, "wp-cron")
 		out.Spec.JobTemplate.Spec.BackoffLimit = &backoffLimit
 		out.Spec.JobTemplate.Spec.ActiveDeadlineSeconds = &activeDeadlineSeconds
 
 		cmd := []string{"wp", "cron", "event", "run", "--due-now"}
-		out.Spec.JobTemplate.Spec.Template = *wp.JobPodTemplateSpec(rt, cmd...)
-		out.Spec.JobTemplate.Spec.Template.ObjectMeta.Labels = wp.LabelsForComponent("wp-cron")
+		out.Spec.JobTemplate.Spec.Template = wordpress.JobPodTemplateSpec(wp, rt, cmd...)
+		out.Spec.JobTemplate.Spec.Template.ObjectMeta.Labels = wordpress.LabelsForComponent(wp, "wp-cron")
 
 		return nil
 	})

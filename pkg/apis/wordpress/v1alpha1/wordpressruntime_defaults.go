@@ -21,17 +21,16 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-// SetDefaults mutates a WordpressRuntime object and sets default values
-// Controller should always apply defaults before passing it down to workers
-func (rt *WordpressRuntime) SetDefaults() {
-	if rt.Spec.WebrootVolumeSpec == nil {
-		rt.Spec.WebrootVolumeSpec = &WordpressVolumeSpec{
+// nolint: golint
+func SetDefaults_WordpressRuntimeSpec(spec *WordpressRuntimeSpec) {
+	if spec.WebrootVolumeSpec == nil {
+		spec.WebrootVolumeSpec = &WordpressVolumeSpec{
 			EmptyDir: &corev1.EmptyDirVolumeSource{},
 		}
 	}
 
-	if rt.Spec.ServiceSpec == nil {
-		rt.Spec.ServiceSpec = &corev1.ServiceSpec{
+	if spec.ServiceSpec == nil {
+		spec.ServiceSpec = &corev1.ServiceSpec{
 			Ports: []corev1.ServicePort{
 				{
 					Name:       "http",

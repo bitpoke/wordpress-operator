@@ -14,14 +14,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package v1alpha1 contains API Schema definitions for the wordpress v1alpha1 API group
-//
-//go:generate go run ../../../../vendor/k8s.io/code-generator/cmd/defaulter-gen/main.go -O zz_generated.defaults -i ./... -h ../../../../hack/boilerplate.go.txt
-//
-// +k8s:openapi-gen=true
-// +k8s:deepcopy-gen=package,register
-// +k8s:conversion-gen=github.com/presslabs/wordpress-operator/pkg/apis/wordpress
-// +k8s:defaulter-gen=TypeMeta
-// +groupName=wordpress.presslabs.org
-//
 package v1alpha1
+
+var (
+	oneReplica int32 = 1
+)
+
+// nolint: golint
+func SetDefaults_WordpressSpec(spec *WordpressSpec) {
+	if spec.Replicas == nil || *spec.Replicas < 1 {
+		spec.Replicas = &oneReplica
+	}
+}

@@ -26,13 +26,14 @@ import (
 	"github.com/presslabs/controller-util/syncer"
 
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
+	"github.com/presslabs/wordpress-operator/pkg/controller/internal/wordpress"
 )
 
 // NewIngressSyncer returns a new sync.Interface for reconciling web Ingress
 func NewIngressSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, c client.Client, scheme *runtime.Scheme) syncer.Interface {
 	obj := &extv1beta1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      wp.GetIngressName(),
+			Name:      wp.Name,
 			Namespace: wp.Namespace,
 		},
 	}
@@ -40,7 +41,7 @@ func NewIngressSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.Wor
 	return syncer.NewObjectSyncer("Ingress", wp, obj, c, scheme, func(existing runtime.Object) error {
 		out := existing.(*extv1beta1.Ingress)
 
-		out.Labels = wp.WebPodLabels()
+		out.Labels = wordpress.WebPodLabels(wp)
 
 		for k, v := range rt.Spec.IngressAnnotations {
 			out.ObjectMeta.Annotations[k] = v
@@ -51,7 +52,7 @@ func NewIngressSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.Wor
 		}
 
 		bk := extv1beta1.IngressBackend{
-			ServiceName: wp.GetServiceName(),
+			ServiceName: wp.Name,
 			ServicePort: intstr.FromString("http"),
 		}
 		bkpaths := []extv1beta1.HTTPIngressPath{

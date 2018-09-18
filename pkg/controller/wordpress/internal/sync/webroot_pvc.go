@@ -17,6 +17,7 @@ limitations under the License.
 package sync
 
 import (
+	"fmt"
 	"reflect"
 
 	corev1 "k8s.io/api/core/v1"
@@ -27,13 +28,18 @@ import (
 	"github.com/presslabs/controller-util/syncer"
 
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
+	"github.com/presslabs/wordpress-operator/pkg/controller/internal/wordpress"
 )
+
+func getWebrootPVCName(wp *wordpressv1alpha1.Wordpress) string {
+	return fmt.Sprintf("%s-webroot", wp.Name)
+}
 
 // NewWebrootPVCSyncer returns a new sync.Interface for reconciling webroot PVC
 func NewWebrootPVCSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, c client.Client, scheme *runtime.Scheme) syncer.Interface {
 	obj := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      wp.GetWebrootPVCName(),
+			Name:      getWebrootPVCName(wp),
 			Namespace: wp.Namespace,
 		},
 	}
@@ -41,7 +47,7 @@ func NewWebrootPVCSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.
 	return syncer.NewObjectSyncer("WebrootPVC", wp, obj, c, scheme, func(existing runtime.Object) error {
 		out := existing.(*corev1.PersistentVolumeClaim)
 
-		out.Labels = wp.LabelsForTier("front")
+		out.Labels = wordpress.LabelsForTier(wp, "front")
 
 		// PVC spec is immutable
 		if !reflect.DeepEqual(out.Spec, corev1.PersistentVolumeClaimSpec{}) {
