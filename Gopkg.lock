@@ -356,12 +356,12 @@
   version = "v0.8.0"
 
 [[projects]]
-  digest = "1:b1160d9435d47fdeda5b9c5a43bbd01b7afa086313c917c828d9af0c5b386cf1"
+  digest = "1:ffb0a7c63d8bd716cc43265f2927604e4c874491be0134b2e7c58ba347b858af"
   name = "github.com/presslabs/controller-util"
   packages = ["syncer"]
   pruneopts = "T"
-  revision = "9c517494a8a27b3b5d49cdb6e6fe7fa28e491251"
-  version = "v0.1.0"
+  revision = "27a9f939cd56e4d1bceeaffa79412ee1da9945b3"
+  version = "v0.1.1"
 
 [[projects]]
   digest = "1:b7bf9fd95d38ebe6726a63b7d0320611f7c920c64e2c8313eba0cec51926bf55"
@@ -889,7 +889,6 @@
     "sigs.k8s.io/controller-runtime/pkg/client",
     "sigs.k8s.io/controller-runtime/pkg/client/config",
     "sigs.k8s.io/controller-runtime/pkg/controller",
-    "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil",
     "sigs.k8s.io/controller-runtime/pkg/envtest",
     "sigs.k8s.io/controller-runtime/pkg/handler",
     "sigs.k8s.io/controller-runtime/pkg/manager",

@@ -10,59 +10,65 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-type objectSyncer struct {
-	name   string
-	owner  runtime.Object
-	obj    runtime.Object
-	syncFn controllerutil.MutateFn
-	c      client.Client
-	scheme *runtime.Scheme
+// ObjectSyncer is a syncer.Interface for syncing kubernetes.Objects only by
+// passing a SyncFn
+type ObjectSyncer struct {
+	Owner  runtime.Object
+	Obj    runtime.Object
+	SyncFn controllerutil.MutateFn
+	Name   string
+	Client client.Client
+	Scheme *runtime.Scheme
 }
 
-func (s *objectSyncer) GetObject() interface{}   { return s.obj }
-func (s *objectSyncer) GetOwner() runtime.Object { return s.owner }
+// GetObject returns the ObjectSyncer subject
+func (s *ObjectSyncer) GetObject() interface{} { return s.Obj }
 
-func (s *objectSyncer) Sync(ctx context.Context) (SyncResult, error) {
+// GetOwner returns the ObjectSyncer owner
+func (s *ObjectSyncer) GetOwner() runtime.Object { return s.Owner }
+
+// Sync does the actual syncing and implements the syncer.Inteface Sync method
+func (s *ObjectSyncer) Sync(ctx context.Context) (SyncResult, error) {
 	result := SyncResult{}
 
-	key, err := getKey(s.obj)
+	key, err := getKey(s.Obj)
 	if err != nil {
 		return result, err
 	}
 
-	result.Operation, err = controllerutil.CreateOrUpdate(ctx, s.c, s.obj, s.mutateFn())
+	result.Operation, err = controllerutil.CreateOrUpdate(ctx, s.Client, s.Obj, s.mutateFn())
 
 	if err != nil {
-		result.SetEventData(eventWarning, basicEventReason(s.name, err),
-			fmt.Sprintf("%T %s failed syncing: %s", s.obj, key, err))
-		log.Error(err, string(result.Operation), "key", key, "kind", fmt.Sprintf("%T", s.obj))
+		result.SetEventData(eventWarning, basicEventReason(s.Name, err),
+			fmt.Sprintf("%T %s failed syncing: %s", s.Obj, key, err))
+		log.Error(err, string(result.Operation), "key", key, "kind", fmt.Sprintf("%T", s.Obj))
 	} else {
-		result.SetEventData(eventNormal, basicEventReason(s.name, err),
-			fmt.Sprintf("%T %s %s successfully", s.obj, key, result.Operation))
-		log.V(1).Info(string(result.Operation), "key", key, "kind", fmt.Sprintf("%T", s.obj))
+		result.SetEventData(eventNormal, basicEventReason(s.Name, err),
+			fmt.Sprintf("%T %s %s successfully", s.Obj, key, result.Operation))
+		log.V(1).Info(string(result.Operation), "key", key, "kind", fmt.Sprintf("%T", s.Obj))
 	}
 
 	return result, err
 }
 
-// Given an objectSyncer, returns a controllerutil.MutateFn which also sets the
+// Given an ObjectSyncer, returns a controllerutil.MutateFn which also sets the
 // owner reference if the subject has one
-func (s *objectSyncer) mutateFn() controllerutil.MutateFn {
+func (s *ObjectSyncer) mutateFn() controllerutil.MutateFn {
 	return func(existing runtime.Object) error {
-		err := s.syncFn(existing)
+		err := s.SyncFn(existing)
 		if err != nil {
 			return err
 		}
-		if s.owner != nil {
+		if s.Owner != nil {
 			existingMeta, ok := existing.(metav1.Object)
 			if !ok {
 				return fmt.Errorf("%T is not a metav1.Object", existing)
 			}
-			ownerMeta, ok := s.owner.(metav1.Object)
+			ownerMeta, ok := s.Owner.(metav1.Object)
 			if !ok {
-				return fmt.Errorf("%T is not a metav1.Object", s.owner)
+				return fmt.Errorf("%T is not a metav1.Object", s.Owner)
 			}
-			err := controllerutil.SetControllerReference(ownerMeta, existingMeta, s.scheme)
+			err := controllerutil.SetControllerReference(ownerMeta, existingMeta, s.Scheme)
 			if err != nil {
 				return err
 			}
@@ -71,17 +77,17 @@ func (s *objectSyncer) mutateFn() controllerutil.MutateFn {
 	}
 }
 
-// NewObjectSyncer creates a new kubernetes object syncer for a given object
+// NewObjectSyncer creates a new kubernetes.Object syncer for a given object
 // with an owner and persists data using controller-runtime's CreateOrUpdate.
 // The name is used for logging and event emitting purposes and should be an
 // valid go identifier in upper camel case. (eg. MysqlStatefulSet)
 func NewObjectSyncer(name string, owner, obj runtime.Object, c client.Client, scheme *runtime.Scheme, syncFn controllerutil.MutateFn) Interface {
-	return &objectSyncer{
-		name:   name,
-		owner:  owner,
-		obj:    obj,
-		c:      c,
-		scheme: scheme,
-		syncFn: syncFn,
+	return &ObjectSyncer{
+		Owner:  owner,
+		Obj:    obj,
+		SyncFn: syncFn,
+		Name:   name,
+		Client: c,
+		Scheme: scheme,
 	}
 }
