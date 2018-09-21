@@ -33,8 +33,7 @@ const (
 )
 
 var (
-	defaultImage       = "defaultImage"
-	oneReplica   int32 = 1
+	defaultImage = "defaultImage"
 )
 
 // GetImage return the image for the Wordpress resource relative to the WordpressRuntime

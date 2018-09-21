@@ -77,6 +77,15 @@ var _ = Describe("Wordpress controller", func() {
 			rt              *wordpressv1alpha1.WordpressRuntime
 		)
 
+		entries := []TableEntry{
+			Entry("reconciles the deployment", "%s", &appsv1.Deployment{}),
+			Entry("reconciles the service", "%s", &corev1.Service{}),
+			Entry("reconciles the ingress", "%s", &extv1beta1.Ingress{}),
+			Entry("reconciles the webroot pvc", "%s-webroot", &corev1.PersistentVolumeClaim{}),
+			Entry("reconciles the media pvc", "%s-media", &corev1.PersistentVolumeClaim{}),
+			Entry("reconciles the wp-cron", "%s-wp-cron", &batchv1beta1.CronJob{}),
+		}
+
 		BeforeEach(func() {
 			r := rand.Int31()
 			name := fmt.Sprintf("wp-%d", r)
@@ -151,48 +160,53 @@ var _ = Describe("Wordpress controller", func() {
 
 			Expect(c.Create(context.TODO(), rt)).To(Succeed())
 			Expect(c.Create(context.TODO(), wp)).To(Succeed())
-			// We should receive the initial reconciliation request
-			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
 
-			// We need to drain the requests queue because syncing a subresource
-			// might trigger reconciliation again and we want to isolate tests
-			// to their own reconciliation requests
-			done := time.After(time.Second)
+			// Wait for initial reconciliation
+			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
+			// Wait for a second reconciliation triggered by components being created
+			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
+			// TODO: find out why sometimes we get extra reconciliation requests and remove this loop
+			done := time.After(100 * time.Millisecond)
+		drain:
 			for {
 				select {
 				case <-requests:
 					continue
 				case <-done:
-					return
+					break drain
 				}
 			}
+			// We need to make sure that the controller does not create infinite loops
+			Consistently(requests).ShouldNot(Receive(Equal(expectedRequest)))
 		})
 
 		// nolint: errcheck
 		AfterEach(func() {
 			Expect(c.Delete(context.TODO(), wp)).To(Succeed())
 			Expect(c.Delete(context.TODO(), rt)).To(Succeed())
+
+			// GC created objects
+			for _, e := range entries {
+				obj := e.Parameters[1].(runtime.Object)
+				nameFmt := e.Parameters[0].(string)
+				mo := obj.(metav1.Object)
+				mo.SetName(fmt.Sprintf(nameFmt, wp.Name))
+				mo.SetNamespace(wp.Namespace)
+				c.Delete(context.TODO(), obj)
+			}
 		})
 
-		DescribeTable("the reconciler",
-			func(nameFmt string, obj runtime.Object) {
-				key := types.NamespacedName{
-					Name:      fmt.Sprintf(nameFmt, wp.Name),
-					Namespace: wp.Namespace,
-				}
-				Eventually(func() error { return c.Get(context.TODO(), key, obj) }, timeout).Should(Succeed())
+		DescribeTable("the reconciler", func(nameFmt string, obj runtime.Object) {
+			key := types.NamespacedName{
+				Name:      fmt.Sprintf(nameFmt, wp.Name),
+				Namespace: wp.Namespace,
+			}
+			Eventually(func() error { return c.Get(context.TODO(), key, obj) }, timeout).Should(Succeed())
 
-				// Delete the resource and expect Reconcile to be called
-				Expect(c.Delete(context.TODO(), obj)).To(Succeed())
-				Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
-				Eventually(func() error { return c.Get(context.TODO(), key, obj) }, timeout).Should(Succeed())
-			},
-			Entry("reconciles the deployment", "%s", &appsv1.Deployment{}),
-			Entry("reconciles the service", "%s", &corev1.Service{}),
-			Entry("reconciles the ingress", "%s", &extv1beta1.Ingress{}),
-			Entry("reconciles the webroot pvc", "%s-webroot", &corev1.PersistentVolumeClaim{}),
-			Entry("reconciles the media pvc", "%s-media", &corev1.PersistentVolumeClaim{}),
-			Entry("reconciles the wp-cron", "%s-wp-cron", &batchv1beta1.CronJob{}),
-		)
+			// Delete the resource and expect Reconcile to be called
+			Expect(c.Delete(context.TODO(), obj)).To(Succeed())
+			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
+			Eventually(func() error { return c.Get(context.TODO(), key, obj) }, timeout).Should(Succeed())
+		}, entries...)
 	})
 })
