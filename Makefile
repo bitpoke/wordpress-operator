@@ -49,11 +49,15 @@ chart:
 	yq w -i $(BUILDDIR)/chart/wordpress-operator/Chart.yaml version "$(APP_VERSION)"
 	yq w -i $(BUILDDIR)/chart/wordpress-operator/Chart.yaml appVersion "$(APP_VERSION)"
 	yq w -i $(BUILDDIR)/chart/wordpress-operator/values.yaml image "$(IMG)"
-	awk 'FNR==1 && NR!=1 {print "---"}{print}' config/crds/*.yaml > $(BUILDDIR)/chart/wordpress-operator/templates/crds.yaml
-	yq m -d'*' -i $(BUILDDIR)/chart/wordpress-operator/templates/crds.yaml hack/chart-metadata.yaml
-	yq w -d'*' -i $(BUILDDIR)/chart/wordpress-operator/templates/crds.yaml 'metadata.annotations[helm.sh/hook]' crd-install
-	yq d -d'*' -i $(BUILDDIR)/chart/wordpress-operator/templates/crds.yaml metadata.creationTimestamp
-	yq d -d'*' -i $(BUILDDIR)/chart/wordpress-operator/templates/crds.yaml status metadata.creationTimestamp
+	awk 'FNR==1 && NR!=1 {print "---"}{print}' config/crds/*.yaml > $(BUILDDIR)/chart/wordpress-operator/templates/_crds.yaml
+	yq m -d'*' -i $(BUILDDIR)/chart/wordpress-operator/templates/_crds.yaml hack/chart-metadata.yaml
+	yq w -d'*' -i $(BUILDDIR)/chart/wordpress-operator/templates/_crds.yaml 'metadata.annotations[helm.sh/hook]' crd-install
+	yq d -d'*' -i $(BUILDDIR)/chart/wordpress-operator/templates/_crds.yaml metadata.creationTimestamp
+	yq d -d'*' -i $(BUILDDIR)/chart/wordpress-operator/templates/_crds.yaml status metadata.creationTimestamp
+	echo '{{- if .Values.crd.install }}' > $(BUILDDIR)/chart/wordpress-operator/templates/crds.yaml
+	cat $(BUILDDIR)/chart/wordpress-operator/templates/_crds.yaml >> $(BUILDDIR)/chart/wordpress-operator/templates/crds.yaml
+	echo '{{- end }}' >> $(BUILDDIR)/chart/wordpress-operator/templates/crds.yaml
+	rm $(BUILDDIR)/chart/wordpress-operator/templates/_crds.yaml
 	cp config/rbac/rbac_role.yaml $(BUILDDIR)/chart/wordpress-operator/templates/rbac.yaml
 	yq m -d'*' -i $(BUILDDIR)/chart/wordpress-operator/templates/rbac.yaml hack/chart-metadata.yaml
 	yq d -d'*' -i $(BUILDDIR)/chart/wordpress-operator/templates/rbac.yaml metadata.creationTimestamp
