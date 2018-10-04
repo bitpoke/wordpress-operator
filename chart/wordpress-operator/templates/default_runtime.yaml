@@ -2,7 +2,7 @@
 apiVersion: wordpress.presslabs.org/v1alpha1
 kind: WordpressRuntime
 metadata:
-  name: default
+  name: {{ template "wordpress-operator.default-rumtime" . }}
 spec:
   defaultImage: "{{ .Values.defaultRuntime.image }}"
   defaultImagePullPolicy: "Always"
