@@ -67,7 +67,7 @@ pipeline:
     environment:
       - GH_USER=presslabs-bot
     commands:
-      - cd chart
+      - cd build/chart
       - helm package wordpress-operator
       - CHART="$(basename *.tgz)" ; MESSAGE="Publish $(basename $CHART .tgz)"
       - /usr/local/bin/gh put --skip-existing -m "$MESSAGE" "$CHART" "presslabs/charts/docs/"

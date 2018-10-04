@@ -3,6 +3,7 @@ APP_VERSION ?= $(shell git describe --abbrev=5 --dirty --tags --always)
 IMG ?= quay.io/presslabs/wordpress-operator:$(APP_VERSION)
 KUBEBUILDER_VERSION ?= 1.0.4
 BINDIR ?= $(PWD)/bin
+BUILDDIR ?= $(PWD)/build
 
 GOOS ?= $(shell uname -s | tr '[:upper:]' '[:lower:]')
 GOARCH ?= amd64
@@ -42,24 +43,25 @@ manifests:
 
 .PHONY: chart
 chart:
-	rm -rf chart/wordpress-operator
-	cp -r chart/wordpress-operator-src chart/wordpress-operator
-	yq w -i chart/wordpress-operator/Chart.yaml version "$(APP_VERSION)"
-	yq w -i chart/wordpress-operator/Chart.yaml appVersion "$(APP_VERSION)"
-	yq w -i chart/wordpress-operator/values.yaml image "$(IMG)"
-	awk 'FNR==1 && NR!=1 {print "---"}{print}' config/crds/*.yaml > chart/wordpress-operator/templates/crds.yaml
-	yq m -d'*' -i chart/wordpress-operator/templates/crds.yaml hack/chart-metadata.yaml
-	yq w -d'*' -i chart/wordpress-operator/templates/crds.yaml 'metadata.annotations[helm.sh/hook]' crd-install
-	yq d -d'*' -i chart/wordpress-operator/templates/crds.yaml metadata.creationTimestamp
-	yq d -d'*' -i chart/wordpress-operator/templates/crds.yaml status metadata.creationTimestamp
-	cp config/rbac/rbac_role.yaml chart/wordpress-operator/templates/rbac.yaml
-	yq m -d'*' -i chart/wordpress-operator/templates/rbac.yaml hack/chart-metadata.yaml
-	yq d -d'*' -i chart/wordpress-operator/templates/rbac.yaml metadata.creationTimestamp
-	yq w -d'*' -i chart/wordpress-operator/templates/rbac.yaml metadata.name '{{ template "wordpress-operator.fullname" . }}'
-	echo '{{- if .Values.rbac.create }}' > chart/wordpress-operator/templates/clusterrole.yaml
-	cat chart/wordpress-operator/templates/rbac.yaml >> chart/wordpress-operator/templates/clusterrole.yaml
-	echo '{{- end }}' >> chart/wordpress-operator/templates/clusterrole.yaml
-	rm chart/wordpress-operator/templates/rbac.yaml
+	test -d $(BUILDDIR) || mkdir -p $(BUILDDIR)/chart
+	rm -rf $(BUILDDIR)/chart/wordpress-operator
+	cp -r chart/wordpress-operator $(BUILDDIR)/chart/wordpress-operator
+	yq w -i $(BUILDDIR)/chart/wordpress-operator/Chart.yaml version "$(APP_VERSION)"
+	yq w -i $(BUILDDIR)/chart/wordpress-operator/Chart.yaml appVersion "$(APP_VERSION)"
+	yq w -i $(BUILDDIR)/chart/wordpress-operator/values.yaml image "$(IMG)"
+	awk 'FNR==1 && NR!=1 {print "---"}{print}' config/crds/*.yaml > $(BUILDDIR)/chart/wordpress-operator/templates/crds.yaml
+	yq m -d'*' -i $(BUILDDIR)/chart/wordpress-operator/templates/crds.yaml hack/chart-metadata.yaml
+	yq w -d'*' -i $(BUILDDIR)/chart/wordpress-operator/templates/crds.yaml 'metadata.annotations[helm.sh/hook]' crd-install
+	yq d -d'*' -i $(BUILDDIR)/chart/wordpress-operator/templates/crds.yaml metadata.creationTimestamp
+	yq d -d'*' -i $(BUILDDIR)/chart/wordpress-operator/templates/crds.yaml status metadata.creationTimestamp
+	cp config/rbac/rbac_role.yaml $(BUILDDIR)/chart/wordpress-operator/templates/rbac.yaml
+	yq m -d'*' -i $(BUILDDIR)/chart/wordpress-operator/templates/rbac.yaml hack/chart-metadata.yaml
+	yq d -d'*' -i $(BUILDDIR)/chart/wordpress-operator/templates/rbac.yaml metadata.creationTimestamp
+	yq w -d'*' -i $(BUILDDIR)/chart/wordpress-operator/templates/rbac.yaml metadata.name '{{ template "wordpress-operator.fullname" . }}'
+	echo '{{- if .Values.rbac.create }}' > $(BUILDDIR)/chart/wordpress-operator/templates/clusterrole.yaml
+	cat $(BUILDDIR)/chart/wordpress-operator/templates/rbac.yaml >> $(BUILDDIR)/chart/wordpress-operator/templates/clusterrole.yaml
+	echo '{{- end }}' >> $(BUILDDIR)/chart/wordpress-operator/templates/clusterrole.yaml
+	rm $(BUILDDIR)/chart/wordpress-operator/templates/rbac.yaml
 
 # Generate code
 generate:
@@ -82,6 +84,7 @@ dependencies:
 	test -d $(BINDIR) || mkdir $(BINDIR)
 	GOBIN=$(BINDIR) go install ./vendor/github.com/onsi/ginkgo/ginkgo
 	curl -sL https://github.com/mikefarah/yq/releases/download/2.1.1/yq_$(GOOS)_$(GOARCH) -o $(BINDIR)/yq
+	chmod +x $(BINDIR)/yq
 	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $(BINDIR) v1.10.2
 	curl -sL https://github.com/kubernetes-sigs/kubebuilder/releases/download/v$(KUBEBUILDER_VERSION)/kubebuilder_$(KUBEBUILDER_VERSION)_$(GOOS)_$(GOARCH).tar.gz | \
 		tar -zx -C $(BINDIR) --strip-components=2
