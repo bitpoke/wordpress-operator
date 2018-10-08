@@ -18,13 +18,14 @@ required = [
 [prune]
   go-tests = true
 
+
 [[override]]
   name="sigs.k8s.io/controller-runtime"
-  version = "v0.1.3"
+  version = "v0.1.4"
 
 [[constraint]]
   name="github.com/presslabs/controller-util"
-  version="v0.1.1"
+  version="v0.1.4"
 
 [[constraint]]
   name = "github.com/appscode/kutil"

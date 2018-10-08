@@ -8,17 +8,19 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/patch"
 )
 
 // ObjectSyncer is a syncer.Interface for syncing kubernetes.Objects only by
 // passing a SyncFn
 type ObjectSyncer struct {
-	Owner  runtime.Object
-	Obj    runtime.Object
-	SyncFn controllerutil.MutateFn
-	Name   string
-	Client client.Client
-	Scheme *runtime.Scheme
+	Owner          runtime.Object
+	Obj            runtime.Object
+	SyncFn         controllerutil.MutateFn
+	Name           string
+	Client         client.Client
+	Scheme         *runtime.Scheme
+	previousObject runtime.Object
 }
 
 // GetObject returns the ObjectSyncer subject
@@ -38,14 +40,16 @@ func (s *ObjectSyncer) Sync(ctx context.Context) (SyncResult, error) {
 
 	result.Operation, err = controllerutil.CreateOrUpdate(ctx, s.Client, s.Obj, s.mutateFn())
 
+	diff, _ := patch.NewJSONPatch(s.previousObject, s.Obj)
+
 	if err != nil {
 		result.SetEventData(eventWarning, basicEventReason(s.Name, err),
 			fmt.Sprintf("%T %s failed syncing: %s", s.Obj, key, err))
-		log.Error(err, string(result.Operation), "key", key, "kind", fmt.Sprintf("%T", s.Obj))
+		log.Error(err, string(result.Operation), "key", key, "kind", fmt.Sprintf("%T", s.Obj), "diff", diff)
 	} else {
 		result.SetEventData(eventNormal, basicEventReason(s.Name, err),
 			fmt.Sprintf("%T %s %s successfully", s.Obj, key, result.Operation))
-		log.V(1).Info(string(result.Operation), "key", key, "kind", fmt.Sprintf("%T", s.Obj))
+		log.V(1).Info(string(result.Operation), "key", key, "kind", fmt.Sprintf("%T", s.Obj), "diff", diff)
 	}
 
 	return result, err
@@ -55,6 +59,7 @@ func (s *ObjectSyncer) Sync(ctx context.Context) (SyncResult, error) {
 // owner reference if the subject has one
 func (s *ObjectSyncer) mutateFn() controllerutil.MutateFn {
 	return func(existing runtime.Object) error {
+		s.previousObject = existing.DeepCopyObject()
 		err := s.SyncFn(existing)
 		if err != nil {
 			return err

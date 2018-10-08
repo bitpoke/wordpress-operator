@@ -209,12 +209,12 @@
   revision = "3605ed457bf7f8caa1371b4fafadadc026673479"
 
 [[projects]]
-  digest = "1:7dcbd1d305649cca21bb504a43524a731f078215f3884be62babe3b600d617e5"
+  digest = "1:3477d9dd8c135faab978bac762eaeafb31f28d6da97ef500d5c271966f74140a"
   name = "github.com/imdario/mergo"
   packages = ["."]
   pruneopts = "T"
-  revision = "7fe0c75c13abdee74b09fcacef5ea1c6bba6a874"
-  version = "0.2.4"
+  revision = "9f23e2d6bd2a77f959b2bf6acdbefd708a83a4a4"
+  version = "v0.3.6"
 
 [[projects]]
   digest = "1:870d441fe217b8e689d7949fef6e43efbc787e50f200cb1e70dbca9204a1d6be"
@@ -356,12 +356,15 @@
   version = "v0.8.0"
 
 [[projects]]
-  digest = "1:ffb0a7c63d8bd716cc43265f2927604e4c874491be0134b2e7c58ba347b858af"
+  digest = "1:5aa5e321b57d8c07864ef702cfc6372814a86dad5761c798ee91e6ed08c90369"
   name = "github.com/presslabs/controller-util"
-  packages = ["syncer"]
+  packages = [
+    "mergo/transformers",
+    "syncer",
+  ]
   pruneopts = "T"
-  revision = "27a9f939cd56e4d1bceeaffa79412ee1da9945b3"
-  version = "v0.1.1"
+  revision = "36e2ce081b5b5c685b5171b3ed57311edb587363"
+  version = "v0.1.4"
 
 [[projects]]
   digest = "1:b7bf9fd95d38ebe6726a63b7d0320611f7c920c64e2c8313eba0cec51926bf55"
@@ -688,6 +691,7 @@
   name = "k8s.io/client-go"
   packages = [
     "discovery",
+    "dynamic",
     "kubernetes",
     "kubernetes/scheme",
     "kubernetes/typed/admissionregistration/v1alpha1",
@@ -793,7 +797,7 @@
   revision = "e3762e86a74c878ffed47484592986685639c2cd"
 
 [[projects]]
-  digest = "1:0d252ff794aef84f642866acbbd8044e1e062183629750832f486611294e5ec7"
+  digest = "1:4c3be496e0e0977b54e265fea184b57e9928fed12a1a14687c04b5d42e044abc"
   name = "sigs.k8s.io/controller-runtime"
   packages = [
     "pkg/cache",
@@ -826,8 +830,8 @@
     "pkg/webhook/types",
   ]
   pruneopts = "T"
-  revision = "79f06014d49b565e2d980fcd9519b33874ddb8d6"
-  version = "v0.1.3"
+  revision = "53fc44b56078cd095b11bd44cfa0288ee4cf718f"
+  version = "v0.1.4"
 
 [[projects]]
   digest = "1:60b8851cad0eb95e81fc3c845a0a465e8b6a13813ba7a1a454a605ba7ba0a194"
@@ -861,10 +865,12 @@
   analyzer-version = 1
   input-imports = [
     "github.com/appscode/kutil/core/v1",
+    "github.com/appscode/mergo",
     "github.com/emicklei/go-restful",
     "github.com/onsi/ginkgo",
     "github.com/onsi/ginkgo/extensions/table",
     "github.com/onsi/gomega",
+    "github.com/presslabs/controller-util/mergo/transformers",
     "github.com/presslabs/controller-util/syncer",
     "golang.org/x/net/context",
     "k8s.io/api/apps/v1",
