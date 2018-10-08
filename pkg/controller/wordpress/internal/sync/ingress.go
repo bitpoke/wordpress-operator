@@ -84,7 +84,7 @@ func NewIngressSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.Wor
 			}
 			out.Spec.TLS = []extv1beta1.IngressTLS{tls}
 		} else {
-			out.Spec.TLS = []extv1beta1.IngressTLS{}
+			out.Spec.TLS = nil
 		}
 
 		return nil

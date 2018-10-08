@@ -22,6 +22,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/appscode/mergo"
+
 	"github.com/presslabs/controller-util/syncer"
 
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
@@ -43,7 +45,11 @@ func NewServiceSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.Wor
 		clusterIP := out.Spec.ClusterIP
 
 		out.Labels = wordpress.WebPodLabels(wp)
-		out.Spec = *rt.Spec.ServiceSpec
+
+		err := mergo.Merge(&out.Spec, *rt.Spec.ServiceSpec, mergo.WithOverride)
+		if err != nil {
+			return err
+		}
 
 		// Spec.ClusterIP of an service is immutable
 		if len(clusterIP) > 0 {

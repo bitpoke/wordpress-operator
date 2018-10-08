@@ -24,6 +24,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/appscode/mergo"
+
+	"github.com/presslabs/controller-util/mergo/transformers"
 	"github.com/presslabs/controller-util/syncer"
 
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
@@ -70,9 +73,15 @@ func NewDBUpgradeJobSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha
 		out.Spec.ActiveDeadlineSeconds = &activeDeadlineSeconds
 
 		cmd := []string{"/bin/sh", "-c", "wp core update-db --network || wp core update-db && wp cache flush"}
-		out.Spec.Template = wordpress.JobPodTemplateSpec(wp, rt, cmd...)
+		template := wordpress.JobPodTemplateSpec(wp, rt, cmd...)
+		template.ObjectMeta.Labels = l
 
-		out.Spec.Template.Labels = l
+		out.Spec.Template.ObjectMeta = template.ObjectMeta
+
+		err := mergo.Merge(&out.Spec.Template.Spec, template.Spec, mergo.WithTransformers(transformers.PodSpec))
+		if err != nil {
+			return err
+		}
 
 		return nil
 	})

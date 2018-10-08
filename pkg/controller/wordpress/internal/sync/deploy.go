@@ -22,6 +22,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/appscode/mergo"
+
+	"github.com/presslabs/controller-util/mergo/transformers"
 	"github.com/presslabs/controller-util/syncer"
 
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
@@ -43,7 +46,15 @@ func NewDeploymentSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.
 		out.Labels = wordpress.WebPodLabels(wp)
 
 		out.Spec.Selector = metav1.SetAsLabelSelector(wordpress.WebPodLabels(wp))
-		out.Spec.Template = wordpress.WebPodTemplateSpec(wp, rt)
+
+		template := wordpress.WebPodTemplateSpec(wp, rt)
+		out.Spec.Template.ObjectMeta = template.ObjectMeta
+
+		err := mergo.Merge(&out.Spec.Template.Spec, template.Spec, mergo.WithTransformers(transformers.PodSpec))
+		if err != nil {
+			return err
+		}
+
 		if wp.Spec.Replicas != nil {
 			out.Spec.Replicas = wp.Spec.Replicas
 		}

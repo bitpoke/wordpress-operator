@@ -24,6 +24,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/appscode/mergo"
+
+	"github.com/presslabs/controller-util/mergo/transformers"
 	"github.com/presslabs/controller-util/syncer"
 
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
@@ -62,8 +65,15 @@ func NewWPCronSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.Word
 		out.Spec.JobTemplate.Spec.ActiveDeadlineSeconds = &activeDeadlineSeconds
 
 		cmd := []string{"wp", "cron", "event", "run", "--due-now"}
-		out.Spec.JobTemplate.Spec.Template = wordpress.JobPodTemplateSpec(wp, rt, cmd...)
-		out.Spec.JobTemplate.Spec.Template.ObjectMeta.Labels = wordpress.LabelsForComponent(wp, "wp-cron")
+		template := wordpress.JobPodTemplateSpec(wp, rt, cmd...)
+		template.ObjectMeta.Labels = wordpress.LabelsForComponent(wp, "wp-cron")
+
+		out.Spec.JobTemplate.Spec.Template.ObjectMeta = template.ObjectMeta
+
+		err := mergo.Merge(&out.Spec.JobTemplate.Spec.Template.Spec, template.Spec, mergo.WithTransformers(transformers.PodSpec))
+		if err != nil {
+			return err
+		}
 
 		return nil
 	})
