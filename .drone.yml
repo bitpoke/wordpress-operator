@@ -6,6 +6,7 @@ clone:
   git:
     image: plugins/git
     tags: true
+    depth: 100
 
 pipeline:
   dependencies:
@@ -23,15 +24,17 @@ pipeline:
     commands:
       - make test
 
-  build:
+  build-chart:
     image: golang:1.11
-    environment:
-      - APP_VERSION=${DRONE_TAG}
     commands:
-      - make dependencies
       - make chart
-    when:
-      event: tag
+
+  lint-chart:
+    image: quay.io/presslabs/kluster-toolbox
+    pull: true
+    commands:
+      - cd build/chart/wordpress-operator
+      - helm lint
 
   publish:
     group: publish
