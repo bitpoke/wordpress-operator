@@ -25,7 +25,7 @@ required = [
 
 [[constraint]]
   name="github.com/presslabs/controller-util"
-  version="v0.1.4"
+  version="v0.1.5"
 
 [[constraint]]
   name = "github.com/appscode/kutil"
