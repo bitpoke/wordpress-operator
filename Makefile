@@ -58,7 +58,7 @@ manifests:
 	cp config/rbac/rbac_role.yaml $(CHARTDIR)/templates/_rbac.yaml
 	yq m -d'*' -i $(CHARTDIR)/templates/_rbac.yaml hack/chart-metadata.yaml
 	yq d -d'*' -i $(CHARTDIR)/templates/_rbac.yaml metadata.creationTimestamp
-	yq w -d'*' -i $(CHARTDIR)/templates/_rbac.yaml metadata.name '{{ template "wordpress-operator.fullname" . }}-controller'
+	yq w -d'*' -i $(CHARTDIR)/templates/_rbac.yaml metadata.name '{{ template "wordpress-operator.fullname" . }}'
 	echo '{{- if .Values.rbac.create }}' > $(CHARTDIR)/templates/controller-clusterrole.yaml
 	cat $(CHARTDIR)/templates/_rbac.yaml >> $(CHARTDIR)/templates/controller-clusterrole.yaml
 	echo '{{- end }}' >> $(CHARTDIR)/templates/controller-clusterrole.yaml
