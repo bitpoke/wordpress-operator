@@ -15,9 +15,18 @@ pipeline:
       - make dependencies
 
   lint:
+    group: lint
     image: golang:1.11
     commands:
       - make lint
+
+  lint-chart:
+    group: lint
+    image: quay.io/presslabs/kluster-toolbox
+    pull: true
+    commands:
+      - helm lint chart/wordpress-operator
+      - helm dep build chart/wordpress-operator
 
   test:
     image: golang:1.11
@@ -25,16 +34,10 @@ pipeline:
       - make test
 
   build-chart:
-    image: golang:1.11
+    group: build
+    image: quay.io/presslabs/kluster-toolbox
     commands:
       - make chart
-
-  lint-chart:
-    image: quay.io/presslabs/kluster-toolbox
-    pull: true
-    commands:
-      - cd build/chart/wordpress-operator
-      - helm lint
 
   publish:
     group: publish
@@ -63,7 +66,7 @@ pipeline:
     when:
       event: tag
 
-  helm-chart:
+  publish-chart:
     group: publish
     image: quay.io/presslabs/kluster-toolbox
     pull: true

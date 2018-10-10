@@ -1,9 +1,13 @@
 # Image URL to use all building/pushing image targets
 APP_VERSION ?= $(shell git describe --abbrev=5 --dirty --tags --always)
-IMG ?= quay.io/presslabs/wordpress-operator:$(APP_VERSION)
+REGISTRY := quay.io/presslabs
+IMAGE_NAME := wordpress-operator
+BUILD_TAG := build
+IMAGE_TAGS := $(APP_VERSION)
 KUBEBUILDER_VERSION ?= 1.0.4
 BINDIR ?= $(PWD)/bin
 BUILDDIR ?= $(PWD)/build
+CHARTDIR ?= $(PWD)/chart/wordpress-operator
 
 GOOS ?= $(shell uname -s | tr '[:upper:]' '[:lower:]')
 GOARCH ?= amd64
@@ -40,44 +44,54 @@ deploy: manifests
 # Generate manifests e.g. CRD, RBAC etc.
 manifests:
 	go run vendor/sigs.k8s.io/controller-tools/cmd/controller-gen/main.go all
+	# CRDs
+	awk 'FNR==1 && NR!=1 {print "---"}{print}' config/crds/*.yaml > $(CHARTDIR)/templates/_crds.yaml
+	yq m -d'*' -i $(CHARTDIR)/templates/_crds.yaml hack/chart-metadata.yaml
+	yq w -d'*' -i $(CHARTDIR)/templates/_crds.yaml 'metadata.annotations[helm.sh/hook]' crd-install
+	yq d -d'*' -i $(CHARTDIR)/templates/_crds.yaml metadata.creationTimestamp
+	yq d -d'*' -i $(CHARTDIR)/templates/_crds.yaml status metadata.creationTimestamp
+	echo '{{- if .Values.crd.install }}' > $(CHARTDIR)/templates/crds.yaml
+	cat $(CHARTDIR)/templates/_crds.yaml >> $(CHARTDIR)/templates/crds.yaml
+	echo '{{- end }}' >> $(CHARTDIR)/templates/crds.yaml
+	rm $(CHARTDIR)/templates/_crds.yaml
+	# RBAC
+	cp config/rbac/rbac_role.yaml $(CHARTDIR)/templates/_rbac.yaml
+	yq m -d'*' -i $(CHARTDIR)/templates/_rbac.yaml hack/chart-metadata.yaml
+	yq d -d'*' -i $(CHARTDIR)/templates/_rbac.yaml metadata.creationTimestamp
+	yq w -d'*' -i $(CHARTDIR)/templates/_rbac.yaml metadata.name '{{ template "wordpress-operator.fullname" . }}-controller'
+	echo '{{- if .Values.rbac.create }}' > $(CHARTDIR)/templates/controller-clusterrole.yaml
+	cat $(CHARTDIR)/templates/_rbac.yaml >> $(CHARTDIR)/templates/controller-clusterrole.yaml
+	echo '{{- end }}' >> $(CHARTDIR)/templates/controller-clusterrole.yaml
+	rm $(CHARTDIR)/templates/_rbac.yaml
 
 .PHONY: chart
 chart:
-	test -d $(BUILDDIR) || mkdir -p $(BUILDDIR)/chart
-	rm -rf $(BUILDDIR)/chart/wordpress-operator
-	cp -r chart/wordpress-operator $(BUILDDIR)/chart/wordpress-operator
-	yq w -i $(BUILDDIR)/chart/wordpress-operator/Chart.yaml version "$(APP_VERSION)"
-	yq w -i $(BUILDDIR)/chart/wordpress-operator/Chart.yaml appVersion "$(APP_VERSION)"
-	yq w -i $(BUILDDIR)/chart/wordpress-operator/values.yaml image "$(IMG)"
-	awk 'FNR==1 && NR!=1 {print "---"}{print}' config/crds/*.yaml > $(BUILDDIR)/chart/wordpress-operator/templates/_crds.yaml
-	yq m -d'*' -i $(BUILDDIR)/chart/wordpress-operator/templates/_crds.yaml hack/chart-metadata.yaml
-	yq w -d'*' -i $(BUILDDIR)/chart/wordpress-operator/templates/_crds.yaml 'metadata.annotations[helm.sh/hook]' crd-install
-	yq d -d'*' -i $(BUILDDIR)/chart/wordpress-operator/templates/_crds.yaml metadata.creationTimestamp
-	yq d -d'*' -i $(BUILDDIR)/chart/wordpress-operator/templates/_crds.yaml status metadata.creationTimestamp
-	echo '{{- if .Values.crd.install }}' > $(BUILDDIR)/chart/wordpress-operator/templates/crds.yaml
-	cat $(BUILDDIR)/chart/wordpress-operator/templates/_crds.yaml >> $(BUILDDIR)/chart/wordpress-operator/templates/crds.yaml
-	echo '{{- end }}' >> $(BUILDDIR)/chart/wordpress-operator/templates/crds.yaml
-	rm $(BUILDDIR)/chart/wordpress-operator/templates/_crds.yaml
-	cp config/rbac/rbac_role.yaml $(BUILDDIR)/chart/wordpress-operator/templates/rbac.yaml
-	yq m -d'*' -i $(BUILDDIR)/chart/wordpress-operator/templates/rbac.yaml hack/chart-metadata.yaml
-	yq d -d'*' -i $(BUILDDIR)/chart/wordpress-operator/templates/rbac.yaml metadata.creationTimestamp
-	yq w -d'*' -i $(BUILDDIR)/chart/wordpress-operator/templates/rbac.yaml metadata.name '{{ template "wordpress-operator.fullname" . }}'
-	echo '{{- if .Values.rbac.create }}' > $(BUILDDIR)/chart/wordpress-operator/templates/clusterrole.yaml
-	cat $(BUILDDIR)/chart/wordpress-operator/templates/rbac.yaml >> $(BUILDDIR)/chart/wordpress-operator/templates/clusterrole.yaml
-	echo '{{- end }}' >> $(BUILDDIR)/chart/wordpress-operator/templates/clusterrole.yaml
-	rm $(BUILDDIR)/chart/wordpress-operator/templates/rbac.yaml
+	yq w -i $(CHARTDIR)/Chart.yaml version "$(APP_VERSION)"
+	yq w -i $(CHARTDIR)/Chart.yaml appVersion "$(APP_VERSION)"
+	mv $(CHARTDIR)/values.yaml $(CHARTDIR)/_values.yaml
+	sed 's#$(REGISTRY)/$(IMAGE_NAME):latest#$(IMG)#g' $(CHARTDIR)/_values.yaml > $(CHARTDIR)/values.yaml
+	rm $(CHARTDIR)/_values.yaml
 
 # Generate code
 generate:
 	go generate ./pkg/... ./cmd/...
 
 # Build the docker image
-images: test
-	docker build . -t ${IMG}
+.PHONY: images
+images:
+	docker build . -t $(REGISTRY)/$(IMAGE_NAME):$(BUILD_TAG)
+	set -e; \
+		for tag in $(IMAGE_TAGS); do \
+			docker tag $(REGISTRY)/$(IMAGE_NAME):$(BUILD_TAG) $(REGISTRY)/$(IMAGE_NAME):$${tag}; \
+	done
 
 # Push the docker image
-publish:
-	docker push ${IMG}
+.PHONY: publish
+publish: images
+	set -e; \
+		for tag in $(IMAGE_TAGS); do \
+		docker push $(REGISTRY)/$(IMAGE_NAME):$${tag}; \
+	done
 
 lint:
 	$(BINDIR)/golangci-lint run ./pkg/... ./cmd/...
