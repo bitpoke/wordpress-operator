@@ -69,11 +69,10 @@ pipeline:
   publish-chart:
     group: publish
     image: quay.io/presslabs/kluster-toolbox
-    pull: true
     environment:
       - GH_USER=presslabs-bot
     commands:
-      - cd build/chart
+      - cd chart
       - helm package wordpress-operator
       - CHART="$(basename *.tgz)" ; MESSAGE="Publish $(basename $CHART .tgz)"
       - /usr/local/bin/gh put --skip-existing -m "$MESSAGE" "$CHART" "presslabs/charts/docs/"
