@@ -69,7 +69,7 @@ chart:
 	yq w -i $(CHARTDIR)/Chart.yaml version "$(APP_VERSION)"
 	yq w -i $(CHARTDIR)/Chart.yaml appVersion "$(APP_VERSION)"
 	mv $(CHARTDIR)/values.yaml $(CHARTDIR)/_values.yaml
-	sed 's#$(REGISTRY)/$(IMAGE_NAME):latest#$(IMG)#g' $(CHARTDIR)/_values.yaml > $(CHARTDIR)/values.yaml
+	sed 's#$(REGISTRY)/$(IMAGE_NAME):latest#$(REGISTRY)/$(IMAGE_NAME):$(APP_VERSION)#g' $(CHARTDIR)/_values.yaml > $(CHARTDIR)/values.yaml
 	rm $(CHARTDIR)/_values.yaml
 
 # Generate code
