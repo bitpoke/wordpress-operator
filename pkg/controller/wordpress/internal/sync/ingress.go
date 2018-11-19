@@ -19,40 +19,37 @@ package sync
 import (
 	extv1beta1 "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
 
-	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
-	"github.com/presslabs/wordpress-operator/pkg/controller/internal/wordpress"
+	"github.com/presslabs/wordpress-operator/pkg/internal/wordpress"
 )
 
 // NewIngressSyncer returns a new sync.Interface for reconciling web Ingress
-func NewIngressSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, c client.Client, scheme *runtime.Scheme) syncer.Interface {
+func NewIngressSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.Scheme) syncer.Interface {
+	objLabels := wp.ComponentLabels(wordpress.WordpressIngress)
+
 	obj := &extv1beta1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      wp.Name,
+			Name:      wp.ComponentName(wordpress.WordpressIngress),
 			Namespace: wp.Namespace,
 		},
 	}
 
-	return syncer.NewObjectSyncer("Ingress", wp, obj, c, scheme, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("Ingress", wp.Unwrap(), obj, c, scheme, func(existing runtime.Object) error {
 		out := existing.(*extv1beta1.Ingress)
-
-		out.Labels = wordpress.WebPodLabels(wp)
-
-		for k, v := range rt.Spec.IngressAnnotations {
-			out.ObjectMeta.Annotations[k] = v
-		}
+		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
 
 		for k, v := range wp.Spec.IngressAnnotations {
 			out.ObjectMeta.Annotations[k] = v
 		}
 
 		bk := extv1beta1.IngressBackend{
-			ServiceName: wp.Name,
+			ServiceName: wp.ComponentName(wordpress.WordpressService),
 			ServicePort: intstr.FromString("http"),
 		}
 		bkpaths := []extv1beta1.HTTPIngressPath{

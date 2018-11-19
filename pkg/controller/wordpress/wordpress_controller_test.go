@@ -74,14 +74,13 @@ var _ = Describe("Wordpress controller", func() {
 		var (
 			expectedRequest reconcile.Request
 			wp              *wordpressv1alpha1.Wordpress
-			rt              *wordpressv1alpha1.WordpressRuntime
 		)
 
 		entries := []TableEntry{
 			Entry("reconciles the deployment", "%s", &appsv1.Deployment{}),
 			Entry("reconciles the service", "%s", &corev1.Service{}),
 			Entry("reconciles the ingress", "%s", &extv1beta1.Ingress{}),
-			Entry("reconciles the webroot pvc", "%s-webroot", &corev1.PersistentVolumeClaim{}),
+			Entry("reconciles the code pvc", "%s-code", &corev1.PersistentVolumeClaim{}),
 			Entry("reconciles the media pvc", "%s-media", &corev1.PersistentVolumeClaim{}),
 			Entry("reconciles the wp-cron", "%s-wp-cron", &batchv1beta1.CronJob{}),
 		}
@@ -89,54 +88,19 @@ var _ = Describe("Wordpress controller", func() {
 		BeforeEach(func() {
 			r := rand.Int31()
 			name := fmt.Sprintf("wp-%d", r)
-			runtimeName := fmt.Sprintf("rt-%d", r)
 			domain := wordpressv1alpha1.Domain(fmt.Sprintf("%s.example.com", name))
 			expectedRequest = reconcile.Request{NamespacedName: types.NamespacedName{Name: name, Namespace: "default"}}
 
-			rt = &wordpressv1alpha1.WordpressRuntime{
-				ObjectMeta: metav1.ObjectMeta{Name: runtimeName},
-				Spec: wordpressv1alpha1.WordpressRuntimeSpec{
-					DefaultImage: "docker.io/library/hello-world",
-					WebPodTemplate: &corev1.PodTemplateSpec{
-						Spec: corev1.PodSpec{
-							Containers: []corev1.Container{
-								{
-									Name:  "wordpress",
-									Image: "image",
-									Ports: []corev1.ContainerPort{
-										{
-											Name:          "http",
-											ContainerPort: 80,
-											Protocol:      corev1.ProtocolTCP,
-										},
-									},
-								},
-							},
-						},
-					},
-					CLIPodTemplate: &corev1.PodTemplateSpec{
-						Spec: corev1.PodSpec{
-							Containers: []corev1.Container{
-								{
-									Name:  "wp-cli",
-									Image: "cli-image",
-								},
-							},
-						},
-					},
-				},
-			}
 			wp = &wordpressv1alpha1.Wordpress{
 				ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "default"},
 				Spec: wordpressv1alpha1.WordpressSpec{
-					Runtime:           rt.Name,
-					Domains:           []wordpressv1alpha1.Domain{domain},
-					WebrootVolumeSpec: &wordpressv1alpha1.WordpressVolumeSpec{},
-					MediaVolumeSpec:   &wordpressv1alpha1.WordpressVolumeSpec{},
+					Domains:         []wordpressv1alpha1.Domain{domain},
+					CodeVolumeSpec:  &wordpressv1alpha1.CodeVolumeSpec{},
+					MediaVolumeSpec: &wordpressv1alpha1.MediaVolumeSpec{},
 				},
 			}
 
-			wp.Spec.WebrootVolumeSpec.PersistentVolumeClaim = &corev1.PersistentVolumeClaimSpec{
+			wp.Spec.CodeVolumeSpec.PersistentVolumeClaim = &corev1.PersistentVolumeClaimSpec{
 				AccessModes: []corev1.PersistentVolumeAccessMode{
 					corev1.ReadWriteOnce,
 				},
@@ -158,7 +122,6 @@ var _ = Describe("Wordpress controller", func() {
 				},
 			}
 
-			Expect(c.Create(context.TODO(), rt)).To(Succeed())
 			Expect(c.Create(context.TODO(), wp)).To(Succeed())
 
 			// Wait for initial reconciliation
@@ -183,7 +146,6 @@ var _ = Describe("Wordpress controller", func() {
 		// nolint: errcheck
 		AfterEach(func() {
 			Expect(c.Delete(context.TODO(), wp)).To(Succeed())
-			Expect(c.Delete(context.TODO(), rt)).To(Succeed())
 
 			// GC created objects
 			for _, e := range entries {

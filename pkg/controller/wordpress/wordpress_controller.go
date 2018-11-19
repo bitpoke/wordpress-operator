@@ -18,7 +18,6 @@ package wordpress
 
 import (
 	"context"
-	gosync "sync"
 
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
@@ -26,7 +25,6 @@ import (
 	extv1beta1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -39,11 +37,10 @@ import (
 
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 	"github.com/presslabs/wordpress-operator/pkg/controller/wordpress/internal/sync"
+	"github.com/presslabs/wordpress-operator/pkg/internal/wordpress"
 )
 
 const controllerName = "wordpress-controller"
-
-var rtMap = &gosync.Map{}
 
 // Add creates a new Wordpress Controller and adds it to the Manager with default RBAC. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -66,23 +63,6 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 
 	// Watch for changes to Wordpress
 	err = c.Watch(&source.Kind{Type: &wordpressv1alpha1.Wordpress{}}, &handler.EnqueueRequestForObject{})
-	if err != nil {
-		return err
-	}
-
-	// Watch for changes to WordpressRuntime
-	err = c.Watch(&source.Kind{Type: &wordpressv1alpha1.WordpressRuntime{}}, &handler.EnqueueRequestsFromMapFunc{
-		ToRequests: handler.ToRequestsFunc(func(rt handler.MapObject) []reconcile.Request {
-			var reconciles = []reconcile.Request{}
-			rtMap.Range(func(key, runtime interface{}) bool {
-				if runtime.(string) == rt.Meta.GetName() {
-					reconciles = append(reconciles, reconcile.Request{NamespacedName: key.(types.NamespacedName)})
-				}
-				return true
-			})
-			return reconciles
-		}),
-	})
 	if err != nil {
 		return err
 	}
@@ -126,11 +106,10 @@ type ReconcileWordpress struct {
 // +kubebuilder:rbac:groups=batch,resources=cronjobs;jobs,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=extensions,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=wordpress.presslabs.org,resources=wordpresses,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=wordpress.presslabs.org,resources=wordpressruntimes,verbs=get;list;watch;create;update;patch;delete
 func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	// Fetch the Wordpress instance
-	wp := &wordpressv1alpha1.Wordpress{}
-	err := r.Get(context.TODO(), request.NamespacedName, wp)
+	wp := wordpress.New(&wordpressv1alpha1.Wordpress{})
+	err := r.Get(context.TODO(), request.NamespacedName, wp.Unwrap())
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Object not found, return.  Created objects are automatically garbage collected.
@@ -141,40 +120,23 @@ func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Res
 		return reconcile.Result{}, err
 	}
 
-	// Add Wordpress to the runtimes map
-	rtMap.Store(request.NamespacedName, wp.Spec.Runtime)
-
-	r.scheme.Default(wp)
-
-	rt := &wordpressv1alpha1.WordpressRuntime{}
-	err = r.Get(context.TODO(), types.NamespacedName{Name: wp.Spec.Runtime}, rt)
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-	r.scheme.Default(rt)
+	r.scheme.Default(wp.Unwrap())
+	wp.SetDefaults()
 
 	syncers := []syncer.Interface{
-		sync.NewDeploymentSyncer(wp, rt, r.Client, r.scheme),
-		sync.NewServiceSyncer(wp, rt, r.Client, r.scheme),
-		sync.NewIngressSyncer(wp, rt, r.Client, r.scheme),
-		sync.NewWPCronSyncer(wp, rt, r.Client, r.scheme),
-		sync.NewDBUpgradeJobSyncer(wp, rt, r.Client, r.scheme),
+		sync.NewDeploymentSyncer(wp, r.Client, r.scheme),
+		sync.NewServiceSyncer(wp, r.Client, r.scheme),
+		sync.NewIngressSyncer(wp, r.Client, r.scheme),
+		sync.NewWPCronSyncer(wp, r.Client, r.scheme),
+		sync.NewDBUpgradeJobSyncer(wp, r.Client, r.scheme),
 	}
 
-	volSpec := rt.Spec.WebrootVolumeSpec
-	if wp.Spec.WebrootVolumeSpec != nil {
-		volSpec = wp.Spec.WebrootVolumeSpec
-	}
-	if volSpec.PersistentVolumeClaim != nil {
-		syncers = append(syncers, sync.NewWebrootPVCSyncer(wp, rt, r.Client, r.scheme))
+	if wp.Spec.CodeVolumeSpec != nil && wp.Spec.CodeVolumeSpec.PersistentVolumeClaim != nil {
+		syncers = append(syncers, sync.NewCodePVCSyncer(wp, r.Client, r.scheme))
 	}
 
-	volSpec = rt.Spec.MediaVolumeSpec
-	if wp.Spec.MediaVolumeSpec != nil {
-		volSpec = wp.Spec.MediaVolumeSpec
-	}
-	if volSpec != nil && volSpec.PersistentVolumeClaim != nil {
-		syncers = append(syncers, sync.NewMediaPVCSyncer(wp, rt, r.Client, r.scheme))
+	if wp.Spec.MediaVolumeSpec != nil && wp.Spec.MediaVolumeSpec.PersistentVolumeClaim != nil {
+		syncers = append(syncers, sync.NewMediaPVCSyncer(wp, r.Client, r.scheme))
 	}
 
 	return reconcile.Result{}, r.sync(syncers)

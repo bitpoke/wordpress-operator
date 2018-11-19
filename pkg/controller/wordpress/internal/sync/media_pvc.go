@@ -22,41 +22,39 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
 
-	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
-	"github.com/presslabs/wordpress-operator/pkg/controller/internal/wordpress"
+	"github.com/presslabs/wordpress-operator/pkg/internal/wordpress"
 )
 
-func getMediaPVCName(wp *wordpressv1alpha1.Wordpress) string { return fmt.Sprintf("%s-media", wp.Name) }
-
 // NewMediaPVCSyncer returns a new sync.Interface for reconciling media PVC
-func NewMediaPVCSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, c client.Client, scheme *runtime.Scheme) syncer.Interface {
+func NewMediaPVCSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.Scheme) syncer.Interface {
+	objLabels := wp.ComponentLabels(wordpress.WordpressMediaPVC)
+
 	obj := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      getMediaPVCName(wp),
+			Name:      wp.ComponentName(wordpress.WordpressMediaPVC),
 			Namespace: wp.Namespace,
 		},
 	}
-	return syncer.NewObjectSyncer("MediaPVC", wp, obj, c, scheme, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("MediaPVC", wp.Unwrap(), obj, c, scheme, func(existing runtime.Object) error {
 		out := existing.(*corev1.PersistentVolumeClaim)
+		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
 
-		out.Labels = wordpress.LabelsForTier(wp, "front")
+		if wp.Spec.MediaVolumeSpec == nil || wp.Spec.MediaVolumeSpec.PersistentVolumeClaim == nil {
+			return fmt.Errorf(".spec.media.persistentVolumeClaim is not defined")
+		}
 
 		// PVC spec is immutable
 		if !reflect.DeepEqual(out.Spec, corev1.PersistentVolumeClaimSpec{}) {
 			return nil
 		}
 
-		volSpec := rt.Spec.MediaVolumeSpec
-		if wp.Spec.MediaVolumeSpec != nil {
-			volSpec = wp.Spec.MediaVolumeSpec
-		}
-
-		out.Spec = *volSpec.PersistentVolumeClaim
+		out.Spec = *wp.Spec.MediaVolumeSpec.PersistentVolumeClaim
 
 		return nil
 	})

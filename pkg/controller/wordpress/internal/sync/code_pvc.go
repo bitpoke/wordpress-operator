@@ -18,12 +18,12 @@ package sync
 
 import (
 	"fmt"
+	"reflect"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/syncer"
@@ -31,41 +31,30 @@ import (
 	"github.com/presslabs/wordpress-operator/pkg/internal/wordpress"
 )
 
-const (
-	wordpressHTTPPort = 80
-)
+// NewCodePVCSyncer returns a new sync.Interface for reconciling codePVC
+func NewCodePVCSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.Scheme) syncer.Interface {
+	objLabels := wp.ComponentLabels(wordpress.WordpressCodePVC)
 
-// NewServiceSyncer returns a new sync.Interface for reconciling web Service
-func NewServiceSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.Scheme) syncer.Interface {
-	objLabels := wp.ComponentLabels(wordpress.WordpressDeployment)
-
-	obj := &corev1.Service{
+	obj := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      wp.Name,
+			Name:      wp.ComponentName(wordpress.WordpressCodePVC),
 			Namespace: wp.Namespace,
 		},
 	}
-
-	return syncer.NewObjectSyncer("Service", wp.Unwrap(), obj, c, scheme, func(existing runtime.Object) error {
-		out := existing.(*corev1.Service)
+	return syncer.NewObjectSyncer("CodePVC", wp.Unwrap(), obj, c, scheme, func(existing runtime.Object) error {
+		out := existing.(*corev1.PersistentVolumeClaim)
 		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
 
-		selector := wp.WebPodLabels()
-		if !labels.Equals(selector, out.Spec.Selector) {
-			if out.ObjectMeta.CreationTimestamp.IsZero() {
-				out.Spec.Selector = selector
-			} else {
-				return fmt.Errorf("service selector is immutable")
-			}
+		if wp.Spec.CodeVolumeSpec == nil || wp.Spec.CodeVolumeSpec.PersistentVolumeClaim == nil {
+			return fmt.Errorf(".spec.code.persistentVolumeClaim is not defined")
 		}
 
-		if len(out.Spec.Ports) != 1 {
-			out.Spec.Ports = make([]corev1.ServicePort, 1)
+		// PVC spec is immutable
+		if !reflect.DeepEqual(out.Spec, corev1.PersistentVolumeClaimSpec{}) {
+			return nil
 		}
 
-		out.Spec.Ports[0].Name = "http"
-		out.Spec.Ports[0].Port = int32(80)
-		out.Spec.Ports[0].TargetPort = intstr.FromInt(wordpressHTTPPort)
+		out.Spec = *wp.Spec.CodeVolumeSpec.PersistentVolumeClaim
 
 		return nil
 	})

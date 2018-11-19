@@ -29,8 +29,6 @@ import (
 func RegisterDefaults(scheme *runtime.Scheme) error {
 	scheme.AddTypeDefaultingFunc(&Wordpress{}, func(obj interface{}) { SetObjectDefaults_Wordpress(obj.(*Wordpress)) })
 	scheme.AddTypeDefaultingFunc(&WordpressList{}, func(obj interface{}) { SetObjectDefaults_WordpressList(obj.(*WordpressList)) })
-	scheme.AddTypeDefaultingFunc(&WordpressRuntime{}, func(obj interface{}) { SetObjectDefaults_WordpressRuntime(obj.(*WordpressRuntime)) })
-	scheme.AddTypeDefaultingFunc(&WordpressRuntimeList{}, func(obj interface{}) { SetObjectDefaults_WordpressRuntimeList(obj.(*WordpressRuntimeList)) })
 	return nil
 }
 
@@ -42,16 +40,5 @@ func SetObjectDefaults_WordpressList(in *WordpressList) {
 	for i := range in.Items {
 		a := &in.Items[i]
 		SetObjectDefaults_Wordpress(a)
-	}
-}
-
-func SetObjectDefaults_WordpressRuntime(in *WordpressRuntime) {
-	SetDefaults_WordpressRuntimeSpec(&in.Spec)
-}
-
-func SetObjectDefaults_WordpressRuntimeList(in *WordpressRuntimeList) {
-	for i := range in.Items {
-		a := &in.Items[i]
-		SetObjectDefaults_WordpressRuntime(a)
 	}
 }

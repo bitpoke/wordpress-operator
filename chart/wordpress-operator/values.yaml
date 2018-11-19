@@ -34,7 +34,3 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
-
-defaultRuntime:
-  install: true
-  image: quay.io/presslabs/wordpress-runtime:4.9.8-php71

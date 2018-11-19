@@ -38,17 +38,10 @@ kind: Wordpress
 metadata:
   name: mysite
 spec:
-  image: docker.io/library/wordpress:4.9.8
-  runtime: default
-  replicas: 3
+  replicas: 1
+  image: quay.io/presslabs/wordpress-runtime:4.9.8-php71
   secretRef: mysite
   tlsSecretRef: mysite-tls
-  webrootVolumeSpec:
-    persistentVolumeClaim:
-      accessModes: [ReadWriteMany]
-      resources:
-        requests:
-          storage: 1Gi
   envFrom:
     - prefix: "WORDPRESS_"
       secretRef:

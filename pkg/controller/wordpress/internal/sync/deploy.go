@@ -17,8 +17,12 @@ limitations under the License.
 package sync
 
 import (
+	"fmt"
+	"reflect"
+
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -27,28 +31,36 @@ import (
 	"github.com/presslabs/controller-util/mergo/transformers"
 	"github.com/presslabs/controller-util/syncer"
 
-	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
-	"github.com/presslabs/wordpress-operator/pkg/controller/internal/wordpress"
+	"github.com/presslabs/wordpress-operator/pkg/internal/wordpress"
 )
 
 // NewDeploymentSyncer returns a new sync.Interface for reconciling web Deployment
-func NewDeploymentSyncer(wp *wordpressv1alpha1.Wordpress, rt *wordpressv1alpha1.WordpressRuntime, c client.Client, scheme *runtime.Scheme) syncer.Interface {
+func NewDeploymentSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.Scheme) syncer.Interface {
+	objLabels := wp.ComponentLabels(wordpress.WordpressDeployment)
+
 	obj := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      wp.Name,
+			Name:      wp.ComponentName(wordpress.WordpressDeployment),
 			Namespace: wp.Namespace,
 		},
 	}
 
-	return syncer.NewObjectSyncer("Deployment", wp, obj, c, scheme, func(existing runtime.Object) error {
+	return syncer.NewObjectSyncer("Deployment", wp.Unwrap(), obj, c, scheme, func(existing runtime.Object) error {
 		out := existing.(*appsv1.Deployment)
+		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
 
-		out.Labels = wordpress.WebPodLabels(wp)
+		template := wp.WebPodTemplateSpec()
 
-		out.Spec.Selector = metav1.SetAsLabelSelector(wordpress.WebPodLabels(wp))
-
-		template := wordpress.WebPodTemplateSpec(wp, rt)
 		out.Spec.Template.ObjectMeta = template.ObjectMeta
+
+		selector := metav1.SetAsLabelSelector(wp.WebPodLabels())
+		if !reflect.DeepEqual(selector, out.Spec.Selector) {
+			if out.ObjectMeta.CreationTimestamp.IsZero() {
+				out.Spec.Selector = selector
+			} else {
+				return fmt.Errorf("deployment selector is immutable")
+			}
+		}
 
 		err := mergo.Merge(&out.Spec.Template.Spec, template.Spec, mergo.WithTransformers(transformers.PodSpec))
 		if err != nil {

@@ -11,6 +11,11 @@ spec:
     kind: Wordpress
     plural: wordpresses
   scope: Namespaced
+  subresources:
+    scale:
+      specReplicasPath: .spec.replicas
+      statusReplicasPath: .status.replicas
+    status: {}
   validation:
     openAPIV3Schema:
       properties:
@@ -22,6 +27,36 @@ spec:
           type: object
         spec:
           properties:
+            code:
+              properties:
+                contentSubPath:
+                  type: string
+                emptyDir:
+                  type: object
+                git:
+                  properties:
+                    cloneURL:
+                      type: string
+                    emptyDir:
+                      type: object
+                    env:
+                      items:
+                        type: object
+                      type: array
+                    envFrom:
+                      items:
+                        type: object
+                      type: array
+                    gitRef:
+                      type: string
+                  required:
+                  - cloneURL
+                  type: object
+                hostPath:
+                  type: object
+                persistentVolumeClaim:
+                  type: object
+              type: object
             domains:
               items:
                 type: string
@@ -49,11 +84,23 @@ spec:
               type: array
             ingressAnnotations:
               type: object
-            labels:
-              type: object
-            mediaVolumeSpec:
+            media:
               properties:
                 emptyDir:
+                  type: object
+                gcs:
+                  properties:
+                    bucket:
+                      minLength: 1
+                      type: string
+                    env:
+                      items:
+                        type: object
+                      type: array
+                    prefix:
+                      type: string
+                  required:
+                  - bucket
                   type: object
                 hostPath:
                   type: object
@@ -63,14 +110,13 @@ spec:
             replicas:
               format: int32
               type: integer
-            runtime:
-              minLength: 1
-              type: string
             serviceAccountName:
+              type: string
+            tag:
               type: string
             tlsSecretRef:
               type: string
-            volumeMountsSpec:
+            volumeMounts:
               items:
                 type: object
               type: array
@@ -78,20 +124,14 @@ spec:
               items:
                 type: object
               type: array
-            webrootVolumeSpec:
-              properties:
-                emptyDir:
-                  type: object
-                hostPath:
-                  type: object
-                persistentVolumeClaim:
-                  type: object
-              type: object
           required:
-          - runtime
           - domains
           type: object
         status:
+          properties:
+            replicas:
+              format: int32
+              type: integer
           type: object
   version: v1alpha1
 status:

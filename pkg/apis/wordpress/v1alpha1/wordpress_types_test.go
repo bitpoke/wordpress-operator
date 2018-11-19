@@ -37,7 +37,6 @@ var _ = Describe("Wordpress CRUD", func() {
 		created = &Wordpress{}
 		created.Name = key.Name
 		created.Namespace = key.Namespace
-		created.Spec.Runtime = "default"
 		created.Spec.Domains = []Domain{"example.com"}
 	})
 

@@ -27,10 +27,6 @@ required = [
   name="github.com/presslabs/controller-util"
   version="v0.1.5"
 
-[[constraint]]
-  name = "github.com/appscode/kutil"
-  branch = "release-8.0"
-
 # STANZAS BELOW ARE GENERATED AND MAY BE WRITTEN - DO NOT MODIFY BELOW THIS LINE.
 
 [[constraint]]

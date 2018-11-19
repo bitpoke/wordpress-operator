@@ -11,30 +11,19 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:34066292c904e99e338e83ae8a9a21958ec0278b41793e3fab2017d258e5c18f"
-  name = "github.com/appscode/go"
-  packages = ["types"]
-  pruneopts = "T"
-  revision = "0499c350ad263174dc8c1e3006b2d3300ff398e6"
-
-[[projects]]
-  branch = "release-8.0"
-  digest = "1:3b1f509dbb1bcb099e39940a2db75c516590b89462289db4ed8ee7488947b7b8"
-  name = "github.com/appscode/kutil"
-  packages = [
-    ".",
-    "core/v1",
-  ]
-  pruneopts = "T"
-  revision = "49a173de8c2edccbdea1185ee2621486003cd458"
-
-[[projects]]
-  branch = "master"
   digest = "1:3477d9dd8c135faab978bac762eaeafb31f28d6da97ef500d5c271966f74140a"
   name = "github.com/appscode/mergo"
   packages = ["."]
   pruneopts = "T"
   revision = "9f23e2d6bd2a77f959b2bf6acdbefd708a83a4a4"
+
+[[projects]]
+  branch = "master"
+  digest = "1:c26eb5dcbeff0f2d70b66bd48aec761c4a623f3993f901205f0e572532110a7c"
+  name = "github.com/cooleo/slugify"
+  packages = ["."]
+  pruneopts = "T"
+  revision = "81db6b52442d49a974a5c4394465cbce7ff6b960"
 
 [[projects]]
   digest = "1:9f42202ac457c462ad8bb9642806d275af9ab4850cf0b1960b9c6f083d4a309a"
@@ -864,8 +853,8 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/appscode/kutil/core/v1",
     "github.com/appscode/mergo",
+    "github.com/cooleo/slugify",
     "github.com/emicklei/go-restful",
     "github.com/onsi/ginkgo",
     "github.com/onsi/ginkgo/extensions/table",

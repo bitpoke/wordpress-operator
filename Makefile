@@ -21,7 +21,7 @@ all: test manager
 test: generate manifests
 	KUBEBUILDER_ASSETS=$(BINDIR) ginkgo \
 		--randomizeAllSpecs --randomizeSuites --failOnPending \
-		--cover --coverprofile cover.out --trace --race -v \
+		--cover --coverprofile cover.out --trace --race \
 		./pkg/... ./cmd/...
 
 # Build manager binary
@@ -50,6 +50,8 @@ manifests:
 	yq w -d'*' -i $(CHARTDIR)/templates/_crds.yaml 'metadata.annotations[helm.sh/hook]' crd-install
 	yq d -d'*' -i $(CHARTDIR)/templates/_crds.yaml metadata.creationTimestamp
 	yq d -d'*' -i $(CHARTDIR)/templates/_crds.yaml status metadata.creationTimestamp
+	# add shortName to CRD until https://github.com/kubernetes-sigs/kubebuilder/issues/404 is solved
+	yq w -i $(CHARTDIR)/templates/_crds.yaml 'spec.names.shortNames[0]' wp
 	echo '{{- if .Values.crd.install }}' > $(CHARTDIR)/templates/crds.yaml
 	cat $(CHARTDIR)/templates/_crds.yaml >> $(CHARTDIR)/templates/crds.yaml
 	echo '{{- end }}' >> $(CHARTDIR)/templates/crds.yaml
@@ -101,6 +103,6 @@ dependencies:
 	GOBIN=$(BINDIR) go install ./vendor/github.com/onsi/ginkgo/ginkgo
 	curl -sL https://github.com/mikefarah/yq/releases/download/2.1.1/yq_$(GOOS)_$(GOARCH) -o $(BINDIR)/yq
 	chmod +x $(BINDIR)/yq
-	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $(BINDIR) v1.10.2
+	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $(BINDIR) v1.12.2
 	curl -sL https://github.com/kubernetes-sigs/kubebuilder/releases/download/v$(KUBEBUILDER_VERSION)/kubebuilder_$(KUBEBUILDER_VERSION)_$(GOOS)_$(GOARCH).tar.gz | \
 		tar -zx -C $(BINDIR) --strip-components=2
