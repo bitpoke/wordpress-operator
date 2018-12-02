@@ -23,10 +23,42 @@ import (
 )
 
 const (
-	gitCloneImage     = "quay.io/presslabs/git-clone:latest"
+	gitCloneImage     = "docker.io/library/buildpack-deps:stretch-scm"
 	wordpressHTTPPort = 80
 	codeVolumeName    = "code"
 	mediaVolumeName   = "media"
+)
+
+const gitCloneScript = `#!/bin/bash
+set -e
+set -o pipefail
+
+export HOME="$(mktemp -d)"
+export GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=$HOME/.ssh/knonw_hosts -o StrictHostKeyChecking=no"
+
+test -d "$HOME/.ssh" || mkdir "$HOME/.ssh"
+
+if [ ! -z "$SSH_RSA_PRIVATE_KEY" ] ; then
+    echo "$SSH_RSA_PRIVATE_KEY" > "$HOME/.ssh/id_rsa"
+    chmod 0400 "$HOME/.ssh/id_rsa"
+    export GIT_SSH_COMMAND="$GIT_SSH_COMMAND -o IdentityFile=$HOME/.ssh/id_rsa"
+fi
+
+if [ -z "$GIT_CLONE_URL" ] ; then
+    echo "No \$GIT_CLONE_URL specified" >&2
+    exit 1
+fi
+
+find /code -maxdepth 1 -mindepth 1 -print0 | xargs -0 /bin/rm -rf
+
+set -x
+git clone "$GIT_CLONE_URL" /code
+cd /code
+git checkout -B "$GIT_CLONE_REF" "$GIT_CLONE_REF"
+`
+
+var (
+	wwwDataUserID int64 = 33
 )
 
 var (
@@ -67,6 +99,30 @@ func (wp *Wordpress) env() []corev1.EnvVar {
 			}
 		}
 	}
+	return out
+}
+
+func (wp *Wordpress) gitCloneEnv() []corev1.EnvVar {
+	if wp.Spec.CodeVolumeSpec.GitDir == nil {
+		return []corev1.EnvVar{}
+	}
+
+	out := []corev1.EnvVar{
+		{
+			Name:  "GIT_CLONE_URL",
+			Value: wp.Spec.CodeVolumeSpec.GitDir.Repository,
+		},
+	}
+
+	if len(wp.Spec.CodeVolumeSpec.GitDir.GitRef) > 0 {
+		out = append(out, corev1.EnvVar{
+			Name:  "GIT_CLONE_REF",
+			Value: wp.Spec.CodeVolumeSpec.GitDir.GitRef,
+		})
+	}
+
+	out = append(out, wp.Spec.CodeVolumeSpec.GitDir.Env...)
+
 	return out
 }
 
@@ -164,6 +220,25 @@ func (wp *Wordpress) volumes() []corev1.Volume {
 	return append(wp.Spec.Volumes, wp.codeVolume(), wp.mediaVolume())
 }
 
+func (wp *Wordpress) gitCloneContainer() corev1.Container {
+	return corev1.Container{
+		Name:    "git",
+		Args:    []string{"/bin/bash", "-c", gitCloneScript},
+		Image:   gitCloneImage,
+		Env:     wp.gitCloneEnv(),
+		EnvFrom: wp.Spec.CodeVolumeSpec.GitDir.EnvFrom,
+		VolumeMounts: []corev1.VolumeMount{
+			{
+				Name:      codeVolumeName,
+				MountPath: "/code",
+			},
+		},
+		SecurityContext: &corev1.SecurityContext{
+			RunAsUser: &wwwDataUserID,
+		},
+	}
+}
+
 // WebPodTemplateSpec generates a pod template spec suitable for use in Wordpress deployment
 func (wp *Wordpress) WebPodTemplateSpec() (out corev1.PodTemplateSpec) {
 	out = corev1.PodTemplateSpec{}
@@ -176,16 +251,7 @@ func (wp *Wordpress) WebPodTemplateSpec() (out corev1.PodTemplateSpec) {
 
 	if wp.Spec.CodeVolumeSpec != nil && wp.Spec.CodeVolumeSpec.GitDir != nil {
 		out.Spec.InitContainers = []corev1.Container{
-			{
-				Name:  "git",
-				Image: gitCloneImage,
-				VolumeMounts: []corev1.VolumeMount{
-					{
-						Name:      codeVolumeName,
-						MountPath: "/code",
-					},
-				},
-			},
+			wp.gitCloneContainer(),
 		}
 	}
 
@@ -207,6 +273,10 @@ func (wp *Wordpress) WebPodTemplateSpec() (out corev1.PodTemplateSpec) {
 
 	out.Spec.Volumes = wp.volumes()
 
+	out.Spec.SecurityContext = &corev1.PodSecurityContext{
+		FSGroup: &wwwDataUserID,
+	}
+
 	return out
 }
 
@@ -224,16 +294,7 @@ func (wp *Wordpress) JobPodTemplateSpec(cmd ...string) (out corev1.PodTemplateSp
 
 	if wp.Spec.CodeVolumeSpec != nil && wp.Spec.CodeVolumeSpec.GitDir != nil {
 		out.Spec.InitContainers = []corev1.Container{
-			{
-				Name:  "git",
-				Image: gitCloneImage,
-				VolumeMounts: []corev1.VolumeMount{
-					{
-						Name:      codeVolumeName,
-						MountPath: "/code",
-					},
-				},
-			},
+			wp.gitCloneContainer(),
 		}
 	}
 
@@ -249,6 +310,10 @@ func (wp *Wordpress) JobPodTemplateSpec(cmd ...string) (out corev1.PodTemplateSp
 	}
 
 	out.Spec.Volumes = wp.volumes()
+
+	out.Spec.SecurityContext = &corev1.PodSecurityContext{
+		FSGroup: &wwwDataUserID,
+	}
 
 	return out
 }

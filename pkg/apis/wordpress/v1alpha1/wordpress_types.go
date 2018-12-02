@@ -87,12 +87,12 @@ type WordpressSpec struct {
 
 // GitVolumeSource is the desired spec for git code source
 type GitVolumeSource struct {
-	// CloneURL for the git repo
-	CloneURL string `json:"cloneURL"`
+	// Repository is the git repository for the code
+	Repository string `json:"repository"`
 	// GitRef to clone (can be a branch name, but it should point to a tag or a
 	// commit hash)
 	// +optional
-	GitRef string `json:"gitRef,omitempty"`
+	GitRef string `json:"reference,omitempty"`
 	// Env defines env variables  which get passed to the git clone container
 	// +optional
 	// +patchMergeKey=name
