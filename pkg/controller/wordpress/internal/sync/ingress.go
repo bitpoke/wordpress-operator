@@ -44,6 +44,9 @@ func NewIngressSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.
 		out := existing.(*extv1beta1.Ingress)
 		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
 
+		if len(out.ObjectMeta.Annotations) == 0 {
+			out.ObjectMeta.Annotations = make(map[string]string)
+		}
 		for k, v := range wp.Spec.IngressAnnotations {
 			out.ObjectMeta.Annotations[k] = v
 		}
