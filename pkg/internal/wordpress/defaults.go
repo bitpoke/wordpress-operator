@@ -17,7 +17,7 @@ limitations under the License.
 package wordpress
 
 const (
-	defaultTag   = "5.0-RC2-php72-r32"
+	defaultTag   = "4.9.8-php72-r45"
 	defaultImage = "quay.io/presslabs/wordpress-runtime"
 )
 

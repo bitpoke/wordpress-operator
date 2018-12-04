@@ -68,7 +68,8 @@ var (
 		"ENDPOINT":          "WORDPRESS_S3_ENDPOINT",
 	}
 	gcsEnvVars = map[string]string{
-		"GOOGLE_APPLICATION_CREDENTIALS_JSON": "WORDPRESS_GCS_APPLICATION_CREDENTIALS_JSON",
+		"GOOGLE_CREDENTIALS":             "GOOGLE_CREDENTIALS",
+		"GOOGLE_APPLICATION_CREDENTIALS": "GOOGLE_APPLICATION_CREDENTIALS",
 	}
 )
 
@@ -84,17 +85,25 @@ func (wp *Wordpress) env() []corev1.EnvVar {
 				if name, ok := s3EnvVars[env.Name]; ok {
 					_env := env.DeepCopy()
 					_env.Name = name
-					wp.Spec.Env = append(wp.Spec.Env, *_env)
+					out = append(out, *_env)
 				}
 			}
 		}
 
 		if wp.Spec.MediaVolumeSpec.GCSVolumeSource != nil {
+			out = append(out, corev1.EnvVar{
+				Name:  "WORDPRESS_GCS_MEDIA_BUCKET",
+				Value: wp.Spec.MediaVolumeSpec.GCSVolumeSource.Bucket,
+			})
+			out = append(out, corev1.EnvVar{
+				Name:  "WORDPRESS_GCS_MEDIA_PREFIX",
+				Value: wp.Spec.MediaVolumeSpec.GCSVolumeSource.PathPrefix,
+			})
 			for _, env := range wp.Spec.MediaVolumeSpec.GCSVolumeSource.Env {
 				if name, ok := gcsEnvVars[env.Name]; ok {
 					_env := env.DeepCopy()
 					_env.Name = name
-					wp.Spec.Env = append(wp.Spec.Env, *_env)
+					out = append(out, *_env)
 				}
 			}
 		}
