@@ -21,6 +21,7 @@ import (
 	"reflect"
 
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -35,7 +36,7 @@ import (
 )
 
 // NewDeploymentSyncer returns a new sync.Interface for reconciling web Deployment
-func NewDeploymentSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.Scheme) syncer.Interface {
+func NewDeploymentSyncer(wp *wordpress.Wordpress, secret *corev1.Secret, c client.Client, scheme *runtime.Scheme) syncer.Interface {
 	objLabels := wp.ComponentLabels(wordpress.WordpressDeployment)
 
 	obj := &appsv1.Deployment{
@@ -50,6 +51,11 @@ func NewDeploymentSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runti
 		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
 
 		template := wp.WebPodTemplateSpec()
+
+		if len(template.Annotations) == 0 {
+			template.Annotations = make(map[string]string)
+		}
+		template.Annotations["wordpress.presslabs.org/secretVersion"] = secret.ResourceVersion
 
 		out.Spec.Template.ObjectMeta = template.ObjectMeta
 

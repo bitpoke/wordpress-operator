@@ -43,8 +43,6 @@ spec:
                   type: object
                 git:
                   properties:
-                    cloneURL:
-                      type: string
                     emptyDir:
                       type: object
                     env:
@@ -55,10 +53,12 @@ spec:
                       items:
                         type: object
                       type: array
-                    gitRef:
+                    reference:
+                      type: string
+                    repository:
                       type: string
                   required:
-                  - cloneURL
+                  - repository
                   type: object
                 hostPath:
                   type: object

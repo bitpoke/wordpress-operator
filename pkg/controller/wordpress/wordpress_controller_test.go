@@ -77,6 +77,7 @@ var _ = Describe("Wordpress controller", func() {
 		)
 
 		entries := []TableEntry{
+			Entry("reconciles the wp secret", "%s-wp", &corev1.Secret{}),
 			Entry("reconciles the deployment", "%s", &appsv1.Deployment{}),
 			Entry("reconciles the service", "%s", &corev1.Service{}),
 			Entry("reconciles the ingress", "%s", &extv1beta1.Ingress{}),

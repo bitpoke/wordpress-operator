@@ -72,6 +72,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		&batchv1beta1.CronJob{},
 		&corev1.PersistentVolumeClaim{},
 		&corev1.Service{},
+		&corev1.Secret{},
 		&extv1beta1.Ingress{},
 	}
 
@@ -101,7 +102,7 @@ type ReconcileWordpress struct {
 // and what is in the Wordpress.Spec
 //
 // Automatically generate RBAC rules to allow the Controller to read and write Deployments
-// +kubebuilder:rbac:groups=,resources=services;persistentvolumeclaims,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=,resources=secrets;services;persistentvolumeclaims,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=batch,resources=cronjobs;jobs,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=extensions,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
@@ -123,12 +124,14 @@ func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Res
 	r.scheme.Default(wp.Unwrap())
 	wp.SetDefaults()
 
+	secretSyncer := sync.NewSecretSyncer(wp, r.Client, r.scheme)
 	syncers := []syncer.Interface{
-		sync.NewDeploymentSyncer(wp, r.Client, r.scheme),
+		secretSyncer,
+		sync.NewDeploymentSyncer(wp, secretSyncer.GetObject().(*corev1.Secret), r.Client, r.scheme),
 		sync.NewServiceSyncer(wp, r.Client, r.scheme),
 		sync.NewIngressSyncer(wp, r.Client, r.scheme),
 		sync.NewWPCronSyncer(wp, r.Client, r.scheme),
-		sync.NewDBUpgradeJobSyncer(wp, r.Client, r.scheme),
+		// sync.NewDBUpgradeJobSyncer(wp, r.Client, r.scheme),
 	}
 
 	if wp.Spec.CodeVolumeSpec != nil && wp.Spec.CodeVolumeSpec.PersistentVolumeClaim != nil {

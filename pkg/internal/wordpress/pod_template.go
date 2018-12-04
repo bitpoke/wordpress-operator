@@ -111,6 +111,23 @@ func (wp *Wordpress) env() []corev1.EnvVar {
 	return out
 }
 
+func (wp *Wordpress) envFrom() []corev1.EnvFromSource {
+	out := []corev1.EnvFromSource{
+		{
+			Prefix: "WORDPRESS_",
+			SecretRef: &corev1.SecretEnvSource{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: wp.ComponentName(WordpressSecret),
+				},
+			},
+		},
+	}
+
+	out = append(out, wp.Spec.EnvFrom...)
+
+	return out
+}
+
 func (wp *Wordpress) gitCloneEnv() []corev1.EnvVar {
 	if wp.Spec.CodeVolumeSpec.GitDir == nil {
 		return []corev1.EnvVar{}
@@ -270,7 +287,7 @@ func (wp *Wordpress) WebPodTemplateSpec() (out corev1.PodTemplateSpec) {
 			Image:        wp.image(),
 			VolumeMounts: wp.volumeMounts(),
 			Env:          wp.env(),
-			EnvFrom:      wp.Spec.EnvFrom,
+			EnvFrom:      wp.envFrom(),
 			Ports: []corev1.ContainerPort{
 				{
 					Name:          "http",
@@ -314,7 +331,7 @@ func (wp *Wordpress) JobPodTemplateSpec(cmd ...string) (out corev1.PodTemplateSp
 			Args:         cmd,
 			VolumeMounts: wp.volumeMounts(),
 			Env:          wp.env(),
-			EnvFrom:      wp.Spec.EnvFrom,
+			EnvFrom:      wp.envFrom(),
 		},
 	}
 

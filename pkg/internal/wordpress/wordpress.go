@@ -37,6 +37,8 @@ type component struct {
 }
 
 var (
+	// WordpressSecret component
+	WordpressSecret = component{name: "web", objNameFmt: "%s-wp"}
 	// WordpressDeployment component
 	WordpressDeployment = component{name: "web", objNameFmt: "%s"}
 	// WordpressCron component
