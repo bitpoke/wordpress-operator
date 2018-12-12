@@ -41,13 +41,3 @@ Create the name of the service account to use
     {{ default "default" .Values.serviceAccount.name }}
 {{- end -}}
 {{- end -}}
-
-{{/*
-Create a name for default WordpressRuntime
-*/}}
-{{- define "wordpress-operator.default-rumtime" -}}
-{{- $fullname := include "wordpress-operator.fullname" . -}}
-{{- $name := default .Chart.Name .Values.nameOverride -}}
-{{- list ($fullname | trimSuffix $name | trimSuffix "-") "default" | join "-" | trimPrefix "-" | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-
