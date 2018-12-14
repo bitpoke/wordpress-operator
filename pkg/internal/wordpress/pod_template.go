@@ -49,11 +49,11 @@ if [ -z "$GIT_CLONE_URL" ] ; then
     exit 1
 fi
 
-find /code -maxdepth 1 -mindepth 1 -print0 | xargs -0 /bin/rm -rf
+find "$SRC_DIR" -maxdepth 1 -mindepth 1 -print0 | xargs -0 /bin/rm -rf
 
 set -x
-git clone "$GIT_CLONE_URL" /code
-cd /code
+git clone "$GIT_CLONE_URL" "$SRC_DIR"
+cd "$SRC_DIR"
 git checkout -B "$GIT_CLONE_REF" "$GIT_CLONE_REF"
 `
 
@@ -63,9 +63,10 @@ var (
 
 var (
 	s3EnvVars = map[string]string{
-		"ACCESS_KEY":        "WORDPRESS_S3_ACCESS_KEY",
-		"SECRET_ACCESS_KEY": "WORDPRESS_S3_SECRET_KEY",
-		"ENDPOINT":          "WORDPRESS_S3_ENDPOINT",
+		"AWS_ACCESS_KEY_ID":     "AWS_ACCESS_KEY_ID",
+		"AWS_SECRET_ACCESS_KEY": "AWS_SECRET_ACCESS_KEY",
+		"AWS_CONFIG_FILE":       "AWS_CONFIG_FILE",
+		"ENDPOINT":              "S3_ENDPOINT",
 	}
 	gcsEnvVars = map[string]string{
 		"GOOGLE_CREDENTIALS":             "GOOGLE_CREDENTIALS",
@@ -78,7 +79,17 @@ func (wp *Wordpress) image() string {
 }
 
 func (wp *Wordpress) env() []corev1.EnvVar {
-	out := wp.Spec.Env
+	out := append([]corev1.EnvVar{
+		{
+			Name:  "WP_HOME",
+			Value: fmt.Sprintf("http://%s", wp.Spec.Domains[0]),
+		},
+		{
+			Name:  "WP_SITEURL",
+			Value: fmt.Sprintf("http://%s/wp", wp.Spec.Domains[0]),
+		},
+	}, wp.Spec.Env...)
+
 	if wp.Spec.MediaVolumeSpec != nil {
 		if wp.Spec.MediaVolumeSpec.S3VolumeSource != nil {
 			for _, env := range wp.Spec.MediaVolumeSpec.S3VolumeSource.Env {
@@ -92,11 +103,11 @@ func (wp *Wordpress) env() []corev1.EnvVar {
 
 		if wp.Spec.MediaVolumeSpec.GCSVolumeSource != nil {
 			out = append(out, corev1.EnvVar{
-				Name:  "WORDPRESS_GCS_MEDIA_BUCKET",
-				Value: wp.Spec.MediaVolumeSpec.GCSVolumeSource.Bucket,
+				Name:  "MEDIA_BUCKET",
+				Value: fmt.Sprintf("gs://%s", wp.Spec.MediaVolumeSpec.GCSVolumeSource.Bucket),
 			})
 			out = append(out, corev1.EnvVar{
-				Name:  "WORDPRESS_GCS_MEDIA_PREFIX",
+				Name:  "MEDIA_BUCKET_PREFIX",
 				Value: wp.Spec.MediaVolumeSpec.GCSVolumeSource.PathPrefix,
 			})
 			for _, env := range wp.Spec.MediaVolumeSpec.GCSVolumeSource.Env {
@@ -114,7 +125,6 @@ func (wp *Wordpress) env() []corev1.EnvVar {
 func (wp *Wordpress) envFrom() []corev1.EnvFromSource {
 	out := []corev1.EnvFromSource{
 		{
-			Prefix: "WORDPRESS_",
 			SecretRef: &corev1.SecretEnvSource{
 				LocalObjectReference: corev1.LocalObjectReference{
 					Name: wp.ComponentName(WordpressSecret),
@@ -138,6 +148,10 @@ func (wp *Wordpress) gitCloneEnv() []corev1.EnvVar {
 			Name:  "GIT_CLONE_URL",
 			Value: wp.Spec.CodeVolumeSpec.GitDir.Repository,
 		},
+		{
+			Name:  "SRC_DIR",
+			Value: codeSrcMountPath,
+		},
 	}
 
 	if len(wp.Spec.CodeVolumeSpec.GitDir.GitRef) > 0 {
@@ -157,12 +171,12 @@ func (wp *Wordpress) volumeMounts() (out []corev1.VolumeMount) {
 	if wp.Spec.CodeVolumeSpec != nil {
 		out = append(out, corev1.VolumeMount{
 			Name:      codeVolumeName,
-			MountPath: "/code",
+			MountPath: codeSrcMountPath,
 			ReadOnly:  wp.Spec.CodeVolumeSpec.ReadOnly,
 		})
 		out = append(out, corev1.VolumeMount{
 			Name:      codeVolumeName,
-			MountPath: "/var/www/html/wp-content",
+			MountPath: wp.Spec.CodeVolumeSpec.MountPath,
 			ReadOnly:  wp.Spec.CodeVolumeSpec.ReadOnly,
 			SubPath:   wp.Spec.CodeVolumeSpec.ContentSubPath,
 		})
@@ -256,7 +270,7 @@ func (wp *Wordpress) gitCloneContainer() corev1.Container {
 		VolumeMounts: []corev1.VolumeMount{
 			{
 				Name:      codeVolumeName,
-				MountPath: "/code",
+				MountPath: codeSrcMountPath,
 			},
 		},
 		SecurityContext: &corev1.SecurityContext{

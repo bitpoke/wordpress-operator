@@ -144,6 +144,10 @@ type CodeVolumeSpec struct {
 	// ReadOnly specifies if the volume should be mounted read-only inside the
 	// wordpress runtime container
 	ReadOnly bool
+	// MountPath spechfies where should the code volume be mounted.
+	// Defaults to /var/www/site/web/wp-content
+	// +optional
+	MountPath string `json:"mountPath,omitempty"`
 	// ContentSubPath specifies where within the code volumes, the wp-content
 	// folder resides.
 	// Defaults to wp-content/

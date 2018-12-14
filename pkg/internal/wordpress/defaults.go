@@ -17,8 +17,10 @@ limitations under the License.
 package wordpress
 
 const (
-	defaultTag   = "4.9.8-php72-r45"
-	defaultImage = "quay.io/presslabs/wordpress-runtime"
+	defaultTag           = "5.0.1-php72-r5"
+	defaultImage         = "quay.io/presslabs/wordpress-runtime"
+	codeSrcMountPath     = "/var/run/presslabs.org/code/src"
+	defaultCodeMountPath = "/var/www/site/web/wp-content"
 )
 
 // SetDefaults sets Wordpress field defaults
@@ -29,5 +31,9 @@ func (o *Wordpress) SetDefaults() {
 
 	if len(o.Spec.Tag) == 0 {
 		o.Spec.Tag = defaultTag
+	}
+
+	if o.Spec.CodeVolumeSpec != nil && len(o.Spec.CodeVolumeSpec.MountPath) == 0 {
+		o.Spec.CodeVolumeSpec.MountPath = defaultCodeMountPath
 	}
 }
