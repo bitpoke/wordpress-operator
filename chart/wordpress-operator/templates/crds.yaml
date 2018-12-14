@@ -62,6 +62,8 @@ spec:
                   type: object
                 hostPath:
                   type: object
+                mountPath:
+                  type: string
                 persistentVolumeClaim:
                   type: object
               type: object

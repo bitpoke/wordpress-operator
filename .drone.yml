@@ -32,6 +32,12 @@ pipeline:
     image: golang:1.11
     commands:
       - make test
+      - git status
+
+  verify:
+    image: quay.io/presslabs/kluster-toolbox
+    commands:
+      - git diff --exit-code
 
   build-chart:
     group: build
