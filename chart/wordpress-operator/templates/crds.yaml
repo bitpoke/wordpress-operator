@@ -28,109 +28,173 @@ spec:
     openAPIV3Schema:
       properties:
         apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
           type: string
         kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
           type: string
         metadata:
           type: object
         spec:
           properties:
             code:
+              description: CodeVolumeSpec specifies how the site's code gets mounted
+                into the container. If not specified, a code volume won't get mounted
+                at all.
               properties:
                 contentSubPath:
+                  description: ContentSubPath specifies where within the code volumes,
+                    the wp-content folder resides. Defaults to wp-content/
                   type: string
                 emptyDir:
+                  description: EmptyDir to use if no HostPath is specified
                   type: object
                 git:
+                  description: GitDir specifies the git repo to use for code cloning.
+                    It has the highest level of precedence over EmptyDir, HostPath
+                    and PersistentVolumeClaim
                   properties:
                     emptyDir:
+                      description: EmptyDir volume to use for git cloning.
                       type: object
                     env:
+                      description: Env defines env variables  which get passed to
+                        the git clone container +patchMergeKey=name +patchStrategy=merge
                       items:
                         type: object
                       type: array
                     envFrom:
+                      description: EnvFrom defines envFrom which get passed to the
+                        git clone container
                       items:
                         type: object
                       type: array
                     reference:
+                      description: GitRef to clone (can be a branch name, but it should
+                        point to a tag or a commit hash)
                       type: string
                     repository:
+                      description: Repository is the git repository for the code
                       type: string
                   required:
                   - repository
                   type: object
                 hostPath:
+                  description: HostPath to use if no PersistentVolumeClaim is specified
                   type: object
                 mountPath:
+                  description: MountPath spechfies where should the code volume be
+                    mounted. Defaults to /var/www/site/web/wp-content
                   type: string
                 persistentVolumeClaim:
+                  description: PersistentVolumeClaim to use if no GitDir is specified
                   type: object
               type: object
             domains:
+              description: Domains for which this this site answers. The first item
+                is set as the "main domain" (eg. WP_HOME and WP_SITEURL constants).
               items:
                 type: string
               minItems: 1
               type: array
             env:
+              description: Env defines environment variables which get passed into
+                web and cli pods +patchMergeKey=name +patchStrategy=merge
               items:
                 type: object
               type: array
             envFrom:
+              description: EnvFrom defines envFrom's which get passed into web and
+                cli containers
               items:
                 type: object
               type: array
             image:
+              description: WordPress runtime image to use. Defaults to quay.io/presslabs/wordpress-runtime
               type: string
             imagePullPolicy:
+              description: ImagePullPolicy overrides WordpressRuntime spec.imagePullPolicy
               enum:
               - Always
               - IfNotPresent
               - Never
               type: string
             imagePullSecrets:
+              description: ImagePullSecrets defines additional secrets to use when
+                pulling images
               items:
                 type: object
               type: array
             ingressAnnotations:
+              description: IngressAnnotations for this Wordpress site
               type: object
             media:
+              description: MediaVolumeSpec specifies how media files get mounted into
+                the runtime container. If not specified, a media volume won't be mounted
+                at all.
               properties:
                 emptyDir:
+                  description: EmptyDir to use if no HostPath is specified
                   type: object
                 gcs:
+                  description: GCSVolumeSource specifies the google cloud storage
+                    object storage configuration for media files. It has the highest
+                    level of precedence over EmptyDir, HostPath and PersistentVolumeClaim
                   properties:
                     bucket:
+                      description: Bucket for storing media files
                       minLength: 1
                       type: string
                     env:
+                      description: 'Env variables for accessing gcs bucket. Taken
+                        into account are: GOOGLE_APPLICATION_CREDENTIALS_JSON +patchMergeKey=name
+                        +patchStrategy=merge'
                       items:
                         type: object
                       type: array
                     prefix:
+                      description: PathPrefix is the prefix for media files in bucket
                       type: string
                   required:
                   - bucket
                   type: object
                 hostPath:
+                  description: HostPath to use if no PersistentVolumeClaim is specified
                   type: object
                 persistentVolumeClaim:
+                  description: PersistentVolumeClaim to use if no S3VolumeSource or
+                    GCSVolumeSource are specified
                   type: object
               type: object
             replicas:
+              description: Number of desired web pods. This is a pointer to distinguish
+                between explicit zero and not specified. Defaults to 1.
               format: int32
               type: integer
             serviceAccountName:
+              description: 'ServiceAccountName is the name of the ServiceAccount to
+                use to run this site''s pods More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/'
               type: string
             tag:
+              description: Image tag to use. Defaults to latest
               type: string
             tlsSecretRef:
+              description: TLSSecretRef a secret containing the TLS certificates for
+                this site.
               type: string
             volumeMounts:
+              description: VolumeMountsSpec defines additional mounts which get injected
+                into web and cli pods.
               items:
                 type: object
               type: array
             volumes:
+              description: Volumes defines additional volumes to get injected into
+                web and cli pods
               items:
                 type: object
               type: array
@@ -140,6 +204,8 @@ spec:
         status:
           properties:
             replicas:
+              description: Total number of non-terminated pods targeted by web deployment
+                This is copied over from the deployment object
               format: int32
               type: integer
           type: object
