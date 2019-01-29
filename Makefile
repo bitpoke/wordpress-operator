@@ -52,7 +52,7 @@ manifests:
 	yq d -d'*' -i $(CHARTDIR)/templates/_crds.yaml status metadata.creationTimestamp
 	# add shortName to CRD until https://github.com/kubernetes-sigs/kubebuilder/issues/404 is solved
 	yq w -i $(CHARTDIR)/templates/_crds.yaml 'spec.names.shortNames[0]' wp
-	echo '{{- if .Values.crd.install }}' > $(CHARTDIR)/templates/crds.yaml
+	echo '{{- if and .Values.crd.install (not (.Capabilities.APIVersions.Has "wordpress.presslabs.org/v1alpha1")) }}' > $(CHARTDIR)/templates/crds.yaml
 	cat $(CHARTDIR)/templates/_crds.yaml >> $(CHARTDIR)/templates/crds.yaml
 	echo '{{- end }}' >> $(CHARTDIR)/templates/crds.yaml
 	rm $(CHARTDIR)/templates/_crds.yaml
