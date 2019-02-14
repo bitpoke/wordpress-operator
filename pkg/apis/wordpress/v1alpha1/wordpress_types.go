@@ -88,7 +88,7 @@ type WordpressSpec struct {
 	Tolerations []corev1.Toleration `json:"tolerations,omitempty"`
 	// If specified, the pod's scheduling constraints
 	// +optional
-	Affinity *corev1.Affinity
+	Affinity *corev1.Affinity `json:"affinity,omitempty"`
 	// If specified, indicates the pod's priority class
 	// +optional
 	PriorityClassName string `json:"priorityClassName,omitempty"`

@@ -33,6 +33,9 @@ spec:
           type: object
         spec:
           properties:
+            affinity:
+              description: If specified, the pod's scheduling constraints
+              type: object
             code:
               description: CodeVolumeSpec specifies how the site's code gets mounted
                 into the container. If not specified, a code volume won't get mounted
