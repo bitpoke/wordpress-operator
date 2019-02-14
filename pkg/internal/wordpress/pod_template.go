@@ -321,6 +321,8 @@ func (wp *Wordpress) WebPodTemplateSpec() (out corev1.PodTemplateSpec) {
 		out.Spec.Tolerations = wp.Spec.Tolerations
 	}
 
+	out.Spec.Affinity = wp.Spec.Affinity
+
 	if len(wp.Spec.PriorityClassName) > 0 {
 		out.Spec.PriorityClassName = wp.Spec.PriorityClassName
 	}
@@ -370,6 +372,8 @@ func (wp *Wordpress) JobPodTemplateSpec(cmd ...string) (out corev1.PodTemplateSp
 	if len(wp.Spec.Tolerations) > 0 {
 		out.Spec.Tolerations = wp.Spec.Tolerations
 	}
+
+	out.Spec.Affinity = wp.Spec.Affinity
 
 	if len(wp.Spec.PriorityClassName) > 0 {
 		out.Spec.PriorityClassName = wp.Spec.PriorityClassName
