@@ -313,6 +313,18 @@ func (wp *Wordpress) WebPodTemplateSpec() (out corev1.PodTemplateSpec) {
 
 	out.Spec.Volumes = wp.volumes()
 
+	if len(wp.Spec.NodeSelector) > 0 {
+		out.Spec.NodeSelector = wp.Spec.NodeSelector
+	}
+
+	if len(wp.Spec.Tolerations) > 0 {
+		out.Spec.Tolerations = wp.Spec.Tolerations
+	}
+
+	if len(wp.Spec.PriorityClassName) > 0 {
+		out.Spec.PriorityClassName = wp.Spec.PriorityClassName
+	}
+
 	out.Spec.SecurityContext = &corev1.PodSecurityContext{
 		FSGroup: &wwwDataUserID,
 	}
@@ -350,6 +362,18 @@ func (wp *Wordpress) JobPodTemplateSpec(cmd ...string) (out corev1.PodTemplateSp
 	}
 
 	out.Spec.Volumes = wp.volumes()
+
+	if len(wp.Spec.NodeSelector) > 0 {
+		out.Spec.NodeSelector = wp.Spec.NodeSelector
+	}
+
+	if len(wp.Spec.Tolerations) > 0 {
+		out.Spec.Tolerations = wp.Spec.Tolerations
+	}
+
+	if len(wp.Spec.PriorityClassName) > 0 {
+		out.Spec.PriorityClassName = wp.Spec.PriorityClassName
+	}
 
 	out.Spec.SecurityContext = &corev1.PodSecurityContext{
 		FSGroup: &wwwDataUserID,

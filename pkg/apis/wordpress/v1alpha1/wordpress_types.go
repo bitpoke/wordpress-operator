@@ -80,6 +80,15 @@ type WordpressSpec struct {
 	// EnvFrom defines envFrom's which get passed into web and cli containers
 	// +optional
 	EnvFrom []corev1.EnvFromSource `json:"envFrom,omitempty"`
+	// If specified, Pod node selector
+	// +optional
+	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+	// If specified, the pod's tolerations.
+	// +optional
+	Tolerations []corev1.Toleration `json:"tolerations,omitempty"`
+	// If specified, indicates the pod's priority class
+	// +optional
+	PriorityClassName string `json:"priorityClassName,omitempty"`
 	// IngressAnnotations for this Wordpress site
 	// +optional
 	IngressAnnotations map[string]string `json:"ingressAnnotations,omitempty"`

@@ -170,6 +170,12 @@ spec:
                     GCSVolumeSource are specified
                   type: object
               type: object
+            nodeSelector:
+              description: If specified, Pod node selector
+              type: object
+            priorityClassName:
+              description: If specified, indicates the pod's priority class
+              type: string
             replicas:
               description: Number of desired web pods. This is a pointer to distinguish
                 between explicit zero and not specified. Defaults to 1.
@@ -186,6 +192,11 @@ spec:
               description: TLSSecretRef a secret containing the TLS certificates for
                 this site.
               type: string
+            tolerations:
+              description: If specified, the pod's tolerations.
+              items:
+                type: object
+              type: array
             volumeMounts:
               description: VolumeMountsSpec defines additional mounts which get injected
                 into web and cli pods.
