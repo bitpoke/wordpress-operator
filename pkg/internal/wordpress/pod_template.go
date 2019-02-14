@@ -79,14 +79,19 @@ func (wp *Wordpress) image() string {
 }
 
 func (wp *Wordpress) env() []corev1.EnvVar {
+	scheme := "http"
+	if len(wp.Spec.TLSSecretRef) > 0 {
+		scheme = "https"
+	}
+
 	out := append([]corev1.EnvVar{
 		{
 			Name:  "WP_HOME",
-			Value: fmt.Sprintf("http://%s", wp.Spec.Domains[0]),
+			Value: fmt.Sprintf("%s://%s", scheme, wp.Spec.Domains[0]),
 		},
 		{
 			Name:  "WP_SITEURL",
-			Value: fmt.Sprintf("http://%s/wp", wp.Spec.Domains[0]),
+			Value: fmt.Sprintf("%s://%s/wp", scheme, wp.Spec.Domains[0]),
 		},
 	}, wp.Spec.Env...)
 

@@ -313,6 +313,11 @@ func (in *WordpressSpec) DeepCopyInto(out *WordpressSpec) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
+	if in.Affinity != nil {
+		in, out := &in.Affinity, &out.Affinity
+		*out = new(v1.Affinity)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.IngressAnnotations != nil {
 		in, out := &in.IngressAnnotations, &out.IngressAnnotations
 		*out = make(map[string]string, len(*in))
