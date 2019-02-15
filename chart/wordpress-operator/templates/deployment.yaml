@@ -24,7 +24,6 @@ spec:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image }}"
           imagePullPolicy: {{ .Values.imagePullPolicy }}
-          args: ["-logtostderr"]
           resources:
 {{ toYaml .Values.resources | indent 12 }}
     {{- with .Values.nodeSelector }}
