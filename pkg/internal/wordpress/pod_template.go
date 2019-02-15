@@ -307,6 +307,7 @@ func (wp *Wordpress) WebPodTemplateSpec() (out corev1.PodTemplateSpec) {
 			VolumeMounts: wp.volumeMounts(),
 			Env:          wp.env(),
 			EnvFrom:      wp.envFrom(),
+			Resources:    wp.Spec.Resources,
 			Ports: []corev1.ContainerPort{
 				{
 					Name:          "http",

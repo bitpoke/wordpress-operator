@@ -80,6 +80,10 @@ type WordpressSpec struct {
 	// EnvFrom defines envFrom's which get passed into web and cli containers
 	// +optional
 	EnvFrom []corev1.EnvFromSource `json:"envFrom,omitempty"`
+	// If specified, the resources required by wordpress container.
+	// More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
+	// +optional
+	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
 	// If specified, Pod node selector
 	// +optional
 	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
