@@ -4,11 +4,15 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/go-test/deep"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/patch"
+)
+
+var (
+	errOwnerDeleted = fmt.Errorf("owner is deleted")
 )
 
 // ObjectSyncer is a syncer.Interface for syncing kubernetes.Objects only by
@@ -40,9 +44,14 @@ func (s *ObjectSyncer) Sync(ctx context.Context) (SyncResult, error) {
 
 	result.Operation, err = controllerutil.CreateOrUpdate(ctx, s.Client, s.Obj, s.mutateFn())
 
-	diff, _ := patch.NewJSONPatch(s.previousObject, s.Obj)
+	// check deep diff
+	diff := deep.Equal(s.previousObject, s.Obj)
 
-	if err != nil {
+	// don't pass to user error for owner deletion, just don't create the object
+	if err == errOwnerDeleted {
+		log.Info(string(result.Operation), "key", key, "kind", fmt.Sprintf("%T", s.Obj), "error", err)
+		err = nil
+	} else if err != nil {
 		result.SetEventData(eventWarning, basicEventReason(s.Name, err),
 			fmt.Sprintf("%T %s failed syncing: %s", s.Obj, key, err))
 		log.Error(err, string(result.Operation), "key", key, "kind", fmt.Sprintf("%T", s.Obj), "diff", diff)
@@ -73,9 +82,18 @@ func (s *ObjectSyncer) mutateFn() controllerutil.MutateFn {
 			if !ok {
 				return fmt.Errorf("%T is not a metav1.Object", s.Owner)
 			}
-			err := controllerutil.SetControllerReference(ownerMeta, existingMeta, s.Scheme)
-			if err != nil {
-				return err
+
+			// set owner reference only if owner resource is not being deleted, otherwise the owner
+			// reference will be reset in case of deleting with cascade=false.
+			if ownerMeta.GetDeletionTimestamp().IsZero() {
+				err := controllerutil.SetControllerReference(ownerMeta, existingMeta, s.Scheme)
+				if err != nil {
+					return err
+				}
+			} else if ctime := existingMeta.GetCreationTimestamp(); ctime.IsZero() {
+				// the owner is deleted, don't recreate the resource if does not exist, because gc
+				// will not delete it again because has no owner reference set
+				return errOwnerDeleted
 			}
 		}
 		return nil
