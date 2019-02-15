@@ -27,18 +27,5 @@ import (
 // Public to allow building arbitrary schemes.
 // All generated defaulters are covering - they call all nested defaulters.
 func RegisterDefaults(scheme *runtime.Scheme) error {
-	scheme.AddTypeDefaultingFunc(&Wordpress{}, func(obj interface{}) { SetObjectDefaults_Wordpress(obj.(*Wordpress)) })
-	scheme.AddTypeDefaultingFunc(&WordpressList{}, func(obj interface{}) { SetObjectDefaults_WordpressList(obj.(*WordpressList)) })
 	return nil
-}
-
-func SetObjectDefaults_Wordpress(in *Wordpress) {
-	SetDefaults_WordpressSpec(&in.Spec)
-}
-
-func SetObjectDefaults_WordpressList(in *WordpressList) {
-	for i := range in.Items {
-		a := &in.Items[i]
-		SetObjectDefaults_Wordpress(a)
-	}
 }
