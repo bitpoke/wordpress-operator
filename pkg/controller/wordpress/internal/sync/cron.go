@@ -34,8 +34,7 @@ import (
 	"github.com/presslabs/wordpress-operator/pkg/internal/wordpress"
 )
 
-// CurlImage represents a small docker image that contains only curl, used to ping wp-cron pool
-const CurlImage = "buildpack-deps:stretch-curl"
+const curlImage = "buildpack-deps:stretch-curl"
 
 // NewWPCronSyncer returns a new sync.Interface for reconciling wp-cron CronJob
 func NewWPCronSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.Scheme) syncer.Interface {
@@ -83,7 +82,7 @@ func NewWPCronSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.S
 		template.Spec.Containers = []corev1.Container{
 			{
 				Name:  "curl",
-				Image: CurlImage,
+				Image: curlImage,
 				Args:  cmd,
 			},
 		}
