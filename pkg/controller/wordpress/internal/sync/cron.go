@@ -17,11 +17,14 @@ limitations under the License.
 package sync
 
 import (
+	"fmt"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"time"
 
 	"github.com/appscode/mergo"
 
@@ -30,6 +33,9 @@ import (
 
 	"github.com/presslabs/wordpress-operator/pkg/internal/wordpress"
 )
+
+// CurlImage represents a small docker image that contains only curl, used to ping wp-cron pool
+const CurlImage = "buildpack-deps:stretch-curl"
 
 // NewWPCronSyncer returns a new sync.Interface for reconciling wp-cron CronJob
 func NewWPCronSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.Scheme) syncer.Interface {
@@ -65,12 +71,28 @@ func NewWPCronSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.S
 		out.Spec.JobTemplate.Spec.BackoffLimit = &backoffLimit
 		out.Spec.JobTemplate.Spec.ActiveDeadlineSeconds = &activeDeadlineSeconds
 
-		cmd := []string{"wp", "cron", "event", "run", "--due-now"}
-		template := wp.JobPodTemplateSpec(cmd...)
+		hostHeader := fmt.Sprintf("Host: %s", wp.Spec.Domains[0])
+		webPod := fmt.Sprintf("%s.%s.svc", wp.Name, wp.Namespace)
+		url := fmt.Sprintf("http://%s/wp/wp-cron.php?doing_wp_cron&ts=%d", webPod, time.Now().Unix())
+
+		// curl -s -I --max-time 30 -H "Host: <Host>" "http://<site>.<namespace>.svc/wp-cron.php?doing_wp_cron&ts=<now>"
+		cmd := []string{"curl", "-s", "-I", "--max-time", "30", "-H", hostHeader, url}
+
+		template := corev1.PodTemplateSpec{}
+		template.ObjectMeta.Labels = wp.JobPodLabels()
+		template.Spec.Containers = []corev1.Container{
+			{
+				Name:  "curl",
+				Image: CurlImage,
+				Args:  cmd,
+			},
+		}
+		template.Spec.RestartPolicy = corev1.RestartPolicyNever
 
 		out.Spec.JobTemplate.Spec.Template.ObjectMeta = template.ObjectMeta
 
-		err := mergo.Merge(&out.Spec.JobTemplate.Spec.Template.Spec, template.Spec, mergo.WithTransformers(transformers.PodSpec))
+		err := mergo.Merge(&out.Spec.JobTemplate.Spec.Template.Spec, template.Spec,
+			mergo.WithTransformers(transformers.PodSpec))
 
 		if err != nil {
 			return err
