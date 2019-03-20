@@ -29,6 +29,8 @@ const (
 	mediaVolumeName   = "media"
 )
 
+const rcloneImage = "quay.io/presslabs/rclone"
+
 const gitCloneScript = `#!/bin/bash
 set -e
 set -o pipefail
@@ -67,10 +69,18 @@ var (
 		"AWS_SECRET_ACCESS_KEY": "AWS_SECRET_ACCESS_KEY",
 		"AWS_CONFIG_FILE":       "AWS_CONFIG_FILE",
 		"ENDPOINT":              "S3_ENDPOINT",
+		"REGION":              	 "AWS_REGION",
+		"ACL":              	 "AWS_ACL",
+		"STORAGE_CLASS":         "AWS_STORAGE_CLASS",
 	}
 	gcsEnvVars = map[string]string{
-		"GOOGLE_CREDENTIALS":             "GOOGLE_CREDENTIALS",
-		"GOOGLE_APPLICATION_CREDENTIALS": "GOOGLE_APPLICATION_CREDENTIALS",
+		"GOOGLE_CREDENTIALS":             "GCS_SERVICE_ACCOUNT_JSON_KEY",
+		"GOOGLE_APPLICATION_CREDENTIALS": "GCS_SERVICE_ACCOUNT_JSON_KEY",
+		"GOOGLE_PROJECT_ID":			  "GCS_PROJECT_ID",
+		"GOOGLE_OBJECT_ACL": 			  "GCS_OBJECT_ACL",
+		"GOOGLE_BUCKET_ACL": 			  "GCS_BUCKET_ACL",
+		"GOOGLE_STORAGE_LOCATION": 		  "GCS_LOCATION",
+		"GOOGLE_STORAGE_CLASS": 		  "GCS_STORAGE_CLASS",
 	}
 )
 
@@ -95,35 +105,6 @@ func (wp *Wordpress) env() []corev1.EnvVar {
 		},
 	}, wp.Spec.Env...)
 
-	if wp.Spec.MediaVolumeSpec != nil {
-		if wp.Spec.MediaVolumeSpec.S3VolumeSource != nil {
-			for _, env := range wp.Spec.MediaVolumeSpec.S3VolumeSource.Env {
-				if name, ok := s3EnvVars[env.Name]; ok {
-					_env := env.DeepCopy()
-					_env.Name = name
-					out = append(out, *_env)
-				}
-			}
-		}
-
-		if wp.Spec.MediaVolumeSpec.GCSVolumeSource != nil {
-			out = append(out, corev1.EnvVar{
-				Name:  "MEDIA_BUCKET",
-				Value: fmt.Sprintf("gs://%s", wp.Spec.MediaVolumeSpec.GCSVolumeSource.Bucket),
-			})
-			out = append(out, corev1.EnvVar{
-				Name:  "MEDIA_BUCKET_PREFIX",
-				Value: wp.Spec.MediaVolumeSpec.GCSVolumeSource.PathPrefix,
-			})
-			for _, env := range wp.Spec.MediaVolumeSpec.GCSVolumeSource.Env {
-				if name, ok := gcsEnvVars[env.Name]; ok {
-					_env := env.DeepCopy()
-					_env.Name = name
-					out = append(out, *_env)
-				}
-			}
-		}
-	}
 	return out
 }
 
@@ -284,6 +265,58 @@ func (wp *Wordpress) gitCloneContainer() corev1.Container {
 	}
 }
 
+func (wp *Wordpress) getUploadsContainers() []corev1.Container {
+	if wp.Spec.MediaVolumeSpec == nil ||
+		(wp.Spec.MediaVolumeSpec.S3VolumeSource == nil && wp.Spec.MediaVolumeSpec.GCSVolumeSource == nil){
+		return []corev1.Container{}
+	}
+
+	var stream string
+	var env []corev1.EnvVar
+
+	if wp.Spec.MediaVolumeSpec.S3VolumeSource != nil {
+		stream = fmt.Sprintf("s3:%s/%s", wp.Spec.MediaVolumeSpec.S3VolumeSource.Bucket,
+			wp.Spec.MediaVolumeSpec.S3VolumeSource.PathPrefix)
+
+		for _, e := range wp.Spec.MediaVolumeSpec.S3VolumeSource.Env {
+			if name, ok := s3EnvVars[e.Name]; ok {
+				_env := e.DeepCopy()
+				_env.Name = name
+				env = append(env, *_env)
+			}
+		}
+	} else if wp.Spec.MediaVolumeSpec.GCSVolumeSource != nil {
+		stream = fmt.Sprintf("gs:%s/%s", wp.Spec.MediaVolumeSpec.GCSVolumeSource.Bucket,
+			wp.Spec.MediaVolumeSpec.GCSVolumeSource.PathPrefix)
+
+		for _, e := range wp.Spec.MediaVolumeSpec.GCSVolumeSource.Env {
+			if name, ok := gcsEnvVars[e.Name]; ok {
+				_env := e.DeepCopy()
+				_env.Name = name
+				env = append(env, *_env)
+			}
+		}
+	}
+
+	return []corev1.Container {
+		{
+			Name:    "rclone-ftp",
+			Image:   rcloneImage,
+			Args:    []string{"serve", "ftp", "--vfs-cache-max-age", "30s", "--vfs-cache-mode", "full",
+				"--vfs-cache-poll-interval", "0", "--poll-interval", "0", stream, "--config=/etc/rclone.conf",
+				"--addr=0.0.0.0:2121"},
+			Env:     env,
+		},
+		{
+			Name:    "rclone-http",
+			Image:   rcloneImage,
+			Args:    []string{"serve", "http", "--dir-cache-time", "0", stream, "--config=/etc/rclone.conf",
+				"--addr=0.0.0.0:8080"},
+			Env:     env,
+		},
+	}
+}
+
 // WebPodTemplateSpec generates a pod template spec suitable for use in Wordpress deployment
 func (wp *Wordpress) WebPodTemplateSpec() (out corev1.PodTemplateSpec) {
 	out = corev1.PodTemplateSpec{}
@@ -316,6 +349,7 @@ func (wp *Wordpress) WebPodTemplateSpec() (out corev1.PodTemplateSpec) {
 			},
 		},
 	}
+	out.Spec.Containers = append(out.Spec.Containers, wp.getUploadsContainers()...)
 
 	out.Spec.Volumes = wp.volumes()
 
@@ -368,6 +402,7 @@ func (wp *Wordpress) JobPodTemplateSpec(cmd ...string) (out corev1.PodTemplateSp
 			EnvFrom:      wp.envFrom(),
 		},
 	}
+	out.Spec.Containers = append(out.Spec.Containers, wp.getUploadsContainers()...)
 
 	out.Spec.Volumes = wp.volumes()
 
