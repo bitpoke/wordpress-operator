@@ -91,6 +91,11 @@ func (wp *Wordpress) image() string {
 	return fmt.Sprintf("%s:%s", wp.Spec.Image, wp.Spec.Tag)
 }
 
+func (wp *Wordpress) hasExternalMedia() bool {
+	return wp.Spec.MediaVolumeSpec != nil &&
+		(wp.Spec.MediaVolumeSpec.S3VolumeSource != nil || wp.Spec.MediaVolumeSpec.GCSVolumeSource != nil)
+}
+
 func (wp *Wordpress) env() []corev1.EnvVar {
 	scheme := "http"
 	if len(wp.Spec.TLSSecretRef) > 0 {
@@ -108,12 +113,12 @@ func (wp *Wordpress) env() []corev1.EnvVar {
 		},
 	}, wp.Spec.Env...)
 
-	if wp.Spec.MediaVolumeSpec != nil &&
-		(wp.Spec.MediaVolumeSpec.S3VolumeSource != nil || wp.Spec.MediaVolumeSpec.GCSVolumeSource != nil) {
+	if wp.hasExternalMedia() {
 		out = append([]corev1.EnvVar{
 			{
 				Name:  "UPLOADS_FTP_HOST",
 				Value: fmt.Sprintf("ftp://127.0.0.1:%s", mediaFTPPort),
+				// TODO: remove ftp:// scheme once https://github.com/presslabs/wordpress-integration/pull/14 is merged
 			},
 			{
 				Name:  "UPLOADS_HTTP_PROXY",
@@ -283,8 +288,7 @@ func (wp *Wordpress) gitCloneContainer() corev1.Container {
 }
 
 func (wp *Wordpress) getMediaContainers() []corev1.Container {
-	if wp.Spec.MediaVolumeSpec == nil ||
-		(wp.Spec.MediaVolumeSpec.S3VolumeSource == nil && wp.Spec.MediaVolumeSpec.GCSVolumeSource == nil) {
+	if !wp.hasExternalMedia() {
 		return []corev1.Container{}
 	}
 
