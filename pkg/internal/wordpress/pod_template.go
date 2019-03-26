@@ -72,18 +72,18 @@ var (
 		"AWS_SECRET_ACCESS_KEY": "AWS_SECRET_ACCESS_KEY",
 		"AWS_CONFIG_FILE":       "AWS_CONFIG_FILE",
 		"ENDPOINT":              "S3_ENDPOINT",
-		"REGION":              	 "AWS_REGION",
-		"ACL":              	 "AWS_ACL",
+		"REGION":                "AWS_REGION",
+		"ACL":                   "AWS_ACL",
 		"STORAGE_CLASS":         "AWS_STORAGE_CLASS",
 	}
 	gcsEnvVars = map[string]string{
 		"GOOGLE_CREDENTIALS":             "GCS_SERVICE_ACCOUNT_JSON_KEY",
 		"GOOGLE_APPLICATION_CREDENTIALS": "GCS_SERVICE_ACCOUNT_JSON_KEY",
-		"GOOGLE_PROJECT_ID":			  "GCS_PROJECT_ID",
-		"GOOGLE_OBJECT_ACL": 			  "GCS_OBJECT_ACL",
-		"GOOGLE_BUCKET_ACL": 			  "GCS_BUCKET_ACL",
-		"GOOGLE_STORAGE_LOCATION": 		  "GCS_LOCATION",
-		"GOOGLE_STORAGE_CLASS": 		  "GCS_STORAGE_CLASS",
+		"GOOGLE_PROJECT_ID":              "GCS_PROJECT_ID",
+		"GOOGLE_OBJECT_ACL":              "GCS_OBJECT_ACL",
+		"GOOGLE_BUCKET_ACL":              "GCS_BUCKET_ACL",
+		"GOOGLE_STORAGE_LOCATION":        "GCS_LOCATION",
+		"GOOGLE_STORAGE_CLASS":           "GCS_STORAGE_CLASS",
 	}
 )
 
@@ -284,7 +284,7 @@ func (wp *Wordpress) gitCloneContainer() corev1.Container {
 
 func (wp *Wordpress) getMediaContainers() []corev1.Container {
 	if wp.Spec.MediaVolumeSpec == nil ||
-		(wp.Spec.MediaVolumeSpec.S3VolumeSource == nil && wp.Spec.MediaVolumeSpec.GCSVolumeSource == nil){
+		(wp.Spec.MediaVolumeSpec.S3VolumeSource == nil && wp.Spec.MediaVolumeSpec.GCSVolumeSource == nil) {
 		return []corev1.Container{}
 	}
 
@@ -315,21 +315,21 @@ func (wp *Wordpress) getMediaContainers() []corev1.Container {
 		}
 	}
 
-	return []corev1.Container {
+	return []corev1.Container{
 		{
-			Name:    "rclone-ftp",
-			Image:   rcloneImage,
-			Args:    []string{"serve", "ftp", "--vfs-cache-max-age", "30s", "--vfs-cache-mode", "full",
+			Name:  "rclone-ftp",
+			Image: rcloneImage,
+			Args: []string{"serve", "ftp", "--vfs-cache-max-age", "30s", "--vfs-cache-mode", "full",
 				"--vfs-cache-poll-interval", "0", "--poll-interval", "0", stream, "--config=/etc/rclone.conf",
 				fmt.Sprintf("--addr=0.0.0.0:%s", mediaFTPPort)},
-			Env:     env,
+			Env: env,
 		},
 		{
-			Name:    "rclone-http",
-			Image:   rcloneImage,
-			Args:    []string{"serve", "http", "--dir-cache-time", "0", stream, "--config=/etc/rclone.conf",
+			Name:  "rclone-http",
+			Image: rcloneImage,
+			Args: []string{"serve", "http", "--dir-cache-time", "0", stream, "--config=/etc/rclone.conf",
 				fmt.Sprintf("--addr=0.0.0.0:%s", mediaHTTPPort)},
-			Env:     env,
+			Env: env,
 		},
 	}
 }
