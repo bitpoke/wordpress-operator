@@ -319,6 +319,17 @@ func (wp *Wordpress) getMediaContainers() []corev1.Container {
 		}
 	}
 
+	// ftp
+	// rclone serve ftp --vfs-cache-max-age 30s --vfs-cache-mde full --vfs-cache-poll-interval 0 --poll-interval 0
+	// We want to cache writes and reads on the FTP server since thumbnails are going to be generated and also
+	// because Wordpress is doing a directory listing in order to display the media gallery.
+	// We also set the poll interval to zero to avoid any unnecessary requests to the remote buckets.
+
+	// http
+	// rclone serve http --dir-cache-time 0
+	// HTTP is used only to read media and the caching will be done in another layer. Also, because some upstreams are
+	// eventually consistent, we don't want to cache stale responses.
+
 	return []corev1.Container{
 		{
 			Name:  "rclone-ftp",
