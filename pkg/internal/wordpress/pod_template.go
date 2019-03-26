@@ -31,6 +31,9 @@ const (
 
 const rcloneImage = "quay.io/presslabs/rclone"
 
+const mediaHTTPPort = "8080"
+const mediaFTPPort = "2121"
+
 const gitCloneScript = `#!/bin/bash
 set -e
 set -o pipefail
@@ -104,6 +107,20 @@ func (wp *Wordpress) env() []corev1.EnvVar {
 			Value: fmt.Sprintf("%s://%s/wp", scheme, wp.Spec.Domains[0]),
 		},
 	}, wp.Spec.Env...)
+
+	if wp.Spec.MediaVolumeSpec != nil &&
+		(wp.Spec.MediaVolumeSpec.S3VolumeSource != nil || wp.Spec.MediaVolumeSpec.GCSVolumeSource != nil) {
+		out = append([]corev1.EnvVar{
+			{
+				Name:  "UPLOADS_FTP_HOST",
+				Value: fmt.Sprintf("ftp://127.0.0.1:%s", mediaFTPPort),
+			},
+			{
+				Name:  "UPLOADS_HTTP_PROXY",
+				Value: fmt.Sprintf("127.0.0.1:%s", mediaHTTPPort),
+			},
+		}, out...)
+	}
 
 	return out
 }
@@ -265,7 +282,7 @@ func (wp *Wordpress) gitCloneContainer() corev1.Container {
 	}
 }
 
-func (wp *Wordpress) getUploadsContainers() []corev1.Container {
+func (wp *Wordpress) getMediaContainers() []corev1.Container {
 	if wp.Spec.MediaVolumeSpec == nil ||
 		(wp.Spec.MediaVolumeSpec.S3VolumeSource == nil && wp.Spec.MediaVolumeSpec.GCSVolumeSource == nil){
 		return []corev1.Container{}
@@ -304,14 +321,14 @@ func (wp *Wordpress) getUploadsContainers() []corev1.Container {
 			Image:   rcloneImage,
 			Args:    []string{"serve", "ftp", "--vfs-cache-max-age", "30s", "--vfs-cache-mode", "full",
 				"--vfs-cache-poll-interval", "0", "--poll-interval", "0", stream, "--config=/etc/rclone.conf",
-				"--addr=0.0.0.0:2121"},
+				fmt.Sprintf("--addr=0.0.0.0:%s", mediaFTPPort)},
 			Env:     env,
 		},
 		{
 			Name:    "rclone-http",
 			Image:   rcloneImage,
 			Args:    []string{"serve", "http", "--dir-cache-time", "0", stream, "--config=/etc/rclone.conf",
-				"--addr=0.0.0.0:8080"},
+				fmt.Sprintf("--addr=0.0.0.0:%s", mediaHTTPPort)},
 			Env:     env,
 		},
 	}
@@ -349,7 +366,7 @@ func (wp *Wordpress) WebPodTemplateSpec() (out corev1.PodTemplateSpec) {
 			},
 		},
 	}
-	out.Spec.Containers = append(out.Spec.Containers, wp.getUploadsContainers()...)
+	out.Spec.Containers = append(out.Spec.Containers, wp.getMediaContainers()...)
 
 	out.Spec.Volumes = wp.volumes()
 
@@ -402,7 +419,7 @@ func (wp *Wordpress) JobPodTemplateSpec(cmd ...string) (out corev1.PodTemplateSp
 			EnvFrom:      wp.envFrom(),
 		},
 	}
-	out.Spec.Containers = append(out.Spec.Containers, wp.getUploadsContainers()...)
+	out.Spec.Containers = append(out.Spec.Containers, wp.getMediaContainers()...)
 
 	out.Spec.Volumes = wp.volumes()
 
