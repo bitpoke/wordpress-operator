@@ -171,5 +171,6 @@ var _ = Describe("Wordpress controller", func() {
 			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
 			Eventually(func() error { return c.Get(context.TODO(), key, obj) }, timeout).Should(Succeed())
 		}, entries...)
+
 	})
 })

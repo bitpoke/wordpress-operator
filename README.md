@@ -69,6 +69,8 @@ spec:
             secretKeyRef:
               name: mysite
               key: google_application_credentials.json
+        - name: GOOGLE_PROJECT_ID
+          value: development
     # persistentVolumeClaim: {}
     # hostPath: {}
     # emptyDir: {}
