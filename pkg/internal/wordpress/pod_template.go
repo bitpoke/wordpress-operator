@@ -31,6 +31,8 @@ const (
 	mediaFTPPort      = 2121
 	codeVolumeName    = "code"
 	mediaVolumeName   = "media"
+	s3Prefix          = "s3"
+	gcsPrefix         = "gs"
 )
 
 const gitCloneScript = `#!/bin/bash
@@ -266,19 +268,18 @@ func (wp *Wordpress) gitCloneContainer() corev1.Container {
 
 func (wp *Wordpress) rcloneContainer(name string, args []string) corev1.Container {
 	var env []corev1.EnvVar
-	if wp.Spec.MediaVolumeSpec.S3VolumeSource != nil {
-		env = wp.Spec.MediaVolumeSpec.S3VolumeSource.Env
-	} else if wp.Spec.MediaVolumeSpec.GCSVolumeSource != nil {
-		env = wp.Spec.MediaVolumeSpec.GCSVolumeSource.Env
-	}
-
 	var stream string
-	if wp.Spec.MediaVolumeSpec.S3VolumeSource != nil {
-		stream = path.Clean(fmt.Sprintf("s3:%s/%s", wp.Spec.MediaVolumeSpec.S3VolumeSource.Bucket,
-			wp.Spec.MediaVolumeSpec.S3VolumeSource.PathPrefix))
-	} else if wp.Spec.MediaVolumeSpec.GCSVolumeSource != nil {
-		stream = path.Clean(fmt.Sprintf("gs:%s/%s", wp.Spec.MediaVolumeSpec.GCSVolumeSource.Bucket,
-			wp.Spec.MediaVolumeSpec.GCSVolumeSource.PathPrefix))
+
+	switch {
+	case wp.Spec.MediaVolumeSpec.S3VolumeSource != nil:
+		env = wp.Spec.MediaVolumeSpec.S3VolumeSource.Env
+		bucket := fmt.Sprintf("%s:%s", s3Prefix, wp.Spec.MediaVolumeSpec.S3VolumeSource.Bucket)
+		stream = path.Join(bucket, wp.Spec.MediaVolumeSpec.S3VolumeSource.PathPrefix)
+
+	case wp.Spec.MediaVolumeSpec.GCSVolumeSource != nil:
+		env = wp.Spec.MediaVolumeSpec.GCSVolumeSource.Env
+		bucket := fmt.Sprintf("%s:%s", gcsPrefix, wp.Spec.MediaVolumeSpec.GCSVolumeSource.Bucket)
+		stream = path.Join(bucket, wp.Spec.MediaVolumeSpec.GCSVolumeSource.PathPrefix)
 	}
 
 	env = append(env, corev1.EnvVar{

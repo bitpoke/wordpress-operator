@@ -51,15 +51,20 @@ var _ = Describe("Web pod spec", func() {
 	})
 
 	DescribeTable("Shouldn't generate any init containers, if git and a remote stream is not configured",
-		func(f func() corev1.PodTemplateSpec) {
-			Expect(f().Spec.InitContainers).To(Equal([]corev1.Container{}))
+		func(f func() func() corev1.PodTemplateSpec) {
+			// we need this hack to allow wp to be initialized
+			podSpec := f()
+			Expect(podSpec().Spec.InitContainers).To(BeEmpty())
 		},
-		Entry("for web pod", func() corev1.PodTemplateSpec { return wp.WebPodTemplateSpec() }),
-		Entry("for job pod", func() corev1.PodTemplateSpec { return wp.JobPodTemplateSpec() }),
+		Entry("for web pod", func() func() corev1.PodTemplateSpec { return wp.WebPodTemplateSpec }),
+		Entry("for job pod", func() func() corev1.PodTemplateSpec {
+			return func() corev1.PodTemplateSpec { return wp.JobPodTemplateSpec() }
+		}),
 	)
 
-	DescribeTable("Should generate just a git container, when no remote stream is configure",
+	DescribeTable("Should generate just a git container, when no remote stream is configured",
 		func(f func() (func() corev1.PodTemplateSpec, *Wordpress)) {
+			// we need this hack to allow wp to be initialized with our custom values
 			podSpec, w := f()
 
 			w.Spec.CodeVolumeSpec = &wordpressv1alpha1.CodeVolumeSpec{
@@ -67,7 +72,7 @@ var _ = Describe("Web pod spec", func() {
 			}
 			containers := podSpec().Spec.InitContainers
 
-			Expect(len(containers)).To(Equal(1))
+			Expect(containers).To(HaveLen(1))
 			Expect(containers[0].Name).To(Equal("git"))
 			Expect(containers[0].Image).To(Equal(gitCloneImage))
 		},
@@ -93,7 +98,7 @@ var _ = Describe("Web pod spec", func() {
 			spec := podSpec()
 
 			initContainers := spec.Spec.InitContainers
-			Expect(len(initContainers)).To(Equal(2))
+			Expect(initContainers).To(HaveLen(2))
 
 			Expect(initContainers[0].Name).To(Equal("rclone-init-ftp"))
 			Expect(initContainers[0].Image).To(Equal(rcloneImage))
@@ -102,7 +107,7 @@ var _ = Describe("Web pod spec", func() {
 			Expect(initContainers[1].Image).To(Equal(gitCloneImage))
 
 			containers := spec.Spec.Containers
-			Expect(len(containers)).To(Equal(3))
+			Expect(containers).To(HaveLen(3))
 
 			Expect(containers[1].Name).To(Equal("rclone-ftp"))
 			Expect(containers[1].Image).To(Equal(rcloneImage))
