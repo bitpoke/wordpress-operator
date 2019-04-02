@@ -18,15 +18,13 @@ package sync
 
 import (
 	"fmt"
+	"github.com/appscode/mergo"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"time"
-
-	"github.com/appscode/mergo"
 
 	"github.com/presslabs/controller-util/mergo/transformers"
 	"github.com/presslabs/controller-util/syncer"
@@ -72,9 +70,9 @@ func NewWPCronSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.S
 
 		hostHeader := fmt.Sprintf("Host: %s", wp.Spec.Domains[0])
 		svcHostname := fmt.Sprintf("%s.%s.svc", wp.Name, wp.Namespace)
-		url := fmt.Sprintf("http://%s/wp/wp-cron.php?doing_wp_cron&ts=%d", svcHostname, time.Now().Unix())
+		url := fmt.Sprintf("http://%s/wp/wp-cron.php?doing_wp_cron", svcHostname)
 
-		// curl -s -I --max-time 30 -H "Host: <Host>" "http://<site>.<namespace>.svc/wp-cron.php?doing_wp_cron&ts=<now>"
+		// curl -s -I --max-time 30 -H "Host: <Host>" "http://<site>.<namespace>.svc/wp-cron.php?doing_wp_cron"
 		cmd := []string{"curl", "-s", "-I", "--max-time", "30", "-H", hostHeader, url}
 
 		template := corev1.PodTemplateSpec{}
