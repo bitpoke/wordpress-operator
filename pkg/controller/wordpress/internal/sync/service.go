@@ -61,7 +61,7 @@ func NewServiceSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.
 
 		out.Spec.Ports[0].Name = "http"
 		out.Spec.Ports[0].Port = int32(80)
-		out.Spec.Ports[0].TargetPort = intstr.FromInt(wordpress.WordpressHTTPPort)
+		out.Spec.Ports[0].TargetPort = intstr.FromInt(wordpress.InternalHTTPPort)
 
 		return nil
 	})
