@@ -31,10 +31,6 @@ import (
 	"github.com/presslabs/wordpress-operator/pkg/internal/wordpress"
 )
 
-const (
-	wordpressHTTPPort = 80
-)
-
 // NewServiceSyncer returns a new sync.Interface for reconciling web Service
 func NewServiceSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.Scheme) syncer.Interface {
 	objLabels := wp.ComponentLabels(wordpress.WordpressDeployment)
@@ -65,7 +61,7 @@ func NewServiceSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.
 
 		out.Spec.Ports[0].Name = "http"
 		out.Spec.Ports[0].Port = int32(80)
-		out.Spec.Ports[0].TargetPort = intstr.FromInt(wordpressHTTPPort)
+		out.Spec.Ports[0].TargetPort = intstr.FromInt(wordpress.WordpressHTTPPort)
 
 		return nil
 	})
