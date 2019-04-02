@@ -72,7 +72,8 @@ func NewWPCronSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.S
 
 		hostHeader := fmt.Sprintf("Host: %s", wp.Spec.Domains[0])
 		webPod := fmt.Sprintf("%s.%s.svc", wp.Name, wp.Namespace)
-		url := fmt.Sprintf("http://%s/wp/wp-cron.php?doing_wp_cron&ts=%d", webPod, time.Now().Unix())
+		url := fmt.Sprintf("http://%s:%d/wp/wp-cron.php?doing_wp_cron&ts=%d", webPod, wordpress.WordpressHTTPPort,
+			time.Now().Unix())
 
 		// curl -s -I --max-time 30 -H "Host: <Host>" "http://<site>.<namespace>.svc/wp-cron.php?doing_wp_cron&ts=<now>"
 		cmd := []string{"curl", "-s", "-I", "--max-time", "30", "-H", hostHeader, url}

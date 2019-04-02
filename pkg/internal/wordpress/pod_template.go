@@ -24,10 +24,11 @@ import (
 )
 
 const (
+	// WordpressHTTPPort represents the internal port used by the runtime container
+	WordpressHTTPPort = 8080
 	gitCloneImage     = "docker.io/library/buildpack-deps:stretch-scm"
 	rcloneImage       = "quay.io/presslabs/rclone@sha256:4436a1e2d471236eafac605b24a66f5f18910b6f9cde505db065506208f73f96"
-	wordpressHTTPPort = 80
-	mediaHTTPPort     = 8080
+	mediaHTTPPort     = 8090
 	mediaFTPPort      = 2121
 	codeVolumeName    = "code"
 	mediaVolumeName   = "media"
@@ -371,7 +372,7 @@ func (wp *Wordpress) WebPodTemplateSpec() (out corev1.PodTemplateSpec) {
 			Ports: []corev1.ContainerPort{
 				{
 					Name:          "http",
-					ContainerPort: int32(wordpressHTTPPort),
+					ContainerPort: int32(WordpressHTTPPort),
 				},
 			},
 		},
