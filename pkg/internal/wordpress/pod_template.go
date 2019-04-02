@@ -332,12 +332,12 @@ func (wp *Wordpress) initContainers() []corev1.Container {
 
 	if wp.hasExternalMedia() {
 		// rclone-init-ftp
-		// rclone mkdir gcs:prefix/wp-content/uploads
+		// rclone touch gcs:prefix/wp-content/uploads/.keep
 		// Because of https://bugs.php.net/bug.php?id=77680, we need to create the root directories.
 		// For now, we don't support custom UPLOADS paths, only the default one (wp-content/uploads).
 		// TODO: remove it once the fix is released
 		initFTPCmd := []string{
-			"mkdir", "-vvv", "$(RCLONE_STREAM)/wp-content/uploads",
+			"touch", "-vvv", "$(RCLONE_STREAM)/wp-content/uploads/.keep",
 		}
 
 		containers = append(containers, wp.rcloneContainer("rclone-init-ftp", initFTPCmd))
