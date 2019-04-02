@@ -17,7 +17,7 @@ limitations under the License.
 package wordpress
 
 const (
-	defaultTag           = "5.1-r72"
+	defaultTag           = "5.1-r73"
 	defaultImage         = "quay.io/presslabs/wordpress-runtime"
 	codeSrcMountPath     = "/var/run/presslabs.org/code/src"
 	defaultCodeMountPath = "/var/www/html/wp-content"
