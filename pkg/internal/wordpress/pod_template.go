@@ -491,7 +491,7 @@ func (wp *Wordpress) initContainers() []corev1.Container {
 	return containers
 }
 
-func (wp *Wordpress) readinessHandler() corev1.Handler {
+func (wp *Wordpress) readinessProbe() *corev1.Probe {
 	// If the HTTPGetAction doesn't have any Host parameter it will use pod's IP address as Host.
 	// This is helpful because Wordpress may not be installed and in this case it will redirect to
 	// Spec.Routes[0]. If the same host was used in the initial request as Spec.Routes[0], k8s will follow
@@ -502,11 +502,34 @@ func (wp *Wordpress) readinessHandler() corev1.Handler {
 	//	* https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/
 	//	  Any code greater than or equal to 200 and less than 400 indicates success.
 
-	return corev1.Handler{
-		HTTPGet: &corev1.HTTPGetAction{
-			Path: "/",
-			Port: intstr.FromInt(InternalHTTPPort),
+	return &corev1.Probe{
+		Handler: corev1.Handler{
+			HTTPGet: &corev1.HTTPGetAction{
+				Path: "/",
+				Port: intstr.FromInt(InternalHTTPPort),
+			},
 		},
+		FailureThreshold:    3,
+		InitialDelaySeconds: 10,
+		PeriodSeconds:       5,
+		SuccessThreshold:    1,
+		TimeoutSeconds:      30,
+	}
+}
+
+func (wp *Wordpress) livenessProbe() *corev1.Probe {
+	return &corev1.Probe{
+		Handler: corev1.Handler{
+			HTTPGet: &corev1.HTTPGetAction{
+				Path: "/-/php-ping",
+				Port: intstr.FromInt(InternalHTTPPort),
+			},
+		},
+		FailureThreshold:    3,
+		InitialDelaySeconds: 10,
+		PeriodSeconds:       5,
+		SuccessThreshold:    1,
+		TimeoutSeconds:      30,
 	}
 }
 
@@ -557,15 +580,9 @@ func (wp *Wordpress) WebPodTemplateSpec() (out corev1.PodTemplateSpec) {
 					},
 				},
 			},
-			ReadinessProbe: &corev1.Probe{
-				Handler:             wp.readinessHandler(),
-				InitialDelaySeconds: 10,
-				TimeoutSeconds:      30,
-				PeriodSeconds:       5,
-				SuccessThreshold:    1,
-				FailureThreshold:    3,
-			},
 		},
+		ReadinessProbe: wp.readinessProbe(),
+		LivenessProbe:  wp.livenessProbe(),
 	}
 	out.Spec.Containers = append([]corev1.Container{wordpressContainer}, wp.Spec.Sidecars...)
 
