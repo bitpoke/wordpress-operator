@@ -1,4 +1,6 @@
 # wordpress-operator
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fpresslabs%2Fwordpress-operator.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fpresslabs%2Fwordpress-operator?ref=badge_shield)
+
 WordPress operator enables managing multiple WordPress installments at scale.
 
 ## Goals and status
@@ -99,3 +101,6 @@ spec:
 
 This project is licensed under Apache 2.0 license. Read the [LICENSE](LICENSE) file in the
 top distribution directory, for the full license text.
+
+
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fpresslabs%2Fwordpress-operator.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fpresslabs%2Fwordpress-operator?ref=badge_large)
