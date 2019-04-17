@@ -97,6 +97,7 @@ publish: images
 
 lint:
 	$(BINDIR)/golangci-lint run ./pkg/... ./cmd/...
+	hack/license-check
 
 dependencies:
 	test -d $(BINDIR) || mkdir $(BINDIR)
