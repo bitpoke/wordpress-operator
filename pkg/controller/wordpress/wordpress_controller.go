@@ -18,6 +18,9 @@ package wordpress
 
 import (
 	"context"
+	"fmt"
+	"reflect"
+	"strings"
 
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
@@ -31,6 +34,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/presslabs/controller-util/syncer"
@@ -41,6 +45,8 @@ import (
 )
 
 const controllerName = "wordpress-controller"
+
+var log = logf.Log.WithName("wordpress-operator")
 
 // Add creates a new Wordpress Controller and adds it to the Manager with default RBAC. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -120,9 +126,30 @@ func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Res
 		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
 	}
+	status := *wp.Status.DeepCopy()
 
 	r.scheme.Default(wp.Unwrap())
 	wp.SetDefaults()
+
+	log.Info(fmt.Sprintf("replicas: %d", wp.Status.Replicas))
+	log.Info(fmt.Sprintf("label selector: %s", wp.Status.LabelSelector))
+
+	var labels []string
+	for k, v := range wp.Labels() {
+		labels = append(labels, fmt.Sprintf("%s=%s", k, v))
+	}
+	wp.Status.LabelSelector = strings.Join(labels[:], ",")
+
+	defer func() {
+		if !reflect.DeepEqual(status, wp.Status) {
+			sErr := r.Status().Update(context.TODO(), wp.Unwrap())
+			if sErr != nil {
+				log.Error(sErr, "failed to update cluster status", "cluster", wp)
+			}
+		} else {
+			log.Info("nothing to update")
+		}
+	}()
 
 	secretSyncer := sync.NewSecretSyncer(wp, r.Client, r.scheme)
 	syncers := []syncer.Interface{
@@ -131,7 +158,7 @@ func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Res
 		sync.NewServiceSyncer(wp, r.Client, r.scheme),
 		sync.NewIngressSyncer(wp, r.Client, r.scheme),
 		sync.NewWPCronSyncer(wp, r.Client, r.scheme),
-		// sync.NewDBUpgradeJobSyncer(wp, r.Client, r.scheme),
+		//sync.NewDBUpgradeJobSyncer(wp, r.Client, r.scheme),
 	}
 
 	if wp.Spec.CodeVolumeSpec != nil && wp.Spec.CodeVolumeSpec.PersistentVolumeClaim != nil {

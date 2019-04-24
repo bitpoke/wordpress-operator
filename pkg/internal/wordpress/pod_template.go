@@ -18,6 +18,7 @@ package wordpress
 
 import (
 	"fmt"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"path"
 
 	corev1 "k8s.io/api/core/v1"
@@ -316,11 +317,20 @@ func (wp *Wordpress) rcloneContainer(name string, args []string) corev1.Containe
 		Value: stream,
 	})
 
+	cpuRequest, _ := resource.ParseQuantity("100m")
+	memoryRequest, _ := resource.ParseQuantity("64Mi")
+
 	return corev1.Container{
 		Name:  name,
 		Image: rcloneImage,
 		Args:  args,
 		Env:   env,
+		Resources: corev1.ResourceRequirements{
+			Requests: corev1.ResourceList{
+				corev1.ResourceMemory: memoryRequest,
+				corev1.ResourceCPU:    cpuRequest,
+			},
+		},
 	}
 }
 

@@ -259,6 +259,8 @@ type WordpressStatus struct {
 	// This is copied over from the deployment object
 	// +optional
 	Replicas int32 `json:"replicas,omitempty"`
+
+	LabelSelector string `json:"labelSelector,omitempty"`
 }
 
 // +genclient
@@ -267,7 +269,7 @@ type WordpressStatus struct {
 // Wordpress is the Schema for the wordpresses API
 // +k8s:openapi-gen=true
 // +kubebuilder:subresource:status
-// +kubebuilder:subresource:scale:specpath=.spec.replicas,statuspath=.status.replicas
+// +kubebuilder:subresource:scale:specpath=.spec.replicas,statuspath=.status.replicas,selectorpath=.status.labelSelector
 type Wordpress struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

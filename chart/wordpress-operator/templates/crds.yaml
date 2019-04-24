@@ -21,6 +21,7 @@ spec:
   scope: Namespaced
   subresources:
     scale:
+      labelSelectorPath: .status.labelSelector
       specReplicasPath: .spec.replicas
       statusReplicasPath: .status.replicas
     status: {}
@@ -256,6 +257,8 @@ spec:
                 - message
                 type: object
               type: array
+            labelSelector:
+              type: string
             replicas:
               description: Total number of non-terminated pods targeted by web deployment
                 This is copied over from the deployment object

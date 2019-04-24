@@ -26,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 
 	"github.com/appscode/mergo"
 
@@ -38,6 +39,8 @@ import (
 var (
 	oneReplica int32 = 1
 )
+
+var log = logf.Log.WithName("wordpress-operator")
 
 // NewDeploymentSyncer returns a new sync.Interface for reconciling web Deployment
 func NewDeploymentSyncer(wp *wordpress.Wordpress, secret *corev1.Secret, c client.Client, scheme *runtime.Scheme) syncer.Interface {
@@ -53,6 +56,10 @@ func NewDeploymentSyncer(wp *wordpress.Wordpress, secret *corev1.Secret, c clien
 	return syncer.NewObjectSyncer("Deployment", wp.Unwrap(), obj, c, scheme, func(existing runtime.Object) error {
 		out := existing.(*appsv1.Deployment)
 		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
+
+		wp.Status.Replicas = out.Status.ReadyReplicas
+
+		log.Info(fmt.Sprintf("ready replicas: %d", out.Status.ReadyReplicas))
 
 		template := wp.WebPodTemplateSpec()
 
