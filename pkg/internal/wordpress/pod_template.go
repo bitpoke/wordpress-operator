@@ -28,6 +28,7 @@ const (
 	InternalHTTPPort = 8080
 	gitCloneImage    = "docker.io/library/buildpack-deps:stretch-scm"
 	rcloneImage      = "quay.io/presslabs/rclone@sha256:4436a1e2d471236eafac605b24a66f5f18910b6f9cde505db065506208f73f96"
+	blackfireImage   = "blackfire/blackfire@sha256:4a4faf49a74a05aca12abb2467f89db88f3a5f7293cae897d594159728038568"
 	mediaHTTPPort    = 8090
 	mediaFTPPort     = 2121
 	codeVolumeName   = "code"
@@ -327,6 +328,51 @@ func (wp *Wordpress) mediaContainers() []corev1.Container {
 	}
 }
 
+func (wp *Wordpress) hasBlackfire() bool {
+	hasID := false
+	hasToken := false
+
+	for _, env := range wp.Spec.Env {
+		if env.Name == "BLACKFIRE_SERVER_ID" {
+			hasID = true
+		}
+
+		if env.Name == "BLACKFIRE_SERVER_TOKEN" {
+			hasToken = true
+		}
+	}
+	return hasToken && hasID
+}
+
+func (wp *Wordpress) blackfireContainer() []corev1.Container {
+	env := []corev1.EnvVar{}
+
+	for _, e := range wp.Spec.Env {
+		if e.Name == "BLACKFIRE_SERVER_ID" || e.Name == "BLACKFIRE_SERVER_TOKEN" {
+			env = append(env, e)
+		}
+	}
+
+	return []corev1.Container{
+		{
+			Name:  "blackfire-agent",
+			Image: blackfireImage,
+			Env:   env,
+		},
+	}
+}
+
+func (wp *Wordpress) utilContainers() []corev1.Container {
+	containers := []corev1.Container{}
+
+	if wp.hasBlackfire() {
+		containers = append(wp.blackfireContainer())
+	}
+
+	return containers
+
+}
+
 func (wp *Wordpress) initContainers() []corev1.Container {
 	containers := []corev1.Container{}
 
@@ -378,6 +424,7 @@ func (wp *Wordpress) WebPodTemplateSpec() (out corev1.PodTemplateSpec) {
 		},
 	}
 	out.Spec.Containers = append(out.Spec.Containers, wp.mediaContainers()...)
+	out.Spec.Containers = append(out.Spec.Containers, wp.utilContainers()...)
 
 	out.Spec.Volumes = wp.volumes()
 
@@ -426,6 +473,7 @@ func (wp *Wordpress) JobPodTemplateSpec(cmd ...string) (out corev1.PodTemplateSp
 		},
 	}
 	out.Spec.Containers = append(out.Spec.Containers, wp.mediaContainers()...)
+	out.Spec.Containers = append(out.Spec.Containers, wp.utilContainers()...)
 
 	out.Spec.Volumes = wp.volumes()
 

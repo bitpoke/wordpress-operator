@@ -79,7 +79,7 @@ spec:
   volumes: []
   # extra volume mounts for the Wordpress container
   volumeMounts: []
-  # extra env variables for the Wordpress container
+  # extra env variables for the Wordpress container or to enable certain features
   env:
     - name: WORDPRESS_DB_HOST
       value: mysite-mysql
@@ -87,6 +87,10 @@ spec:
       valueFrom:
         secretKeyRef: mysite-mysql
         key: PASSWORD
+    - name: BLACKFIRE_SERVER_ID
+      value: your-blackfire-server-id
+    - name: BLACKFIRE_SERVER_TOKEN
+      value: your-blackfire-server-token
   envFrom: []
 
   # secret containg HTTPS certificate

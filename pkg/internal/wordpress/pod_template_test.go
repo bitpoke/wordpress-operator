@@ -50,6 +50,36 @@ var _ = Describe("Web pod spec", func() {
 		wp.SetDefaults()
 	})
 
+	DescribeTable("Should create a blackfire container if the credentials are in the environment",
+		func(f func() (func() corev1.PodTemplateSpec, *Wordpress)) {
+			// we need this hack to allow wp to be initialized with our custom values
+			podSpec, w := f()
+
+			w.Spec.Env = append(w.Spec.Env, []corev1.EnvVar{
+				{
+					Name:  "BLACKFIRE_SERVER_ID",
+					Value: "BLACKFIRE_SERVER_ID",
+				},
+				{
+					Name:  "BLACKFIRE_SERVER_TOKEN",
+					Value: "BLACKFIRE_SERVER_TOKEN",
+				},
+			}...)
+
+			containers := podSpec().Spec.Containers
+
+			Expect(containers).To(HaveLen(2))
+			Expect(containers[1].Name).To(Equal("blackfire-agent"))
+			Expect(containers[1].Image).To(Equal(blackfireImage))
+		},
+		Entry("for web pod", func() (func() corev1.PodTemplateSpec, *Wordpress) {
+			return wp.WebPodTemplateSpec, wp
+		}),
+		Entry("for job pod", func() (func() corev1.PodTemplateSpec, *Wordpress) {
+			return func() corev1.PodTemplateSpec { return wp.JobPodTemplateSpec("test") }, wp
+		}),
+	)
+
 	DescribeTable("Shouldn't generate any init containers, if git and a remote stream is not configured",
 		func(f func() func() corev1.PodTemplateSpec) {
 			// we need this hack to allow wp to be initialized
