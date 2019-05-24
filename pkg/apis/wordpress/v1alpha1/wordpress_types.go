@@ -27,6 +27,44 @@ type SecretRef string
 // Domain represents a valid domain name
 type Domain string
 
+// WordpressConditionType defines condition types of a backup resources
+type WordpressConditionType string
+
+// WordpressCondition defines condition struct for backup resource
+type WordpressCondition struct {
+	// Type of Wordpress condition.
+	Type WordpressConditionType `json:"type"`
+	// Status of the condition, one of True, False, Unknown.
+	Status corev1.ConditionStatus `json:"status"`
+	// The last time this condition was updated.
+	LastUpdateTime metav1.Time `json:"lastUpdateTime,omitempty"`
+	// Last time the condition transitioned from one status to another.
+	LastTransitionTime metav1.Time `json:"lastTransitionTime"`
+	// The reason for the condition's last transition.
+	Reason string `json:"reason"`
+	// A human readable message indicating details about the transition.
+	Message string `json:"message"`
+}
+
+const (
+	// WordpressConditionProvisioning states if a given Wordpress is still provisioning.
+	WordpressConditionProvisioning WordpressConditionType = "Provisioning"
+	// WordpressConditionError states if a given Wordpress has encountered an error.
+	WordpressConditionError WordpressConditionType = "Error"
+	// WordpressConditionRunning states if a given Wordpress is running.
+	WordpressConditionRunning WordpressConditionType = "Running"
+
+	// ProvisionInProgress is the reason associated to the Provisioning condition for when
+	// the Wordpress provisioning is ongoing
+	ProvisionInProgress string = "ProvisionInProgress"
+	// ProvisionFailed is the reason associated to the Provisioning condition for when
+	// the Wordpress provisioning has failed
+	ProvisionFailed string = "ProvisionFailed"
+	// ProvisionSuccessful is the reason associated to the Provisioning condition for when
+	// the Wordpress provisioning has been successful
+	ProvisionSuccessful string = "ProvisionSuccessful"
+)
+
 // WordpressSpec defines the desired state of Wordpress
 type WordpressSpec struct {
 	// Number of desired web pods. This is a pointer to distinguish between
@@ -214,6 +252,9 @@ type MediaVolumeSpec struct {
 
 // WordpressStatus defines the observed state of Wordpress
 type WordpressStatus struct {
+	// Conditions represents the Wordpress resource conditions list.
+	// +optional
+	Conditions []WordpressCondition `json:"conditions,omitempty"`
 	// Total number of non-terminated pods targeted by web deployment
 	// This is copied over from the deployment object
 	// +optional

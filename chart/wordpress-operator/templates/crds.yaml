@@ -221,6 +221,41 @@ spec:
           type: object
         status:
           properties:
+            conditions:
+              description: Conditions represents the Wordpress resource conditions
+                list.
+              items:
+                properties:
+                  lastTransitionTime:
+                    description: Last time the condition transitioned from one status
+                      to another.
+                    format: date-time
+                    type: string
+                  lastUpdateTime:
+                    description: The last time this condition was updated.
+                    format: date-time
+                    type: string
+                  message:
+                    description: A human readable message indicating details about
+                      the transition.
+                    type: string
+                  reason:
+                    description: The reason for the condition's last transition.
+                    type: string
+                  status:
+                    description: Status of the condition, one of True, False, Unknown.
+                    type: string
+                  type:
+                    description: Type of Wordpress condition.
+                    type: string
+                required:
+                - type
+                - status
+                - lastTransitionTime
+                - reason
+                - message
+                type: object
+              type: array
             replicas:
               description: Total number of non-terminated pods targeted by web deployment
                 This is copied over from the deployment object
