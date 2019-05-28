@@ -107,7 +107,7 @@ var _ = Describe("Web pod spec", func() {
 			Expect(initContainers[1].Image).To(Equal(gitCloneImage))
 
 			containers := spec.Spec.Containers
-			Expect(containers).To(HaveLen(3))
+			Expect(containers).To(HaveLen(2))
 
 			Expect(containers[1].Name).To(Equal("rclone-ftp"))
 			Expect(containers[1].Image).To(Equal(rcloneImage))
@@ -117,19 +117,6 @@ var _ = Describe("Web pod spec", func() {
 					fmt.Sprintf("--addr=0.0.0.0:%d", mediaFTPPort),
 				}))
 			Expect(containers[1].Env).To(Equal([]corev1.EnvVar{
-				{
-					Name:  "RCLONE_STREAM",
-					Value: "gs:",
-				},
-			}))
-
-			Expect(containers[2].Name).To(Equal("rclone-http"))
-			Expect(containers[2].Image).To(Equal(rcloneImage))
-			Expect(containers[2].Args).To(Equal([]string{
-				"serve", "http", "-vvv", "--dir-cache-time", "0", "$(RCLONE_STREAM)/",
-				fmt.Sprintf("--addr=0.0.0.0:%d", mediaHTTPPort),
-			}))
-			Expect(containers[2].Env).To(Equal([]corev1.EnvVar{
 				{
 					Name:  "RCLONE_STREAM",
 					Value: "gs:",
