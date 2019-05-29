@@ -46,25 +46,6 @@ type WordpressCondition struct {
 	Message string `json:"message"`
 }
 
-const (
-	// WordpressConditionProvisioning states if a given Wordpress is still provisioning.
-	WordpressConditionProvisioning WordpressConditionType = "Provisioning"
-	// WordpressConditionError states if a given Wordpress has encountered an error.
-	WordpressConditionError WordpressConditionType = "Error"
-	// WordpressConditionRunning states if a given Wordpress is running.
-	WordpressConditionRunning WordpressConditionType = "Running"
-
-	// ProvisionInProgress is the reason associated to the Provisioning condition for when
-	// the Wordpress provisioning is ongoing
-	ProvisionInProgress string = "ProvisionInProgress"
-	// ProvisionFailed is the reason associated to the Provisioning condition for when
-	// the Wordpress provisioning has failed
-	ProvisionFailed string = "ProvisionFailed"
-	// ProvisionSuccessful is the reason associated to the Provisioning condition for when
-	// the Wordpress provisioning has been successful
-	ProvisionSuccessful string = "ProvisionSuccessful"
-)
-
 // WordpressSpec defines the desired state of Wordpress
 type WordpressSpec struct {
 	// Number of desired web pods. This is a pointer to distinguish between
