@@ -67,6 +67,11 @@ var (
 	wwwDataUserID int64 = 33
 )
 
+var blacklistedEnv = map[string]bool{
+	"WORDPRESS_BOOTSTRAP_USER":     true,
+	"WORDPRESS_BOOTSTRAP_PASSWORD": true,
+}
+
 var (
 	s3EnvVars = map[string]string{
 		"AWS_ACCESS_KEY_ID":     "AWS_ACCESS_KEY_ID",
@@ -129,7 +134,15 @@ func (wp *Wordpress) env() []corev1.EnvVar {
 			Name:  "WP_SITEURL",
 			Value: fmt.Sprintf("%s://%s/wp", scheme, wp.Spec.Domains[0]),
 		},
-	}, wp.Spec.Env...)
+	})
+
+	for _, env := range wp.Spec.Env {
+		if _, ok := blacklistedEnv[env.Name]; ok {
+			continue
+		}
+
+		out = append(out, env)
+	}
 
 	if wp.Spec.MediaVolumeSpec != nil {
 		if wp.Spec.MediaVolumeSpec.S3VolumeSource != nil {
