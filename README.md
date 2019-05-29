@@ -87,6 +87,14 @@ spec:
       valueFrom:
         secretKeyRef: mysite-mysql
         key: PASSWORD
+    - name: WORDPRESS_BOOTSTRAP_USER
+      valueFrom:
+        secretKeyRef: mysite
+        key: USER
+    - name: WORDPRESS_BOOTSTRAP_PASSWORD
+      valueFrom:
+        secretKeyRef: mysite
+        key: PASSWORD
   envFrom: []
 
   # secret containg HTTPS certificate
