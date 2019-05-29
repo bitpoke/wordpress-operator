@@ -150,16 +150,10 @@ var _ = Describe("Web pod spec", func() {
 			}...)
 
 			initContainers := podSpec().Spec.InitContainers
-			Expect(initContainers).To(HaveLen(3))
+			Expect(initContainers).To(HaveLen(1))
 
-			Expect(initContainers[0].Name).To(Equal("rclone-init-ftp"))
-			Expect(initContainers[0].Image).To(Equal(rcloneImage))
-
-			Expect(initContainers[1].Name).To(Equal("git"))
-			Expect(initContainers[1].Image).To(Equal(gitCloneImage))
-
-			Expect(initContainers[1].Name).To(Equal("install-wp"))
-			Expect(initContainers[1].Image).To(Equal(w.image()))
+			Expect(initContainers[0].Name).To(Equal("install-wp"))
+			Expect(initContainers[0].Image).To(Equal(w.image()))
 		},
 		Entry("for web pod", func() (func() corev1.PodTemplateSpec, *Wordpress) {
 			return wp.WebPodTemplateSpec, wp
