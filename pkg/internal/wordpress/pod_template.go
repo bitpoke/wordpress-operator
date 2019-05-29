@@ -80,6 +80,11 @@ var (
 	}
 )
 
+type wpBootstrapCredentials struct {
+	user     string
+	password string
+}
+
 func (wp *Wordpress) image() string {
 	return fmt.Sprintf("%s:%s", wp.Spec.Image, wp.Spec.Tag)
 }
@@ -87,6 +92,26 @@ func (wp *Wordpress) image() string {
 func (wp *Wordpress) hasExternalMedia() bool {
 	return wp.Spec.MediaVolumeSpec != nil &&
 		(wp.Spec.MediaVolumeSpec.S3VolumeSource != nil || wp.Spec.MediaVolumeSpec.GCSVolumeSource != nil)
+}
+
+func (wp *Wordpress) installCredentials() *wpBootstrapCredentials {
+	var credentials wpBootstrapCredentials
+
+	for _, env := range wp.Spec.Env {
+		if env.Name == "WORDPRESS_BOOTSTRAP_USER" {
+			credentials.user = env.Value
+		}
+
+		if env.Name == "WORDPRESS_BOOTSTRAP_PASSWORD" {
+			credentials.password = env.Value
+		}
+	}
+
+	if credentials.user != "" && credentials.password != "" {
+		return &credentials
+	}
+
+	return nil
 }
 
 func (wp *Wordpress) env() []corev1.EnvVar {
@@ -347,6 +372,32 @@ func (wp *Wordpress) mediaContainers() []corev1.Container {
 
 func (wp *Wordpress) initContainers() []corev1.Container {
 	containers := []corev1.Container{}
+	installCredentials := wp.installCredentials()
+
+	if installCredentials != nil {
+		scheme := "http"
+		if len(wp.Spec.TLSSecretRef) > 0 {
+			scheme = "https"
+		}
+		url := fmt.Sprintf("%s://%s/", scheme, wp.Spec.Domains[0])
+
+		installCmd := []string{
+			"wp", "core", "install",
+			fmt.Sprintf("--url=%s", url),
+			fmt.Sprintf("--title=%s", wp.Spec.Domains[0]),
+			fmt.Sprintf("--admin_user=%s", installCredentials.user),
+			fmt.Sprintf("--admin_password=%s", installCredentials.password),
+			fmt.Sprintf("--admin_email=ping@%s", wp.Spec.Domains[0]),
+			"--skip-email"}
+		containers = append(containers, corev1.Container{
+			Name:         "install-wp",
+			Image:        wp.image(),
+			Args:         installCmd,
+			VolumeMounts: wp.volumeMounts(),
+			Env:          wp.env(),
+			EnvFrom:      wp.envFrom(),
+		})
+	}
 
 	if wp.hasExternalMedia() {
 		// rclone-init-ftp
