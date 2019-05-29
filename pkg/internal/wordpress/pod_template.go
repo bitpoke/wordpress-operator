@@ -119,13 +119,52 @@ func (wp *Wordpress) installCredentials() *wpBootstrapCredentials {
 	return nil
 }
 
+func (wp *Wordpress) mediaEnv() []corev1.EnvVar {
+	out := []corev1.EnvVar{}
+
+	if wp.Spec.MediaVolumeSpec == nil {
+		return out
+	}
+
+	if wp.Spec.MediaVolumeSpec.S3VolumeSource != nil {
+		for _, env := range wp.Spec.MediaVolumeSpec.S3VolumeSource.Env {
+			if name, ok := s3EnvVars[env.Name]; ok {
+				_env := env.DeepCopy()
+				_env.Name = name
+				out = append(out, *_env)
+			}
+		}
+	}
+
+	if wp.Spec.MediaVolumeSpec.GCSVolumeSource != nil {
+		out = append(out, corev1.EnvVar{
+			Name:  "MEDIA_BUCKET",
+			Value: fmt.Sprintf("gs://%s", wp.Spec.MediaVolumeSpec.GCSVolumeSource.Bucket),
+		})
+		out = append(out, corev1.EnvVar{
+			Name:  "MEDIA_BUCKET_PREFIX",
+			Value: wp.Spec.MediaVolumeSpec.GCSVolumeSource.PathPrefix,
+		})
+		for _, env := range wp.Spec.MediaVolumeSpec.GCSVolumeSource.Env {
+			if name, ok := gcsEnvVars[env.Name]; ok {
+				_env := env.DeepCopy()
+				_env.Name = name
+				out = append(out, *_env)
+			}
+		}
+	}
+
+	return out
+
+}
+
 func (wp *Wordpress) env() []corev1.EnvVar {
 	scheme := "http"
 	if len(wp.Spec.TLSSecretRef) > 0 {
 		scheme = "https"
 	}
 
-	out := append([]corev1.EnvVar{
+	out := []corev1.EnvVar{
 		{
 			Name:  "WP_HOME",
 			Value: fmt.Sprintf("%s://%s", scheme, wp.Spec.Domains[0]),
@@ -134,7 +173,7 @@ func (wp *Wordpress) env() []corev1.EnvVar {
 			Name:  "WP_SITEURL",
 			Value: fmt.Sprintf("%s://%s/wp", scheme, wp.Spec.Domains[0]),
 		},
-	})
+	}
 
 	for _, env := range wp.Spec.Env {
 		if _, ok := blacklistedEnv[env.Name]; ok {
@@ -144,35 +183,8 @@ func (wp *Wordpress) env() []corev1.EnvVar {
 		out = append(out, env)
 	}
 
-	if wp.Spec.MediaVolumeSpec != nil {
-		if wp.Spec.MediaVolumeSpec.S3VolumeSource != nil {
-			for _, env := range wp.Spec.MediaVolumeSpec.S3VolumeSource.Env {
-				if name, ok := s3EnvVars[env.Name]; ok {
-					_env := env.DeepCopy()
-					_env.Name = name
-					out = append(out, *_env)
-				}
-			}
-		}
+	out = append(out, wp.mediaEnv()...)
 
-		if wp.Spec.MediaVolumeSpec.GCSVolumeSource != nil {
-			out = append(out, corev1.EnvVar{
-				Name:  "MEDIA_BUCKET",
-				Value: fmt.Sprintf("gs://%s", wp.Spec.MediaVolumeSpec.GCSVolumeSource.Bucket),
-			})
-			out = append(out, corev1.EnvVar{
-				Name:  "MEDIA_BUCKET_PREFIX",
-				Value: wp.Spec.MediaVolumeSpec.GCSVolumeSource.PathPrefix,
-			})
-			for _, env := range wp.Spec.MediaVolumeSpec.GCSVolumeSource.Env {
-				if name, ok := gcsEnvVars[env.Name]; ok {
-					_env := env.DeepCopy()
-					_env.Name = name
-					out = append(out, *_env)
-				}
-			}
-		}
-	}
 	return out
 }
 
