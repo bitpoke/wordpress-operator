@@ -138,16 +138,18 @@ var _ = Describe("Web pod spec", func() {
 			// we need this hack to allow wp to be initialized with our custom values
 			podSpec, w := f()
 
-			w.Spec.Env = append(w.Spec.Env, []corev1.EnvVar{
-				{
-					Name:  "WORDPRESS_BOOTSTRAP_USER",
-					Value: "test",
+			w.Spec.WordpressBootstrapSpec = &wordpressv1alpha1.WordpressBootstrapSpec{
+				Env: []corev1.EnvVar{
+					{
+						Name:  "WORDPRESS_BOOTSTRAP_USER",
+						Value: "test",
+					},
+					{
+						Name:  "WORDPRESS_BOOTSTRAP_PASSWORD",
+						Value: "test",
+					},
 				},
-				{
-					Name:  "WORDPRESS_BOOTSTRAP_PASSWORD",
-					Value: "test",
-				},
-			}...)
+			}
 
 			initContainers := podSpec().Spec.InitContainers
 			Expect(initContainers).To(HaveLen(1))

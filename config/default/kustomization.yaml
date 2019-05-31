@@ -1,4 +1,6 @@
 # Adds namespace to all resources.
+kind: Kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
 namespace: wordpress-operator-system
 
 # Value of this field is prepended to the
@@ -20,6 +22,8 @@ namePrefix: wordpress-operator-
 resources:
 - ../rbac/*.yaml
 - ../manager/*.yaml
+- ../rbac/rbac_role.yaml
+- ../rbac/rbac_role_binding.yaml
 
-patches:
+patchesStrategicMerge:
 - manager_image_patch.yaml
