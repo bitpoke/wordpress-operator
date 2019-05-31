@@ -87,6 +87,9 @@ type WordpressSpec struct {
 	// Volumes defines additional volumes to get injected into web and cli pods
 	// +optional
 	Volumes []corev1.Volume `json:"volumes,omitempty"`
+	// WordpressBootstrapSpec specifies credentials used to install wordpress, on the first run.
+	// +optional
+	WordpressBootstrapSpec *WordpressBootstrapSpec `json:"bootstrap,omitempty"`
 	// VolumeMountsSpec defines additional mounts which get injected into web
 	// and cli pods.
 	// +optional
@@ -203,8 +206,7 @@ type CodeVolumeSpec struct {
 	EmptyDir *corev1.EmptyDirVolumeSource `json:"emptyDir,omitempty"`
 }
 
-// MediaVolumeSpec is the desired spec for mounting code into the wordpress
-// runtime container
+// MediaVolumeSpec is the desired spec for handling media files at runtime
 type MediaVolumeSpec struct {
 	// ReadOnly specifies if the volume should be mounted read-only inside the
 	// wordpress runtime container
@@ -229,6 +231,20 @@ type MediaVolumeSpec struct {
 	// EmptyDir to use if no HostPath is specified
 	// +optional
 	EmptyDir *corev1.EmptyDirVolumeSource `json:"emptyDir,omitempty"`
+}
+
+// WordpressBootstrapSpec requires defining at least
+// `WORDPRESS_BOOSTRAP_USER` and `WORDPRESS_BOOTSTRAP_PASSWORD` env variables.
+// `WORDPRESS_BOOSTRAP_EMAIL` and `WORDPRESS_BOOTSTRAP_TITLE` are also used if provided.
+type WordpressBootstrapSpec struct {
+	// Env defines environment variables for bootstrapping WordPress
+	// +optional
+	// +patchMergeKey=name
+	// +patchStrategy=merge
+	Env []corev1.EnvVar `json:"env,omitempty" patchStrategy:"merge" patchMergeKey:"name"`
+	// EnvFrom defines envFrom's which get passed into wordpress bootstrapper
+	// +optional
+	EnvFrom []corev1.EnvFromSource `json:"envFrom,omitempty"`
 }
 
 // WordpressStatus defines the observed state of Wordpress

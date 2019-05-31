@@ -18,10 +18,12 @@ package wordpress
 
 import (
 	"fmt"
-	"path"
-
 	corev1 "k8s.io/api/core/v1"
+	"path"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
+
+var log = logf.Log.WithName("wordpress-operator")
 
 const (
 	// InternalHTTPPort represents the internal port used by the runtime container
@@ -67,11 +69,6 @@ var (
 	wwwDataUserID int64 = 33
 )
 
-var blacklistedEnv = map[string]bool{
-	"WORDPRESS_BOOTSTRAP_USER":     true,
-	"WORDPRESS_BOOTSTRAP_PASSWORD": true,
-}
-
 var (
 	s3EnvVars = map[string]string{
 		"AWS_ACCESS_KEY_ID":     "AWS_ACCESS_KEY_ID",
@@ -85,9 +82,11 @@ var (
 	}
 )
 
-type wpBootstrapCredentials struct {
+type wpBootstrapConfig struct {
 	user     string
 	password string
+	title    string
+	email    string
 }
 
 func (wp *Wordpress) image() string {
@@ -99,21 +98,37 @@ func (wp *Wordpress) hasExternalMedia() bool {
 		(wp.Spec.MediaVolumeSpec.S3VolumeSource != nil || wp.Spec.MediaVolumeSpec.GCSVolumeSource != nil)
 }
 
-func (wp *Wordpress) installCredentials() *wpBootstrapCredentials {
-	var credentials wpBootstrapCredentials
+func (wp *Wordpress) installCredentials() *wpBootstrapConfig {
+	if wp.Spec.WordpressBootstrapSpec == nil {
+		log.Info("empty bootstrap config")
+		return nil
+	}
 
-	for _, env := range wp.Spec.Env {
+	config := wpBootstrapConfig{
+		email: fmt.Sprintf("ping@%s", wp.Spec.Domains[0]),
+		title: fmt.Sprintf("New site: %s", wp.Spec.Domains[0]),
+	}
+
+	for _, env := range wp.Spec.WordpressBootstrapSpec.Env {
 		if env.Name == "WORDPRESS_BOOTSTRAP_USER" {
-			credentials.user = env.Value
+			config.user = env.Value
 		}
 
 		if env.Name == "WORDPRESS_BOOTSTRAP_PASSWORD" {
-			credentials.password = env.Value
+			config.password = env.Value
+		}
+
+		if env.Name == "WORDPRESS_BOOTSTRAP_TITLE" {
+			config.title = env.Value
+		}
+
+		if env.Name == "WORDPRESS_BOOTSTRAP_EMAIL" {
+			config.email = env.Value
 		}
 	}
 
-	if credentials.user != "" && credentials.password != "" {
-		return &credentials
+	if config.user != "" && config.password != "" {
+		return &config
 	}
 
 	return nil
@@ -164,7 +179,7 @@ func (wp *Wordpress) env() []corev1.EnvVar {
 		scheme = "https"
 	}
 
-	out := []corev1.EnvVar{
+	out := append([]corev1.EnvVar{
 		{
 			Name:  "WP_HOME",
 			Value: fmt.Sprintf("%s://%s", scheme, wp.Spec.Domains[0]),
@@ -173,15 +188,7 @@ func (wp *Wordpress) env() []corev1.EnvVar {
 			Name:  "WP_SITEURL",
 			Value: fmt.Sprintf("%s://%s/wp", scheme, wp.Spec.Domains[0]),
 		},
-	}
-
-	for _, env := range wp.Spec.Env {
-		if _, ok := blacklistedEnv[env.Name]; ok {
-			continue
-		}
-
-		out = append(out, env)
-	}
+	}, wp.Spec.Env...)
 
 	out = append(out, wp.mediaEnv()...)
 
@@ -409,10 +416,10 @@ func (wp *Wordpress) initContainers() []corev1.Container {
 		installCmd := []string{
 			"wp", "core", "install",
 			fmt.Sprintf("--url=%s", url),
-			fmt.Sprintf("--title=%s", wp.Spec.Domains[0]),
+			fmt.Sprintf("--title=%s", installCredentials.title),
 			fmt.Sprintf("--admin_user=%s", installCredentials.user),
 			fmt.Sprintf("--admin_password=%s", installCredentials.password),
-			fmt.Sprintf("--admin_email=ping@%s", wp.Spec.Domains[0]),
+			fmt.Sprintf("--admin_email=%s", installCredentials.email),
 			"--skip-email"}
 		containers = append(containers, corev1.Container{
 			Name:         "install-wp",
