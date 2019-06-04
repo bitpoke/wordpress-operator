@@ -50,11 +50,11 @@ var _ = Describe("Web pod spec", func() {
 		wp.SetDefaults()
 	})
 
-	DescribeTable("Shouldn't generate any init containers, if git and a remote stream is not configured",
+	DescribeTable("Shouldn't generate any new init containers, if git and a remote stream is not configured",
 		func(f func() func() corev1.PodTemplateSpec) {
 			// we need this hack to allow wp to be initialized
 			podSpec := f()
-			Expect(podSpec().Spec.InitContainers).To(BeEmpty())
+			Expect(podSpec().Spec.InitContainers).To(HaveLen(1))
 		},
 		Entry("for web pod", func() func() corev1.PodTemplateSpec { return wp.WebPodTemplateSpec }),
 		Entry("for job pod", func() func() corev1.PodTemplateSpec {
@@ -72,9 +72,12 @@ var _ = Describe("Web pod spec", func() {
 			}
 			containers := podSpec().Spec.InitContainers
 
-			Expect(containers).To(HaveLen(1))
-			Expect(containers[0].Name).To(Equal("git"))
-			Expect(containers[0].Image).To(Equal(gitCloneImage))
+			Expect(containers).To(HaveLen(2))
+			Expect(containers[0].Name).To(Equal("install-wp"))
+			Expect(containers[0].Image).To(Equal(w.image()))
+
+			Expect(containers[1].Name).To(Equal("git"))
+			Expect(containers[1].Image).To(Equal(gitCloneImage))
 		},
 		Entry("for web pod", func() (func() corev1.PodTemplateSpec, *Wordpress) {
 			return wp.WebPodTemplateSpec, wp
@@ -98,13 +101,16 @@ var _ = Describe("Web pod spec", func() {
 			spec := podSpec()
 
 			initContainers := spec.Spec.InitContainers
-			Expect(initContainers).To(HaveLen(2))
+			Expect(initContainers).To(HaveLen(3))
 
-			Expect(initContainers[0].Name).To(Equal("rclone-init-ftp"))
-			Expect(initContainers[0].Image).To(Equal(rcloneImage))
+			Expect(initContainers[0].Name).To(Equal("install-wp"))
+			Expect(initContainers[0].Image).To(Equal(w.image()))
 
-			Expect(initContainers[1].Name).To(Equal("git"))
-			Expect(initContainers[1].Image).To(Equal(gitCloneImage))
+			Expect(initContainers[1].Name).To(Equal("rclone-init-ftp"))
+			Expect(initContainers[1].Image).To(Equal(rcloneImage))
+
+			Expect(initContainers[2].Name).To(Equal("git"))
+			Expect(initContainers[2].Image).To(Equal(gitCloneImage))
 
 			containers := spec.Spec.Containers
 			Expect(containers).To(HaveLen(2))
@@ -124,39 +130,6 @@ var _ = Describe("Web pod spec", func() {
 			}))
 		},
 
-		Entry("for web pod", func() (func() corev1.PodTemplateSpec, *Wordpress) {
-			return wp.WebPodTemplateSpec, wp
-		}),
-		Entry("for job pod", func() (func() corev1.PodTemplateSpec, *Wordpress) {
-			return func() corev1.PodTemplateSpec { return wp.JobPodTemplateSpec("test") }, wp
-		}),
-	)
-
-	DescribeTable("Should create an install wp init container container if the credentials are in "+
-		"the environment",
-		func(f func() (func() corev1.PodTemplateSpec, *Wordpress)) {
-			// we need this hack to allow wp to be initialized with our custom values
-			podSpec, w := f()
-
-			w.Spec.WordpressBootstrapSpec = &wordpressv1alpha1.WordpressBootstrapSpec{
-				Env: []corev1.EnvVar{
-					{
-						Name:  "WORDPRESS_BOOTSTRAP_USER",
-						Value: "test",
-					},
-					{
-						Name:  "WORDPRESS_BOOTSTRAP_PASSWORD",
-						Value: "test",
-					},
-				},
-			}
-
-			initContainers := podSpec().Spec.InitContainers
-			Expect(initContainers).To(HaveLen(1))
-
-			Expect(initContainers[0].Name).To(Equal("install-wp"))
-			Expect(initContainers[0].Image).To(Equal(w.image()))
-		},
 		Entry("for web pod", func() (func() corev1.PodTemplateSpec, *Wordpress) {
 			return wp.WebPodTemplateSpec, wp
 		}),

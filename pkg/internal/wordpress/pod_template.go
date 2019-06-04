@@ -20,10 +20,7 @@ import (
 	"fmt"
 	corev1 "k8s.io/api/core/v1"
 	"path"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
-
-var log = logf.Log.WithName("wordpress-operator")
 
 const (
 	// InternalHTTPPort represents the internal port used by the runtime container
@@ -65,6 +62,14 @@ cd "$SRC_DIR"
 git checkout -B "$GIT_CLONE_REF" "$GIT_CLONE_REF"
 `
 
+const installWPCmd = `wp core install \
+--title="${WORDPRESS_BOOTSTRAP_TITLE:-Demo site}" \
+--url="%s" \
+--admin_user="${WORDPRESS_BOOTSTRAP_USER}" \
+--admin_password="${WORDPRESS_BOOTSTRAP_PASSWORD}" \
+--admin_email="${WORDPRESS_BOOTSTRAP_EMAIL:-%s}" \
+--skip-email`
+
 var (
 	wwwDataUserID int64 = 33
 )
@@ -82,13 +87,6 @@ var (
 	}
 )
 
-type wpBootstrapConfig struct {
-	user     string
-	password string
-	title    string
-	email    string
-}
-
 func (wp *Wordpress) image() string {
 	return fmt.Sprintf("%s:%s", wp.Spec.Image, wp.Spec.Tag)
 }
@@ -96,42 +94,6 @@ func (wp *Wordpress) image() string {
 func (wp *Wordpress) hasExternalMedia() bool {
 	return wp.Spec.MediaVolumeSpec != nil &&
 		(wp.Spec.MediaVolumeSpec.S3VolumeSource != nil || wp.Spec.MediaVolumeSpec.GCSVolumeSource != nil)
-}
-
-func (wp *Wordpress) installCredentials() *wpBootstrapConfig {
-	if wp.Spec.WordpressBootstrapSpec == nil {
-		log.Info("empty bootstrap config")
-		return nil
-	}
-
-	config := wpBootstrapConfig{
-		email: fmt.Sprintf("ping@%s", wp.Spec.Domains[0]),
-		title: fmt.Sprintf("New site: %s", wp.Spec.Domains[0]),
-	}
-
-	for _, env := range wp.Spec.WordpressBootstrapSpec.Env {
-		if env.Name == "WORDPRESS_BOOTSTRAP_USER" {
-			config.user = env.Value
-		}
-
-		if env.Name == "WORDPRESS_BOOTSTRAP_PASSWORD" {
-			config.password = env.Value
-		}
-
-		if env.Name == "WORDPRESS_BOOTSTRAP_TITLE" {
-			config.title = env.Value
-		}
-
-		if env.Name == "WORDPRESS_BOOTSTRAP_EMAIL" {
-			config.email = env.Value
-		}
-	}
-
-	if config.user != "" && config.password != "" {
-		return &config
-	}
-
-	return nil
 }
 
 func (wp *Wordpress) mediaEnv() []corev1.EnvVar {
@@ -404,32 +366,24 @@ func (wp *Wordpress) mediaContainers() []corev1.Container {
 
 func (wp *Wordpress) initContainers() []corev1.Container {
 	containers := []corev1.Container{}
-	installCredentials := wp.installCredentials()
 
-	if installCredentials != nil {
-		scheme := "http"
-		if len(wp.Spec.TLSSecretRef) > 0 {
-			scheme = "https"
-		}
-		url := fmt.Sprintf("%s://%s/", scheme, wp.Spec.Domains[0])
-
-		installCmd := []string{
-			"wp", "core", "install",
-			fmt.Sprintf("--url=%s", url),
-			fmt.Sprintf("--title=%s", installCredentials.title),
-			fmt.Sprintf("--admin_user=%s", installCredentials.user),
-			fmt.Sprintf("--admin_password=%s", installCredentials.password),
-			fmt.Sprintf("--admin_email=%s", installCredentials.email),
-			"--skip-email"}
-		containers = append(containers, corev1.Container{
-			Name:         "install-wp",
-			Image:        wp.image(),
-			Args:         installCmd,
-			VolumeMounts: wp.volumeMounts(),
-			Env:          wp.env(),
-			EnvFrom:      wp.envFrom(),
-		})
+	scheme := "http"
+	if len(wp.Spec.TLSSecretRef) > 0 {
+		scheme = "https"
 	}
+	url := fmt.Sprintf("%s://%s/", scheme, wp.Spec.Domains[0])
+	defaultEmail := fmt.Sprintf("ping@%s", wp.Spec.Domains[0])
+
+	installCmd := []string{"/bin/bash", "-c", fmt.Sprintf(installWPCmd, url, defaultEmail)}
+
+	containers = append(containers, corev1.Container{
+		Name:         "install-wp",
+		Image:        wp.image(),
+		Args:         installCmd,
+		VolumeMounts: wp.volumeMounts(),
+		Env:          wp.env(),
+		EnvFrom:      wp.envFrom(),
+	})
 
 	if wp.hasExternalMedia() {
 		// rclone-init-ftp
