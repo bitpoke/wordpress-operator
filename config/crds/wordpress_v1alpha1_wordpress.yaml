@@ -60,7 +60,7 @@ spec:
               properties:
                 contentSubPath:
                   description: ContentSubPath specifies where within the code volumes,
-                    the wp-content folder resides. Defaults to wp-content/
+                    the wp-content folder resides.
                   type: string
                 emptyDir:
                   description: EmptyDir to use if no HostPath is specified
@@ -105,6 +105,10 @@ spec:
                 persistentVolumeClaim:
                   description: PersistentVolumeClaim to use if no GitDir is specified
                   type: object
+                readOnly:
+                  description: ReadOnly specifies if the volume should be mounted
+                    read-only inside the wordpress runtime container
+                  type: boolean
               type: object
             domains:
               description: Domains for which this this site answers. The first item

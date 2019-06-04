@@ -15,6 +15,7 @@ rules:
   - secrets
   - services
   - persistentvolumeclaims
+  - events
   verbs:
   - get
   - list
@@ -64,6 +65,7 @@ rules:
   - wordpress.presslabs.org
   resources:
   - wordpresses
+  - wordpresses/status
   verbs:
   - get
   - list
