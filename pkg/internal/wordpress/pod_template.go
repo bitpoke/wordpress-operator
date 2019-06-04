@@ -343,6 +343,32 @@ func (wp *Wordpress) rcloneContainer(name string, args []string) corev1.Containe
 	}
 }
 
+func (wp *Wordpress) installWPContainer() []corev1.Container {
+	if wp.Spec.WordpressBootstrapSpec == nil {
+		return []corev1.Container{}
+	}
+
+	scheme := "http"
+	if len(wp.Spec.TLSSecretRef) > 0 {
+		scheme = "https"
+	}
+	url := fmt.Sprintf("%s://%s/", scheme, wp.Spec.Domains[0])
+
+	defaultEmail := fmt.Sprintf("ping@%s", wp.Spec.Domains[0])
+	installCmd := []string{"/bin/bash", "-c", fmt.Sprintf(installWPCmd, url, defaultEmail)}
+
+	return []corev1.Container{
+		{
+			Name:         "install-wp",
+			Image:        wp.image(),
+			Args:         installCmd,
+			VolumeMounts: wp.volumeMounts(),
+			Env:          wp.env(),
+			EnvFrom:      wp.envFrom(),
+		},
+	}
+}
+
 func (wp *Wordpress) mediaContainers() []corev1.Container {
 	if !wp.hasExternalMedia() {
 		return []corev1.Container{}
@@ -367,23 +393,7 @@ func (wp *Wordpress) mediaContainers() []corev1.Container {
 func (wp *Wordpress) initContainers() []corev1.Container {
 	containers := []corev1.Container{}
 
-	scheme := "http"
-	if len(wp.Spec.TLSSecretRef) > 0 {
-		scheme = "https"
-	}
-	url := fmt.Sprintf("%s://%s/", scheme, wp.Spec.Domains[0])
-	defaultEmail := fmt.Sprintf("ping@%s", wp.Spec.Domains[0])
-
-	installCmd := []string{"/bin/bash", "-c", fmt.Sprintf(installWPCmd, url, defaultEmail)}
-
-	containers = append(containers, corev1.Container{
-		Name:         "install-wp",
-		Image:        wp.image(),
-		Args:         installCmd,
-		VolumeMounts: wp.volumeMounts(),
-		Env:          wp.env(),
-		EnvFrom:      wp.envFrom(),
-	})
+	containers = append(containers, wp.installWPContainer()...)
 
 	if wp.hasExternalMedia() {
 		// rclone-init-ftp
