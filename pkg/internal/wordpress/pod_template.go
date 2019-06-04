@@ -18,8 +18,9 @@ package wordpress
 
 import (
 	"fmt"
-	corev1 "k8s.io/api/core/v1"
 	"path"
+
+	corev1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -101,6 +102,15 @@ func (wp *Wordpress) mediaEnv() []corev1.EnvVar {
 
 	if wp.Spec.MediaVolumeSpec == nil {
 		return out
+	}
+
+	if wp.hasExternalMedia() {
+		out = append([]corev1.EnvVar{
+			{
+				Name:  "UPLOADS_FTP_HOST",
+				Value: fmt.Sprintf("127.0.0.1:%d", mediaFTPPort),
+			},
+		})
 	}
 
 	if wp.Spec.MediaVolumeSpec.S3VolumeSource != nil {
