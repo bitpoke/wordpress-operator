@@ -102,11 +102,11 @@ type ReconcileWordpress struct {
 // and what is in the Wordpress.Spec
 //
 // Automatically generate RBAC rules to allow the Controller to read and write Deployments
-// +kubebuilder:rbac:groups=,resources=secrets;services;persistentvolumeclaims,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=,resources=secrets;services;persistentvolumeclaims;events,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=batch,resources=cronjobs;jobs,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=extensions,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=wordpress.presslabs.org,resources=wordpresses,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=wordpress.presslabs.org,resources=wordpresses;wordpresses/status,verbs=get;list;watch;create;update;patch;delete
 func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	// Fetch the Wordpress instance
 	wp := wordpress.New(&wordpressv1alpha1.Wordpress{})
@@ -125,9 +125,10 @@ func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Res
 	wp.SetDefaults()
 
 	secretSyncer := sync.NewSecretSyncer(wp, r.Client, r.scheme)
+	deploySyncer := sync.NewDeploymentSyncer(wp, secretSyncer.GetObject().(*corev1.Secret), r.Client, r.scheme)
 	syncers := []syncer.Interface{
 		secretSyncer,
-		sync.NewDeploymentSyncer(wp, secretSyncer.GetObject().(*corev1.Secret), r.Client, r.scheme),
+		deploySyncer,
 		sync.NewServiceSyncer(wp, r.Client, r.scheme),
 		sync.NewIngressSyncer(wp, r.Client, r.scheme),
 		sync.NewWPCronSyncer(wp, r.Client, r.scheme),
@@ -142,7 +143,19 @@ func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Res
 		syncers = append(syncers, sync.NewMediaPVCSyncer(wp, r.Client, r.scheme))
 	}
 
-	return reconcile.Result{}, r.sync(syncers)
+	if err = r.sync(syncers); err != nil {
+		return reconcile.Result{}, err
+	}
+
+	oldStatus := wp.Status.DeepCopy()
+	wp.Status.Replicas = deploySyncer.GetObject().(*appsv1.Deployment).Status.Replicas
+	if oldStatus.Replicas != wp.Status.Replicas {
+		if err := r.Status().Update(context.TODO(), wp.Unwrap()); err != nil {
+			return reconcile.Result{}, err
+		}
+	}
+
+	return reconcile.Result{}, nil
 }
 
 func (r *ReconcileWordpress) sync(syncers []syncer.Interface) error {
