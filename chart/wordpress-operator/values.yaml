@@ -1,7 +1,7 @@
 # Default values for wordpress-operator.
 replicaCount: 1
 
-image: quay.io/presslabs/wordpress-operator:v0.3.1-7-g72296-dirty
+image: quay.io/presslabs/wordpress-operator:latest
 imagePullPolicy: IfNotPresent
 
 nameOverride: ""
