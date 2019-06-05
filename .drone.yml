@@ -50,13 +50,12 @@ pipeline:
     image: plugins/docker
     registry: quay.io
     repo: quay.io/presslabs/wordpress-operator
-    tags: [ "latest" ]
+    tags: ["${DRONE_BRANCH/master/latest}", "${DRONE_COMMIT_SHA:0:7}"]
     username: presslabs+drone
     secrets:
       - source: QUAY_TOKEN
         target: DOCKER_PASSWORD
     when:
-      branch: master
       event: push
 
   publish:
