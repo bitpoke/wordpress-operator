@@ -373,7 +373,7 @@ func (wp *Wordpress) installWPContainer() []corev1.Container {
 			Image:        wp.image(),
 			Args:         installCmd,
 			VolumeMounts: wp.volumeMounts(),
-			Env:          wp.env(),
+			Env:          append(wp.env(), wp.Spec.WordpressBootstrapSpec.Env...),
 			EnvFrom:      wp.envFrom(),
 		},
 	}
