@@ -65,6 +65,10 @@ spec:
                 emptyDir:
                   description: EmptyDir to use if no HostPath is specified
                   type: object
+                environmentsSubPath:
+                  description: EnvironmentsSubPath specifies where within the code
+                    volumes the environments config files are found.
+                  type: string
                 git:
                   description: GitDir specifies the git repo to use for code cloning.
                     It has the highest level of precedence over EmptyDir, HostPath
