@@ -190,6 +190,10 @@ type CodeVolumeSpec struct {
 	// folder resides.
 	// +optional
 	ContentSubPath string `json:"contentSubPath,omitempty"`
+	// EnvironmentsSubPath specifies where within the code volumes the environments config
+	// files are found.
+	// +optional
+	EnvironmentsSubPath string `json:"environmentsSubPath,omitempty"`
 	// GitDir specifies the git repo to use for code cloning. It has the highest
 	// level of precedence over EmptyDir, HostPath and PersistentVolumeClaim
 	// +optional

@@ -217,6 +217,12 @@ func (wp *Wordpress) volumeMounts() (out []corev1.VolumeMount) {
 			ReadOnly:  wp.Spec.CodeVolumeSpec.ReadOnly,
 			SubPath:   wp.Spec.CodeVolumeSpec.ContentSubPath,
 		})
+		out = append(out, corev1.VolumeMount{
+			Name:      codeVolumeName,
+			MountPath: configMountPath,
+			ReadOnly:  wp.Spec.CodeVolumeSpec.ReadOnly,
+			SubPath:   wp.Spec.CodeVolumeSpec.EnvironmentsSubPath,
+		})
 	}
 	return out
 }

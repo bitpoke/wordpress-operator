@@ -21,6 +21,9 @@ const (
 	defaultImage         = "quay.io/presslabs/wordpress-runtime"
 	codeSrcMountPath     = "/var/run/presslabs.org/code/src"
 	defaultCodeMountPath = "/var/www/html/wp-content"
+	configMountPath      = "/var/www/config/environments"
+
+	defaultRepoEnvSubPath = "config/environments"
 )
 
 // SetDefaults sets Wordpress field defaults
@@ -35,5 +38,10 @@ func (o *Wordpress) SetDefaults() {
 
 	if o.Spec.CodeVolumeSpec != nil && len(o.Spec.CodeVolumeSpec.MountPath) == 0 {
 		o.Spec.CodeVolumeSpec.MountPath = defaultCodeMountPath
+	}
+
+	// set default path from Bedrock directory file structure
+	if o.Spec.CodeVolumeSpec != nil && len(o.Spec.CodeVolumeSpec.EnvironmentsSubPath) == 0 {
+		o.Spec.CodeVolumeSpec.EnvironmentsSubPath = defaultRepoEnvSubPath
 	}
 }
