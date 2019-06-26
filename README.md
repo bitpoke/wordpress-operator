@@ -78,12 +78,14 @@ spec:
     env:
       - name: WORDPRESS_BOOTSTRAP_USER
         valueFrom:
-          secretKeyRef: mysite
-          key: USER
+          secretKeyRef:
+            name: mysite
+            key: USER
       - name: WORDPRESS_BOOTSTRAP_PASSWORD
         valueFrom:
-          secretKeyRef: mysite
-          key: PASSWORD
+          secretKeyRef:
+            name: mysite
+            key: PASSWORD
   # extra volumes for the Wordpress container
   volumes: []
   # extra volume mounts for the Wordpress container

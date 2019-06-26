@@ -450,6 +450,9 @@ func (wp *Wordpress) WebPodTemplateSpec() (out corev1.PodTemplateSpec) {
 					ContainerPort: int32(InternalHTTPPort),
 				},
 			},
+			SecurityContext: &corev1.SecurityContext{
+				RunAsUser: &wwwDataUserID,
+			},
 		},
 	}
 	out.Spec.Containers = append(out.Spec.Containers, wp.mediaContainers()...)
@@ -498,6 +501,9 @@ func (wp *Wordpress) JobPodTemplateSpec(cmd ...string) (out corev1.PodTemplateSp
 			VolumeMounts: wp.volumeMounts(),
 			Env:          wp.env(),
 			EnvFrom:      wp.envFrom(),
+			SecurityContext: &corev1.SecurityContext{
+				RunAsUser: &wwwDataUserID,
+			},
 		},
 	}
 	out.Spec.Containers = append(out.Spec.Containers, wp.mediaContainers()...)
