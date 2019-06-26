@@ -63,14 +63,6 @@ cd "$SRC_DIR"
 git checkout -B "$GIT_CLONE_REF" "$GIT_CLONE_REF"
 `
 
-const installWPCmd = `wp core install \
---title="${WORDPRESS_BOOTSTRAP_TITLE:-Demo site}" \
---url="%s" \
---admin_user="${WORDPRESS_BOOTSTRAP_USER}" \
---admin_password="${WORDPRESS_BOOTSTRAP_PASSWORD}" \
---admin_email="${WORDPRESS_BOOTSTRAP_EMAIL:-%s}" \
---skip-email`
-
 var (
 	wwwDataUserID int64 = 33
 )
@@ -364,17 +356,24 @@ func (wp *Wordpress) installWPContainer() []corev1.Container {
 	}
 	url := fmt.Sprintf("%s://%s/", scheme, wp.Spec.Domains[0])
 
-	defaultEmail := fmt.Sprintf("ping@%s", wp.Spec.Domains[0])
-	installCmd := []string{"/bin/bash", "-c", fmt.Sprintf(installWPCmd, url, defaultEmail)}
-
 	return []corev1.Container{
 		{
 			Name:         "install-wp",
 			Image:        wp.image(),
-			Args:         installCmd,
 			VolumeMounts: wp.volumeMounts(),
 			Env:          append(wp.env(), wp.Spec.WordpressBootstrapSpec.Env...),
-			EnvFrom:      wp.envFrom(),
+			EnvFrom:      append(wp.envFrom(), wp.Spec.WordpressBootstrapSpec.EnvFrom...),
+			SecurityContext: &corev1.SecurityContext{
+				RunAsUser: &wwwDataUserID,
+			},
+			Command: []string{"wp-install"},
+			Args: []string{
+				"$(WORDPRESS_BOOTSTRAP_TITLE)",
+				url,
+				"$(WORDPRESS_BOOTSTRAP_USER)",
+				"$(WORDPRESS_BOOTSTRAP_PASSWORD)",
+				"$(WORDPRESS_BOOTSTRAP_EMAIL)",
+			},
 		},
 	}
 }
@@ -403,8 +402,6 @@ func (wp *Wordpress) mediaContainers() []corev1.Container {
 func (wp *Wordpress) initContainers() []corev1.Container {
 	containers := []corev1.Container{}
 
-	containers = append(containers, wp.installWPContainer()...)
-
 	if wp.hasExternalMedia() {
 		// rclone-init-ftp
 		// rclone touch gcs:prefix/wp-content/uploads/.keep
@@ -421,6 +418,9 @@ func (wp *Wordpress) initContainers() []corev1.Container {
 	if wp.Spec.CodeVolumeSpec != nil && wp.Spec.CodeVolumeSpec.GitDir != nil {
 		containers = append(containers, wp.gitCloneContainer())
 	}
+
+	// first clone data then install wp
+	containers = append(containers, wp.installWPContainer()...)
 
 	return containers
 }
