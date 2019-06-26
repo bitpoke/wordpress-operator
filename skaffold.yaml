@@ -1,0 +1,16 @@
+apiVersion: skaffold/v1beta11
+kind: Config
+build:
+  artifacts:
+  - image: quay.io/presslabs/wordpress-operator
+deploy:
+  helm:
+    releases:
+    - name: wp-operator
+      namespace: presslabs-sys
+      chartPath: chart/wordpress-operator
+      setValues:
+        imagePullPolicy: Always
+      values:
+        image: quay.io/presslabs/wordpress-operator
+
