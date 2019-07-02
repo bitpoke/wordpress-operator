@@ -81,10 +81,6 @@ func NewDeploymentSyncer(wp *wordpress.Wordpress, secret *corev1.Secret, c clien
 			out.Spec.Replicas = wp.Spec.Replicas
 		}
 
-		if out.Spec.Replicas == nil {
-			out.Spec.Replicas = &oneReplica
-		}
-
 		return nil
 	})
 }
