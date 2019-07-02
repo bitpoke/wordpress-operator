@@ -35,10 +35,6 @@ import (
 	"github.com/presslabs/wordpress-operator/pkg/internal/wordpress"
 )
 
-var (
-	oneReplica int32 = 1
-)
-
 // NewDeploymentSyncer returns a new sync.Interface for reconciling web Deployment
 func NewDeploymentSyncer(wp *wordpress.Wordpress, secret *corev1.Secret, c client.Client, scheme *runtime.Scheme) syncer.Interface {
 	objLabels := wp.ComponentLabels(wordpress.WordpressDeployment)
