@@ -21,13 +21,13 @@ import (
 	"path"
 
 	corev1 "k8s.io/api/core/v1"
+
+	"github.com/presslabs/wordpress-operator/pkg/cmd/options"
 )
 
 const (
 	// InternalHTTPPort represents the internal port used by the runtime container
 	InternalHTTPPort = 8080
-	gitCloneImage    = "docker.io/library/buildpack-deps:stretch-scm"
-	rcloneImage      = "quay.io/presslabs/rclone@sha256:4436a1e2d471236eafac605b24a66f5f18910b6f9cde505db065506208f73f96"
 	mediaFTPPort     = 2121
 	codeVolumeName   = "code"
 	mediaVolumeName  = "media"
@@ -307,7 +307,7 @@ func (wp *Wordpress) gitCloneContainer() corev1.Container {
 	return corev1.Container{
 		Name:    "git",
 		Args:    []string{"/bin/bash", "-c", gitCloneScript},
-		Image:   gitCloneImage,
+		Image:   options.GitCloneImage,
 		Env:     wp.gitCloneEnv(),
 		EnvFrom: wp.Spec.CodeVolumeSpec.GitDir.EnvFrom,
 		VolumeMounts: []corev1.VolumeMount{
@@ -345,7 +345,7 @@ func (wp *Wordpress) rcloneContainer(name string, args []string) corev1.Containe
 
 	return corev1.Container{
 		Name:  name,
-		Image: rcloneImage,
+		Image: options.RcloneImage,
 		Args:  args,
 		Env:   env,
 	}

@@ -17,23 +17,31 @@ limitations under the License.
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 
-	"github.com/presslabs/wordpress-operator/pkg/apis"
-	"github.com/presslabs/wordpress-operator/pkg/controller"
+	flag "github.com/spf13/pflag"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
+
+	"github.com/presslabs/wordpress-operator/pkg/apis"
+	"github.com/presslabs/wordpress-operator/pkg/cmd/options"
+	"github.com/presslabs/wordpress-operator/pkg/controller"
 )
 
 var log = logf.Log.WithName("wordpress-operator")
 
 func main() {
-	flag.Parse()
+	fs := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
+	options.AddToFlagSet(fs)
+	if err := fs.Parse(os.Args); err != nil {
+		log.Error(err, "unable to parse args")
+		os.Exit(1)
+	}
+
 	logf.SetLogger(logf.ZapLogger(true))
 
 	fmt.Fprintln(os.Stderr, "Starting wordpress-operator...")
