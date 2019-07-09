@@ -24,17 +24,23 @@ spec:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image }}"
           imagePullPolicy: {{ .Values.imagePullPolicy }}
+          {{- with .Values.extraArgs }}
+          args:
+            {{- range $arg := . }}
+            - {{ $arg }}
+            {{- end }}
+          {{- end }}
           resources:
-{{ toYaml .Values.resources | indent 12 }}
-    {{- with .Values.nodeSelector }}
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
       nodeSelector:
-{{ toYaml . | indent 8 }}
-    {{- end }}
-    {{- with .Values.affinity }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
       affinity:
-{{ toYaml . | indent 8 }}
-    {{- end }}
-    {{- with .Values.tolerations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
       tolerations:
-{{ toYaml . | indent 8 }}
-    {{- end }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
