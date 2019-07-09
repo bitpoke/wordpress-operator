@@ -16,9 +16,9 @@ limitations under the License.
 
 package wordpress
 
+import "github.com/presslabs/wordpress-operator/pkg/cmd/options"
+
 const (
-	defaultTag           = "5.2-7.3.4-r164"
-	defaultImage         = "quay.io/presslabs/wordpress-runtime"
 	codeSrcMountPath     = "/var/run/presslabs.org/code/src"
 	defaultCodeMountPath = "/var/www/html/wp-content"
 	configMountPath      = "/var/www/config/environments"
@@ -29,11 +29,11 @@ const (
 // SetDefaults sets Wordpress field defaults
 func (o *Wordpress) SetDefaults() {
 	if len(o.Spec.Image) == 0 {
-		o.Spec.Image = defaultImage
+		o.Spec.Image = options.WordpressRuntimeImage
 	}
 
 	if len(o.Spec.Tag) == 0 {
-		o.Spec.Tag = defaultTag
+		o.Spec.Tag = options.WordpressRuntimeTag
 	}
 
 	if o.Spec.CodeVolumeSpec != nil && len(o.Spec.CodeVolumeSpec.MountPath) == 0 {

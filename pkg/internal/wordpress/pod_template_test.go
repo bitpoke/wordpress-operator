@@ -18,14 +18,17 @@ package wordpress
 
 import (
 	"fmt"
+	"math/rand"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
-	"math/rand"
 
-	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
+	"github.com/presslabs/wordpress-operator/pkg/cmd/options"
 )
 
 var _ = Describe("Web pod spec", func() {
@@ -74,7 +77,7 @@ var _ = Describe("Web pod spec", func() {
 
 			Expect(containers).To(HaveLen(1))
 			Expect(containers[0].Name).To(Equal("git"))
-			Expect(containers[0].Image).To(Equal(gitCloneImage))
+			Expect(containers[0].Image).To(Equal(options.GitCloneImage))
 		},
 		Entry("for web pod", func() (func() corev1.PodTemplateSpec, *Wordpress) {
 			return wp.WebPodTemplateSpec, wp
@@ -101,16 +104,16 @@ var _ = Describe("Web pod spec", func() {
 			Expect(initContainers).To(HaveLen(2))
 
 			Expect(initContainers[0].Name).To(Equal("rclone-init-ftp"))
-			Expect(initContainers[0].Image).To(Equal(rcloneImage))
+			Expect(initContainers[0].Image).To(Equal(options.RcloneImage))
 
 			Expect(initContainers[1].Name).To(Equal("git"))
-			Expect(initContainers[1].Image).To(Equal(gitCloneImage))
+			Expect(initContainers[1].Image).To(Equal(options.GitCloneImage))
 
 			containers := spec.Spec.Containers
 			Expect(containers).To(HaveLen(2))
 
 			Expect(containers[1].Name).To(Equal("rclone-ftp"))
-			Expect(containers[1].Image).To(Equal(rcloneImage))
+			Expect(containers[1].Image).To(Equal(options.RcloneImage))
 			Expect(containers[1].Args).To(Equal(
 				[]string{"serve", "ftp", "-vvv", "--vfs-cache-max-age", "30s", "--vfs-cache-mode", "full",
 					"--vfs-cache-poll-interval", "0", "--poll-interval", "0", "$(RCLONE_STREAM)/",
