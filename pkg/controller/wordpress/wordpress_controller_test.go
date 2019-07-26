@@ -129,17 +129,6 @@ var _ = Describe("Wordpress controller", func() {
 			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
 			// Wait for a second reconciliation triggered by components being created
 			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
-			// TODO: find out why sometimes we get extra reconciliation requests and remove this loop
-			done := time.After(100 * time.Millisecond)
-		drain:
-			for {
-				select {
-				case <-requests:
-					continue
-				case <-done:
-					break drain
-				}
-			}
 			// We need to make sure that the controller does not create infinite loops
 			Consistently(requests).ShouldNot(Receive(Equal(expectedRequest)))
 		})

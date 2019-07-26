@@ -303,6 +303,14 @@ func (wp *Wordpress) volumes() []corev1.Volume {
 	return append(wp.Spec.Volumes, wp.codeVolume(), wp.mediaVolume())
 }
 
+func (wp *Wordpress) securityContext() *corev1.SecurityContext {
+	defaultProcMount := corev1.DefaultProcMount
+	return &corev1.SecurityContext{
+		RunAsUser: &wwwDataUserID,
+		ProcMount: &defaultProcMount,
+	}
+}
+
 func (wp *Wordpress) gitCloneContainer() corev1.Container {
 	return corev1.Container{
 		Name:    "git",
@@ -316,9 +324,7 @@ func (wp *Wordpress) gitCloneContainer() corev1.Container {
 				MountPath: codeSrcMountPath,
 			},
 		},
-		SecurityContext: &corev1.SecurityContext{
-			RunAsUser: &wwwDataUserID,
-		},
+		SecurityContext: wp.securityContext(),
 	}
 }
 
@@ -364,15 +370,13 @@ func (wp *Wordpress) installWPContainer() []corev1.Container {
 
 	return []corev1.Container{
 		{
-			Name:         "install-wp",
-			Image:        wp.image(),
-			VolumeMounts: wp.volumeMounts(),
-			Env:          append(wp.env(), wp.Spec.WordpressBootstrapSpec.Env...),
-			EnvFrom:      append(wp.envFrom(), wp.Spec.WordpressBootstrapSpec.EnvFrom...),
-			SecurityContext: &corev1.SecurityContext{
-				RunAsUser: &wwwDataUserID,
-			},
-			Command: []string{"wp-install"},
+			Name:            "install-wp",
+			Image:           wp.image(),
+			VolumeMounts:    wp.volumeMounts(),
+			Env:             append(wp.env(), wp.Spec.WordpressBootstrapSpec.Env...),
+			EnvFrom:         append(wp.envFrom(), wp.Spec.WordpressBootstrapSpec.EnvFrom...),
+			SecurityContext: wp.securityContext(),
+			Command:         []string{"wp-install"},
 			Args: []string{
 				"$(WORDPRESS_BOOTSTRAP_TITLE)",
 				url,
@@ -456,9 +460,7 @@ func (wp *Wordpress) WebPodTemplateSpec() (out corev1.PodTemplateSpec) {
 					ContainerPort: int32(InternalHTTPPort),
 				},
 			},
-			SecurityContext: &corev1.SecurityContext{
-				RunAsUser: &wwwDataUserID,
-			},
+			SecurityContext: wp.securityContext(),
 		},
 	}
 	out.Spec.Containers = append(out.Spec.Containers, wp.mediaContainers()...)
@@ -501,15 +503,13 @@ func (wp *Wordpress) JobPodTemplateSpec(cmd ...string) (out corev1.PodTemplateSp
 	out.Spec.InitContainers = wp.initContainers()
 	out.Spec.Containers = []corev1.Container{
 		{
-			Name:         "wp-cli",
-			Image:        wp.image(),
-			Args:         cmd,
-			VolumeMounts: wp.volumeMounts(),
-			Env:          wp.env(),
-			EnvFrom:      wp.envFrom(),
-			SecurityContext: &corev1.SecurityContext{
-				RunAsUser: &wwwDataUserID,
-			},
+			Name:            "wp-cli",
+			Image:           wp.image(),
+			Args:            cmd,
+			VolumeMounts:    wp.volumeMounts(),
+			Env:             wp.env(),
+			EnvFrom:         wp.envFrom(),
+			SecurityContext: wp.securityContext(),
 		},
 	}
 	out.Spec.Containers = append(out.Spec.Containers, wp.mediaContainers()...)
