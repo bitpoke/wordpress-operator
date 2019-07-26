@@ -20,10 +20,10 @@ import "github.com/presslabs/wordpress-operator/pkg/cmd/options"
 
 const (
 	codeSrcMountPath     = "/var/run/presslabs.org/code/src"
-	defaultCodeMountPath = "/var/www/html/wp-content"
-	configMountPath      = "/var/www/config/environments"
+	defaultCodeMountPath = "/app/web/wp-content"
+	configMountPath      = "/app/config"
 
-	defaultRepoEnvSubPath = "config/environments"
+	defaultRepoConfigSubPath = "config"
 )
 
 // SetDefaults sets Wordpress field defaults
@@ -40,8 +40,7 @@ func (o *Wordpress) SetDefaults() {
 		o.Spec.CodeVolumeSpec.MountPath = defaultCodeMountPath
 	}
 
-	// set default path from Bedrock directory file structure
-	if o.Spec.CodeVolumeSpec != nil && len(o.Spec.CodeVolumeSpec.EnvironmentsSubPath) == 0 {
-		o.Spec.CodeVolumeSpec.EnvironmentsSubPath = defaultRepoEnvSubPath
+	if o.Spec.CodeVolumeSpec != nil && len(o.Spec.CodeVolumeSpec.ConfigSubPath) == 0 {
+		o.Spec.CodeVolumeSpec.ConfigSubPath = defaultRepoConfigSubPath
 	}
 }

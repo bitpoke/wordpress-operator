@@ -207,21 +207,21 @@ func (wp *Wordpress) volumeMounts() (out []corev1.VolumeMount) {
 	out = wp.Spec.VolumeMounts
 	if wp.Spec.CodeVolumeSpec != nil {
 		out = append(out, corev1.VolumeMount{
-			Name:      codeVolumeName,
 			MountPath: codeSrcMountPath,
+			Name:      codeVolumeName,
 			ReadOnly:  wp.Spec.CodeVolumeSpec.ReadOnly,
 		})
 		out = append(out, corev1.VolumeMount{
-			Name:      codeVolumeName,
 			MountPath: wp.Spec.CodeVolumeSpec.MountPath,
+			Name:      codeVolumeName,
 			ReadOnly:  wp.Spec.CodeVolumeSpec.ReadOnly,
 			SubPath:   wp.Spec.CodeVolumeSpec.ContentSubPath,
 		})
 		out = append(out, corev1.VolumeMount{
-			Name:      codeVolumeName,
 			MountPath: configMountPath,
-			ReadOnly:  wp.Spec.CodeVolumeSpec.ReadOnly,
-			SubPath:   wp.Spec.CodeVolumeSpec.EnvironmentsSubPath,
+			Name:      codeVolumeName,
+			ReadOnly:  true,
+			SubPath:   wp.Spec.CodeVolumeSpec.ConfigSubPath,
 		})
 	}
 	return out

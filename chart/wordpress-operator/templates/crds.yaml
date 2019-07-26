@@ -66,17 +66,17 @@ spec:
                 into the container. If not specified, a code volume won't get mounted
                 at all.
               properties:
+                configSubPath:
+                  description: 'ConfigSubPath specifies where within the code volumes
+                    the config directory is located. Defaults to: config'
+                  type: string
                 contentSubPath:
-                  description: ContentSubPath specifies where within the code volumes,
-                    the wp-content folder resides.
+                  description: 'ContentSubPath specifies where within the code volumes,
+                    the WP_CONTENT_DIR is located. Defaults to: wp-content'
                   type: string
                 emptyDir:
                   description: EmptyDir to use if no HostPath is specified
                   type: object
-                environmentsSubPath:
-                  description: EnvironmentsSubPath specifies where within the code
-                    volumes the environments config files are found.
-                  type: string
                 git:
                   description: GitDir specifies the git repo to use for code cloning.
                     It has the highest level of precedence over EmptyDir, HostPath
@@ -111,8 +111,8 @@ spec:
                   description: HostPath to use if no PersistentVolumeClaim is specified
                   type: object
                 mountPath:
-                  description: MountPath spechfies where should the code volume be
-                    mounted. Defaults to /var/www/site/web/wp-content
+                  description: MountPath specifies where should the code volume be
+                    mounted. Defaults to /app/web/wp-content
                   type: string
                 persistentVolumeClaim:
                   description: PersistentVolumeClaim to use if no GitDir is specified
@@ -196,6 +196,28 @@ spec:
                 persistentVolumeClaim:
                   description: PersistentVolumeClaim to use if no S3VolumeSource or
                     GCSVolumeSource are specified
+                  type: object
+                s3:
+                  description: S3VolumeSource specifies the S3 object storage configuration
+                    for media files. It has the highest level of precedence over EmptyDir,
+                    HostPath and PersistentVolumeClaim
+                  properties:
+                    bucket:
+                      description: Bucket for storing media files
+                      minLength: 1
+                      type: string
+                    env:
+                      description: 'Env variables for accessing S3 bucket. Taken into
+                        account are: ACCESS_KEY, SECRET_ACCESS_KEY +patchMergeKey=name
+                        +patchStrategy=merge'
+                      items:
+                        type: object
+                      type: array
+                    prefix:
+                      description: PathPrefix is the prefix for media files in bucket
+                      type: string
+                  required:
+                  - bucket
                   type: object
               type: object
             nodeSelector:

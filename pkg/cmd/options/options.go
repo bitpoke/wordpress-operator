@@ -28,7 +28,7 @@ var (
 	// WordpressRuntimeImage is the base image used to run your code
 	WordpressRuntimeImage = "quay.io/presslabs/wordpress-runtime"
 	// WordpressRuntimeTag represents the tag used for WordpressRuntimeImage
-	WordpressRuntimeTag = "5.2-7.3.4-r164"
+	WordpressRuntimeTag = "5.2.2"
 )
 
 // AddToFlagSet set command line arguments
