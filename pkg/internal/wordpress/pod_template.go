@@ -18,9 +18,10 @@ package wordpress
 
 import (
 	"fmt"
-	"path"
 
 	corev1 "k8s.io/api/core/v1"
+
+	"path"
 
 	"github.com/presslabs/wordpress-operator/pkg/cmd/options"
 )
@@ -28,7 +29,6 @@ import (
 const (
 	// InternalHTTPPort represents the internal port used by the runtime container
 	InternalHTTPPort = 8080
-	mediaFTPPort     = 2121
 	codeVolumeName   = "code"
 	mediaVolumeName  = "media"
 	s3Prefix         = "s3"
@@ -84,11 +84,6 @@ func (wp *Wordpress) image() string {
 	return fmt.Sprintf("%s:%s", wp.Spec.Image, wp.Spec.Tag)
 }
 
-func (wp *Wordpress) hasExternalMedia() bool {
-	return wp.Spec.MediaVolumeSpec != nil &&
-		(wp.Spec.MediaVolumeSpec.S3VolumeSource != nil || wp.Spec.MediaVolumeSpec.GCSVolumeSource != nil)
-}
-
 func (wp *Wordpress) mediaEnv() []corev1.EnvVar {
 	out := []corev1.EnvVar{}
 
@@ -96,16 +91,12 @@ func (wp *Wordpress) mediaEnv() []corev1.EnvVar {
 		return out
 	}
 
-	if wp.hasExternalMedia() {
-		out = append([]corev1.EnvVar{
-			{
-				Name:  "UPLOADS_FTP_HOST",
-				Value: fmt.Sprintf("127.0.0.1:%d", mediaFTPPort),
-			},
-		})
-	}
-
 	if wp.Spec.MediaVolumeSpec.S3VolumeSource != nil {
+		bucket := path.Join(wp.Spec.MediaVolumeSpec.S3VolumeSource.Bucket, wp.Spec.MediaVolumeSpec.S3VolumeSource.PathPrefix)
+		out = append(out, corev1.EnvVar{
+			Name:  "MEDIA_BUCKET",
+			Value: fmt.Sprintf("%s://%s", s3Prefix, bucket),
+		})
 		for _, env := range wp.Spec.MediaVolumeSpec.S3VolumeSource.Env {
 			if name, ok := s3EnvVars[env.Name]; ok {
 				_env := env.DeepCopy()
@@ -116,13 +107,10 @@ func (wp *Wordpress) mediaEnv() []corev1.EnvVar {
 	}
 
 	if wp.Spec.MediaVolumeSpec.GCSVolumeSource != nil {
+		bucket := path.Join(wp.Spec.MediaVolumeSpec.GCSVolumeSource.Bucket, wp.Spec.MediaVolumeSpec.GCSVolumeSource.PathPrefix)
 		out = append(out, corev1.EnvVar{
 			Name:  "MEDIA_BUCKET",
-			Value: fmt.Sprintf("gs://%s", wp.Spec.MediaVolumeSpec.GCSVolumeSource.Bucket),
-		})
-		out = append(out, corev1.EnvVar{
-			Name:  "MEDIA_BUCKET_PREFIX",
-			Value: wp.Spec.MediaVolumeSpec.GCSVolumeSource.PathPrefix,
+			Value: fmt.Sprintf("%s://%s", gcsPrefix, bucket),
 		})
 		for _, env := range wp.Spec.MediaVolumeSpec.GCSVolumeSource.Env {
 			if name, ok := gcsEnvVars[env.Name]; ok {
@@ -328,35 +316,6 @@ func (wp *Wordpress) gitCloneContainer() corev1.Container {
 	}
 }
 
-func (wp *Wordpress) rcloneContainer(name string, args []string) corev1.Container {
-	var env []corev1.EnvVar
-	var stream string
-
-	switch {
-	case wp.Spec.MediaVolumeSpec.S3VolumeSource != nil:
-		env = wp.Spec.MediaVolumeSpec.S3VolumeSource.Env
-		bucket := fmt.Sprintf("%s:%s", s3Prefix, wp.Spec.MediaVolumeSpec.S3VolumeSource.Bucket)
-		stream = path.Join(bucket, wp.Spec.MediaVolumeSpec.S3VolumeSource.PathPrefix)
-
-	case wp.Spec.MediaVolumeSpec.GCSVolumeSource != nil:
-		env = wp.Spec.MediaVolumeSpec.GCSVolumeSource.Env
-		bucket := fmt.Sprintf("%s:%s", gcsPrefix, wp.Spec.MediaVolumeSpec.GCSVolumeSource.Bucket)
-		stream = path.Join(bucket, wp.Spec.MediaVolumeSpec.GCSVolumeSource.PathPrefix)
-	}
-
-	env = append(env, corev1.EnvVar{
-		Name:  "RCLONE_STREAM",
-		Value: stream,
-	})
-
-	return corev1.Container{
-		Name:  name,
-		Image: options.RcloneImage,
-		Args:  args,
-		Env:   env,
-	}
-}
-
 func (wp *Wordpress) installWPContainer() []corev1.Container {
 	if wp.Spec.WordpressBootstrapSpec == nil {
 		return []corev1.Container{}
@@ -388,42 +347,8 @@ func (wp *Wordpress) installWPContainer() []corev1.Container {
 	}
 }
 
-func (wp *Wordpress) mediaContainers() []corev1.Container {
-	if !wp.hasExternalMedia() {
-		return []corev1.Container{}
-	}
-
-	// rclone-ftp
-	// rclone serve ftp --vfs-cache-max-age 30s --vfs-cache-mde full --vfs-cache-poll-interval 0 --poll-interval 0
-	// We want to cache writes and reads on the FTP server since thumbnails are going to be generated and also
-	// because Wordpress is doing a directory listing in order to display the media gallery.
-	// We also set the poll interval to zero to avoid any unnecessary requests to the remote buckets.
-	ftpCmd := []string{
-		"serve", "ftp", "-vvv", "--vfs-cache-max-age", "30s", "--vfs-cache-mode", "full",
-		"--vfs-cache-poll-interval", "0", "--poll-interval", "0", "$(RCLONE_STREAM)/",
-		fmt.Sprintf("--addr=0.0.0.0:%d", mediaFTPPort),
-	}
-
-	return []corev1.Container{
-		wp.rcloneContainer("rclone-ftp", ftpCmd),
-	}
-}
-
 func (wp *Wordpress) initContainers() []corev1.Container {
 	containers := []corev1.Container{}
-
-	if wp.hasExternalMedia() {
-		// rclone-init-ftp
-		// rclone touch gcs:prefix/wp-content/uploads/.keep
-		// Because of https://bugs.php.net/bug.php?id=77680, we need to create the root directories.
-		// For now, we don't support custom UPLOADS paths, only the default one (wp-content/uploads).
-		// TODO: remove it once the fix is released
-		initFTPCmd := []string{
-			"touch", "-vvv", "$(RCLONE_STREAM)/wp-content/uploads/.keep",
-		}
-
-		containers = append(containers, wp.rcloneContainer("rclone-init-ftp", initFTPCmd))
-	}
 
 	if wp.Spec.CodeVolumeSpec != nil && wp.Spec.CodeVolumeSpec.GitDir != nil {
 		containers = append(containers, wp.gitCloneContainer())
@@ -463,7 +388,6 @@ func (wp *Wordpress) WebPodTemplateSpec() (out corev1.PodTemplateSpec) {
 			SecurityContext: wp.securityContext(),
 		},
 	}
-	out.Spec.Containers = append(out.Spec.Containers, wp.mediaContainers()...)
 
 	out.Spec.Volumes = wp.volumes()
 
@@ -512,7 +436,6 @@ func (wp *Wordpress) JobPodTemplateSpec(cmd ...string) (out corev1.PodTemplateSp
 			SecurityContext: wp.securityContext(),
 		},
 	}
-	out.Spec.Containers = append(out.Spec.Containers, wp.mediaContainers()...)
 
 	out.Spec.Volumes = wp.volumes()
 

@@ -182,15 +182,16 @@ type CodeVolumeSpec struct {
 	// ReadOnly specifies if the volume should be mounted read-only inside the
 	// wordpress runtime container
 	ReadOnly bool `json:"readOnly,omitempty"`
-	// MountPath spechfies where should the code volume be mounted.
-	// Defaults to /var/www/site/web/wp-content
+	// MountPath specifies where should the code volume be mounted.
+	// Defaults to /app/web/wp-content
 	// +optional
 	MountPath string `json:"mountPath,omitempty"`
-	// ContentSubPath specifies where within the code volumes, the wp-content
-	// folder resides.
+	// ContentSubPath specifies where within the code volumes, the WP_CONTENT_DIR is located.
+	// Defaults to: wp-content
 	// +optional
 	ContentSubPath string `json:"contentSubPath,omitempty"`
 	// ConfigSubPath specifies where within the code volumes the config directory is located.
+	// Defaults to: config
 	// +optional
 	ConfigSubPath string `json:"configSubPath,omitempty"`
 	// GitDir specifies the git repo to use for code cloning. It has the highest

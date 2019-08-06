@@ -53,7 +53,7 @@ var _ = Describe("Web pod spec", func() {
 		wp.SetDefaults()
 	})
 
-	DescribeTable("Shouldn't generate any new init containers, if git and a remote stream is not configured",
+	DescribeTable("Shouldn't generate any new init containers if git is not configured",
 		func(f func() func() corev1.PodTemplateSpec) {
 			// we need this hack to allow wp to be initialized
 			podSpec := f()
@@ -65,7 +65,7 @@ var _ = Describe("Web pod spec", func() {
 		}),
 	)
 
-	DescribeTable("Should generate just a git container, when no remote stream is configured",
+	DescribeTable("Should generate a git container when git is configured",
 		func(f func() (func() corev1.PodTemplateSpec, *Wordpress)) {
 			// we need this hack to allow wp to be initialized with our custom values
 			podSpec, w := f()
@@ -79,54 +79,6 @@ var _ = Describe("Web pod spec", func() {
 			Expect(containers[0].Name).To(Equal("git"))
 			Expect(containers[0].Image).To(Equal(options.GitCloneImage))
 		},
-		Entry("for web pod", func() (func() corev1.PodTemplateSpec, *Wordpress) {
-			return wp.WebPodTemplateSpec, wp
-		}),
-		Entry("for job pod", func() (func() corev1.PodTemplateSpec, *Wordpress) {
-			return func() corev1.PodTemplateSpec { return wp.JobPodTemplateSpec("test") }, wp
-		}),
-	)
-
-	DescribeTable("Should generate a git container and a rclone container when gcs is configured",
-		func(f func() (func() corev1.PodTemplateSpec, *Wordpress)) {
-			podSpec, w := f()
-
-			w.Spec.CodeVolumeSpec = &wordpressv1alpha1.CodeVolumeSpec{
-				GitDir: &wordpressv1alpha1.GitVolumeSource{},
-			}
-			w.Spec.MediaVolumeSpec = &wordpressv1alpha1.MediaVolumeSpec{
-				GCSVolumeSource: &wordpressv1alpha1.GCSVolumeSource{Env: []corev1.EnvVar{}},
-			}
-
-			spec := podSpec()
-
-			initContainers := spec.Spec.InitContainers
-			Expect(initContainers).To(HaveLen(2))
-
-			Expect(initContainers[0].Name).To(Equal("rclone-init-ftp"))
-			Expect(initContainers[0].Image).To(Equal(options.RcloneImage))
-
-			Expect(initContainers[1].Name).To(Equal("git"))
-			Expect(initContainers[1].Image).To(Equal(options.GitCloneImage))
-
-			containers := spec.Spec.Containers
-			Expect(containers).To(HaveLen(2))
-
-			Expect(containers[1].Name).To(Equal("rclone-ftp"))
-			Expect(containers[1].Image).To(Equal(options.RcloneImage))
-			Expect(containers[1].Args).To(Equal(
-				[]string{"serve", "ftp", "-vvv", "--vfs-cache-max-age", "30s", "--vfs-cache-mode", "full",
-					"--vfs-cache-poll-interval", "0", "--poll-interval", "0", "$(RCLONE_STREAM)/",
-					fmt.Sprintf("--addr=0.0.0.0:%d", mediaFTPPort),
-				}))
-			Expect(containers[1].Env).To(Equal([]corev1.EnvVar{
-				{
-					Name:  "RCLONE_STREAM",
-					Value: "gs:",
-				},
-			}))
-		},
-
 		Entry("for web pod", func() (func() corev1.PodTemplateSpec, *Wordpress) {
 			return wp.WebPodTemplateSpec, wp
 		}),

@@ -22,9 +22,6 @@ var (
 	// GitCloneImage is the image used by the init container that clones the code.
 	GitCloneImage = "docker.io/library/buildpack-deps:stretch-scm"
 
-	// RcloneImage is the image used for writing and deleting media files, from cloud storage.
-	RcloneImage = "quay.io/presslabs/rclone@sha256:4436a1e2d471236eafac605b24a66f5f18910b6f9cde505db065506208f73f96"
-
 	// WordpressRuntimeImage is the base image used to run your code
 	WordpressRuntimeImage = "quay.io/presslabs/wordpress-runtime"
 	// WordpressRuntimeTag represents the tag used for WordpressRuntimeImage
@@ -34,7 +31,6 @@ var (
 // AddToFlagSet set command line arguments
 func AddToFlagSet(flag *pflag.FlagSet) {
 	flag.StringVar(&GitCloneImage, "git-clone-image", GitCloneImage, "The image used when cloning code from git.")
-	flag.StringVar(&RcloneImage, "rclone-image", RcloneImage, "The image used for managing media files with Rclone.")
 	flag.StringVar(&WordpressRuntimeImage, "wordpress-runtime-image", WordpressRuntimeImage, "The base image used for Wordpress.")
 	flag.StringVar(&WordpressRuntimeTag, "wordpress-runtime-tag", WordpressRuntimeTag, "The base tag for Wordpress image.")
 }

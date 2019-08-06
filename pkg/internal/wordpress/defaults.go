@@ -19,10 +19,12 @@ package wordpress
 import "github.com/presslabs/wordpress-operator/pkg/cmd/options"
 
 const (
-	codeSrcMountPath     = "/var/run/presslabs.org/code/src"
-	defaultCodeMountPath = "/app/web/wp-content"
-	configMountPath      = "/app/config"
+	codeSrcMountPath = "/var/run/presslabs.org/code/src"
 
+	defaultCodeMountPath   = "/app/web/wp-content"
+	defaultRepoCodeSubPath = "wp-content"
+
+	configMountPath          = "/app/config"
 	defaultRepoConfigSubPath = "config"
 )
 
@@ -38,6 +40,10 @@ func (o *Wordpress) SetDefaults() {
 
 	if o.Spec.CodeVolumeSpec != nil && len(o.Spec.CodeVolumeSpec.MountPath) == 0 {
 		o.Spec.CodeVolumeSpec.MountPath = defaultCodeMountPath
+	}
+
+	if o.Spec.CodeVolumeSpec != nil && len(o.Spec.CodeVolumeSpec.ContentSubPath) == 0 {
+		o.Spec.CodeVolumeSpec.ContentSubPath = defaultRepoCodeSubPath
 	}
 
 	if o.Spec.CodeVolumeSpec != nil && len(o.Spec.CodeVolumeSpec.ConfigSubPath) == 0 {
