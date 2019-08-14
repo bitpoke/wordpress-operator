@@ -1,4 +1,6 @@
-# wordpress-operator
+wordpress-operator
+[![Build Status](https://stack-ci.presslabs.net/api/badges/presslabs/wordpress-operator/status.svg)](https://stack-ci.presslabs.net/presslabs/wordpress-operator)
+===
 WordPress operator enables managing multiple WordPress installments at scale.
 
 ## Goals and status
