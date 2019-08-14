@@ -16,7 +16,11 @@ limitations under the License.
 
 package wordpress
 
-import "github.com/presslabs/wordpress-operator/pkg/cmd/options"
+import (
+	corev1 "k8s.io/api/core/v1"
+
+	"github.com/presslabs/wordpress-operator/pkg/cmd/options"
+)
 
 const (
 	codeSrcMountPath = "/var/run/presslabs.org/code/src"
@@ -36,6 +40,10 @@ func (o *Wordpress) SetDefaults() {
 
 	if len(o.Spec.Tag) == 0 {
 		o.Spec.Tag = options.WordpressRuntimeTag
+	}
+
+	if len(o.Spec.ImagePullPolicy) == 0 {
+		o.Spec.ImagePullPolicy = corev1.PullAlways
 	}
 
 	if o.Spec.CodeVolumeSpec != nil && len(o.Spec.CodeVolumeSpec.MountPath) == 0 {

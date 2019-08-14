@@ -373,12 +373,13 @@ func (wp *Wordpress) WebPodTemplateSpec() (out corev1.PodTemplateSpec) {
 	out.Spec.InitContainers = wp.initContainers()
 	out.Spec.Containers = []corev1.Container{
 		{
-			Name:         "wordpress",
-			Image:        wp.image(),
-			VolumeMounts: wp.volumeMounts(),
-			Env:          wp.env(),
-			EnvFrom:      wp.envFrom(),
-			Resources:    wp.Spec.Resources,
+			Name:            "wordpress",
+			Image:           wp.image(),
+			ImagePullPolicy: wp.Spec.ImagePullPolicy,
+			VolumeMounts:    wp.volumeMounts(),
+			Env:             wp.env(),
+			EnvFrom:         wp.envFrom(),
+			Resources:       wp.Spec.Resources,
 			Ports: []corev1.ContainerPort{
 				{
 					Name:          "http",
@@ -429,6 +430,7 @@ func (wp *Wordpress) JobPodTemplateSpec(cmd ...string) (out corev1.PodTemplateSp
 		{
 			Name:            "wp-cli",
 			Image:           wp.image(),
+			ImagePullPolicy: wp.Spec.ImagePullPolicy,
 			Args:            cmd,
 			VolumeMounts:    wp.volumeMounts(),
 			Env:             wp.env(),
