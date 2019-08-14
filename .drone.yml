@@ -101,6 +101,9 @@ steps:
       from_secret: GH_PASSWORD
     GH_USER: presslabs-bot
 
+depends_on:
+  - build
+
 trigger:
   event:
   - tag
