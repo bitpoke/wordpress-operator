@@ -4,7 +4,7 @@ REGISTRY := quay.io/presslabs
 IMAGE_NAME := wordpress-operator
 BUILD_TAG := build
 IMAGE_TAGS := $(APP_VERSION)
-KUBEBUILDER_VERSION ?= 1.0.4
+KUBEBUILDER_VERSION := 1.0.8
 BINDIR ?= $(PWD)/bin
 BUILDDIR ?= $(PWD)/build
 CHARTDIR ?= $(PWD)/chart/wordpress-operator
@@ -73,6 +73,11 @@ chart:
 	mv $(CHARTDIR)/values.yaml $(CHARTDIR)/_values.yaml
 	sed 's#$(REGISTRY)/$(IMAGE_NAME):latest#$(REGISTRY)/$(IMAGE_NAME):$(APP_VERSION)#g' $(CHARTDIR)/_values.yaml > $(CHARTDIR)/values.yaml
 	rm $(CHARTDIR)/_values.yaml
+
+# Run go fmt against code
+.PHONY: fmt
+fmt:
+	go fmt ./pkg/... ./cmd/...
 
 # Generate code
 generate:

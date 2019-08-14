@@ -1,104 +1,106 @@
-workspace:
-  base: /go
-  path: src/github.com/presslabs/wordpress-operator
+---
+kind: pipeline
+name: build
 
 clone:
-  git:
-    image: plugins/git
+  disable: true
+
+workspace:
+  base: /root/go
+  path: src/github.com/presslabs/wordpress-operator
+
+steps:
+- name: git
+  pull: default
+  image: plugins/git
+  settings:
+    depth: 0
     tags: true
-    depth: 100
 
-pipeline:
-  dependencies:
-    image: golang:1.11
-    commands:
-      - make dependencies
+- name: dependencies
+  pull: always
+  image: quay.io/presslabs/bfc
+  commands:
+  - make dependencies
 
-  lint:
-    group: lint
-    image: golang:1.11
-    commands:
-      - make lint
+- name: verify
+  image: quay.io/presslabs/bfc
+  commands:
+  - make -s fmt generate manifests
+  - git diff --exit-code
 
-  lint-chart:
-    group: lint
-    image: quay.io/presslabs/kluster-toolbox
-    pull: true
-    commands:
-      - helm lint chart/wordpress-operator
-      - helm dep build chart/wordpress-operator
+- name: lint
+  image: quay.io/presslabs/bfc
+  commands:
+  - make lint
+  - helm lint chart/wordpress-operator
+  - helm dep build chart/wordpress-operator
 
-  test:
-    image: golang:1.11
-    commands:
-      - make test
-      - git status
+- name: build
+  image: quay.io/presslabs/bfc
+  commands:
+  - make chart
+  - make test
 
-  verify:
-    image: quay.io/presslabs/kluster-toolbox
-    commands:
-      - git diff --exit-code
-
-  build-chart:
-    group: build
-    image: quay.io/presslabs/kluster-toolbox
-    commands:
-      - make chart
-
-  publish:
+- name: publish docker image
+  image: plugins/docker
+  settings:
     group: publish
-    image: plugins/docker
     registry: quay.io
     repo: quay.io/presslabs/wordpress-operator
-    tags: ["${DRONE_BRANCH/master/latest}", "${DRONE_COMMIT_SHA:0:7}"]
+    tags:
+    - ${DRONE_BRANCH/master/latest}
+    - ${DRONE_COMMIT_SHA:0:7}
     username: presslabs+drone
-    secrets:
-      - source: QUAY_TOKEN
-        target: DOCKER_PASSWORD
-    when:
-      event: push
+  environment:
+    DOCKER_PASSWORD:
+      from_secret: QUAY_TOKEN
+  when:
+    event:
+      - push
+---
+kind: pipeline
+name: publish
 
-  publish:
+clone:
+  disable: true
+
+steps:
+- name: git
+  pull: default
+  image: plugins/git
+  settings:
+    depth: 0
+    tags: true
+
+- name: publish docker image
+  image: plugins/docker
+  settings:
     group: publish
-    image: plugins/docker
     registry: quay.io
     repo: quay.io/presslabs/wordpress-operator
-    tags: [ "${DRONE_TAG}" ]
+    auto_tag: true
     username: presslabs+drone
-    secrets:
-      - source: QUAY_TOKEN
-        target: DOCKER_PASSWORD
-    when:
-      event: tag
+  environment:
+    DOCKER_PASSWORD:
+      from_secret: QUAY_TOKEN
 
-  publish-chart:
+- name: publish helm chart
+  pull: default
+  image: quay.io/presslabs/bfc
+  commands:
+  - make chart
+  - cd chart
+  - helm package wordpress-operator
+  - CHART="$(basename *.tgz)" ; MESSAGE="Publish $(basename $CHART .tgz)"
+  - /usr/local/bin/gh put --skip-existing -m "$MESSAGE" "$CHART" "presslabs/charts/docs/"
+  settings:
     group: publish
-    image: quay.io/presslabs/kluster-toolbox
-    environment:
-      - GH_USER=presslabs-bot
-    commands:
-      - cd chart
-      - helm package wordpress-operator
-      - CHART="$(basename *.tgz)" ; MESSAGE="Publish $(basename $CHART .tgz)"
-      - /usr/local/bin/gh put --skip-existing -m "$MESSAGE" "$CHART" "presslabs/charts/docs/"
-    secrets:
-      - GH_PASSWORD
-    when:
-      event: tag
-# services:
-#   kube-apiserver:
-#     image: k8s.gcr.io/hyperkube:v1.10.7
-#     command:
-#       - kube-apiserver
-#       - --etcd-servers=http://etcd:2379
-#       - --insecure-port=8080
-#       - --insecure-bind-address=0.0.0.0
-#       - --secure-port=0
-#     ports:
-#       - "8080:8080"
-#   etcd:
-#     image: k8s.gcr.io/etcd:2.2.1
-#     command:
-#       - etcd
-#       - --listen-client-urls=http://0.0.0.0:2379,http://0.0.0.0:4001
-#       - --advertise-client-urls=https://etcd:2379,https://etcd:4001
+  environment:
+    GH_PASSWORD:
+      from_secret: GH_PASSWORD
+    GH_USER: presslabs-bot
+
+trigger:
+  event:
+  - tag
