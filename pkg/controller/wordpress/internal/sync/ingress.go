@@ -26,8 +26,11 @@ import (
 
 	"github.com/presslabs/controller-util/syncer"
 
+	"github.com/presslabs/wordpress-operator/pkg/cmd/options"
 	"github.com/presslabs/wordpress-operator/pkg/internal/wordpress"
 )
+
+const ingressClassAnnotationKey = "kubernetes.io/ingress.class"
 
 // NewIngressSyncer returns a new sync.Interface for reconciling web Ingress
 func NewIngressSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.Scheme) syncer.Interface {
@@ -44,8 +47,11 @@ func NewIngressSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.
 		out := existing.(*extv1beta1.Ingress)
 		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
 
-		if len(out.ObjectMeta.Annotations) == 0 && len(wp.Spec.IngressAnnotations) > 0 {
+		if len(out.ObjectMeta.Annotations) == 0 && (len(wp.Spec.IngressAnnotations) > 0 || options.IngressClass != "") {
 			out.ObjectMeta.Annotations = make(map[string]string)
+		}
+		if options.IngressClass != "" {
+			out.ObjectMeta.Annotations[ingressClassAnnotationKey] = options.IngressClass
 		}
 		for k, v := range wp.Spec.IngressAnnotations {
 			out.ObjectMeta.Annotations[k] = v

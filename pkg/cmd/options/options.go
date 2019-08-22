@@ -26,6 +26,9 @@ var (
 	WordpressRuntimeImage = "quay.io/presslabs/wordpress-runtime"
 	// WordpressRuntimeTag represents the tag used for WordpressRuntimeImage
 	WordpressRuntimeTag = "5.2.2"
+
+	// IngressClass is the default ingress class used used for creating WordPress ingresses
+	IngressClass = ""
 )
 
 // AddToFlagSet set command line arguments
@@ -33,4 +36,5 @@ func AddToFlagSet(flag *pflag.FlagSet) {
 	flag.StringVar(&GitCloneImage, "git-clone-image", GitCloneImage, "The image used when cloning code from git.")
 	flag.StringVar(&WordpressRuntimeImage, "wordpress-runtime-image", WordpressRuntimeImage, "The base image used for Wordpress.")
 	flag.StringVar(&WordpressRuntimeTag, "wordpress-runtime-tag", WordpressRuntimeTag, "The base tag for Wordpress image.")
+	flag.StringVar(&IngressClass, "ingress-class", IngressClass, "The default ingress class for WordPress sites.")
 }
