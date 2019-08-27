@@ -56,12 +56,9 @@ type WordpressSpec struct {
 	// The first item is set as the "main domain" (eg. WP_HOME and WP_SITEURL constants).
 	// +kubebuilder:validation:MinItems=1
 	Domains []Domain `json:"domains"`
-	// WordPress runtime image to use. Defaults to quay.io/presslabs/wordpress-runtime
+	// WordPress runtime image to use. Defaults to quay.io/presslabs/wordpress-runtime:<latest stable runtime tag>
 	// +optional
 	Image string `json:"image,omitempty"`
-	// Image tag to use. Defaults to latest
-	// +optional
-	Tag string `json:"tag,omitempty"`
 	// ImagePullPolicy overrides WordpressRuntime spec.imagePullPolicy
 	// +kubebuilder:validation:Enum=Always,IfNotPresent,Never
 	// +optional

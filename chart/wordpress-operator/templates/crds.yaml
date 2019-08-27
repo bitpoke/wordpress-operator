@@ -142,7 +142,8 @@ spec:
                 type: object
               type: array
             image:
-              description: WordPress runtime image to use. Defaults to quay.io/presslabs/wordpress-runtime
+              description: WordPress runtime image to use. Defaults to quay.io/presslabs/wordpress-runtime:<latest
+                stable runtime tag>
               type: string
             imagePullPolicy:
               description: ImagePullPolicy overrides WordpressRuntime spec.imagePullPolicy
@@ -238,9 +239,6 @@ spec:
             serviceAccountName:
               description: 'ServiceAccountName is the name of the ServiceAccount to
                 use to run this site''s pods More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/'
-              type: string
-            tag:
-              description: Image tag to use. Defaults to latest
               type: string
             tlsSecretRef:
               description: TLSSecretRef a secret containing the TLS certificates for

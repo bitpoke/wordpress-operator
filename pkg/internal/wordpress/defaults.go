@@ -38,10 +38,6 @@ func (o *Wordpress) SetDefaults() {
 		o.Spec.Image = options.WordpressRuntimeImage
 	}
 
-	if len(o.Spec.Tag) == 0 {
-		o.Spec.Tag = options.WordpressRuntimeTag
-	}
-
 	if len(o.Spec.ImagePullPolicy) == 0 {
 		o.Spec.ImagePullPolicy = corev1.PullAlways
 	}

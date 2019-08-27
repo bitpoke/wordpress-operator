@@ -97,7 +97,7 @@ var _ = Describe("Web pod spec", func() {
 
 			Expect(containers).To(HaveLen(1))
 			Expect(containers[0].Name).To(Equal("install-wp"))
-			Expect(containers[0].Image).To(Equal(w.image()))
+			Expect(containers[0].Image).To(Equal(w.Spec.Image))
 		},
 		Entry("for web pod", func() (func() corev1.PodTemplateSpec, *Wordpress) {
 			return wp.WebPodTemplateSpec, wp

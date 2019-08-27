@@ -87,7 +87,7 @@ func (o *Wordpress) ComponentLabels(component component) labels.Set {
 	l["app.kubernetes.io/component"] = component.name
 
 	if component == WordpressDBUpgrade {
-		l["wordpress.presslabs.org/upgrade-for"] = o.ImageTagVersion()
+		l["wordpress.presslabs.org/upgrade-for"] = o.ImageVersion()
 	}
 
 	return l
@@ -101,16 +101,16 @@ func (o *Wordpress) ComponentName(component component) string {
 	}
 
 	if component == WordpressDBUpgrade {
-		name = fmt.Sprintf("%s-for-%s", name, o.ImageTagVersion())
+		name = fmt.Sprintf("%s-for-%s", name, o.ImageVersion())
 	}
 
 	return name
 }
 
-// ImageTagVersion returns the version from the image tag in a format suitable
-// fro kubernetes object names and labels
-func (o *Wordpress) ImageTagVersion() string {
-	return slugify.Slugify(o.Spec.Tag)
+// ImageVersion returns the version from the image in a format suitable
+// for kubernetes object names and labels
+func (o *Wordpress) ImageVersion() string {
+	return slugify.Slugify(o.Spec.Image)
 }
 
 // WebPodLabels return labels to apply to web pods
