@@ -80,10 +80,6 @@ var (
 	}
 )
 
-func (wp *Wordpress) image() string {
-	return fmt.Sprintf("%s:%s", wp.Spec.Image, wp.Spec.Tag)
-}
-
 func (wp *Wordpress) mediaEnv() []corev1.EnvVar {
 	out := []corev1.EnvVar{}
 
@@ -330,7 +326,7 @@ func (wp *Wordpress) installWPContainer() []corev1.Container {
 	return []corev1.Container{
 		{
 			Name:            "install-wp",
-			Image:           wp.image(),
+			Image:           wp.Spec.Image,
 			VolumeMounts:    wp.volumeMounts(),
 			Env:             append(wp.env(), wp.Spec.WordpressBootstrapSpec.Env...),
 			EnvFrom:         append(wp.envFrom(), wp.Spec.WordpressBootstrapSpec.EnvFrom...),
@@ -374,7 +370,7 @@ func (wp *Wordpress) WebPodTemplateSpec() (out corev1.PodTemplateSpec) {
 	out.Spec.Containers = []corev1.Container{
 		{
 			Name:            "wordpress",
-			Image:           wp.image(),
+			Image:           wp.Spec.Image,
 			ImagePullPolicy: wp.Spec.ImagePullPolicy,
 			VolumeMounts:    wp.volumeMounts(),
 			Env:             wp.env(),
@@ -429,7 +425,7 @@ func (wp *Wordpress) JobPodTemplateSpec(cmd ...string) (out corev1.PodTemplateSp
 	out.Spec.Containers = []corev1.Container{
 		{
 			Name:            "wp-cli",
-			Image:           wp.image(),
+			Image:           wp.Spec.Image,
 			ImagePullPolicy: wp.Spec.ImagePullPolicy,
 			Args:            cmd,
 			VolumeMounts:    wp.volumeMounts(),
