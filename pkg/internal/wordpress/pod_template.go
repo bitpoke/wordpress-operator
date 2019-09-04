@@ -189,7 +189,7 @@ func (wp *Wordpress) gitCloneEnv() []corev1.EnvVar {
 
 func (wp *Wordpress) volumeMounts() (out []corev1.VolumeMount) {
 	out = wp.Spec.VolumeMounts
-	if wp.Spec.CodeVolumeSpec != nil {
+	if wp.hasCodeMounts() {
 		out = append(out, corev1.VolumeMount{
 			MountPath: codeSrcMountPath,
 			Name:      codeVolumeName,
@@ -295,7 +295,10 @@ func (wp *Wordpress) mediaVolume() corev1.Volume {
 }
 
 func (wp *Wordpress) volumes() []corev1.Volume {
-	volumes := append(wp.Spec.Volumes, wp.codeVolume())
+	volumes := wp.Spec.Volumes
+	if wp.hasCodeMounts() {
+		volumes = append(volumes, wp.codeVolume())
+	}
 	if wp.hasMediaMounts() {
 		volumes = append(volumes, wp.mediaVolume())
 	}
@@ -483,6 +486,23 @@ func (wp *Wordpress) hasMediaMounts() bool {
 	case wp.Spec.MediaVolumeSpec.HostPath != nil:
 		return true
 	case wp.Spec.MediaVolumeSpec.EmptyDir != nil:
+		return true
+	}
+	return false
+}
+
+func (wp *Wordpress) hasCodeMounts() bool {
+	if wp.Spec.CodeVolumeSpec == nil {
+		return false
+	}
+	switch {
+	case wp.Spec.CodeVolumeSpec.GitDir != nil:
+		return true
+	case wp.Spec.CodeVolumeSpec.PersistentVolumeClaim != nil:
+		return true
+	case wp.Spec.CodeVolumeSpec.HostPath != nil:
+		return true
+	case wp.Spec.CodeVolumeSpec.EmptyDir != nil:
 		return true
 	}
 	return false
