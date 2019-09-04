@@ -19,6 +19,8 @@ package wordpress
 import (
 	corev1 "k8s.io/api/core/v1"
 
+	"path"
+
 	"github.com/presslabs/wordpress-operator/pkg/cmd/options"
 )
 
@@ -30,9 +32,13 @@ const (
 
 	configMountPath          = "/app/config"
 	defaultRepoConfigSubPath = "config"
+
+	mediaSubPath          = "uploads"
+	defaultMediaMountPath = defaultCodeMountPath + "/" + mediaSubPath
 )
 
 // SetDefaults sets Wordpress field defaults
+// nolint: gocyclo
 func (o *Wordpress) SetDefaults() {
 	if len(o.Spec.Image) == 0 {
 		o.Spec.Image = options.WordpressRuntimeImage
@@ -42,15 +48,23 @@ func (o *Wordpress) SetDefaults() {
 		o.Spec.ImagePullPolicy = corev1.PullAlways
 	}
 
-	if o.Spec.CodeVolumeSpec != nil && len(o.Spec.CodeVolumeSpec.MountPath) == 0 {
+	if o.Spec.CodeVolumeSpec != nil && o.Spec.CodeVolumeSpec.MountPath == "" {
 		o.Spec.CodeVolumeSpec.MountPath = defaultCodeMountPath
 	}
 
-	if o.Spec.CodeVolumeSpec != nil && len(o.Spec.CodeVolumeSpec.ContentSubPath) == 0 {
+	if o.Spec.CodeVolumeSpec != nil && o.Spec.CodeVolumeSpec.ContentSubPath == "" {
 		o.Spec.CodeVolumeSpec.ContentSubPath = defaultRepoCodeSubPath
 	}
 
-	if o.Spec.CodeVolumeSpec != nil && len(o.Spec.CodeVolumeSpec.ConfigSubPath) == 0 {
+	if o.Spec.CodeVolumeSpec != nil && o.Spec.CodeVolumeSpec.ConfigSubPath == "" {
 		o.Spec.CodeVolumeSpec.ConfigSubPath = defaultRepoConfigSubPath
+	}
+
+	if o.Spec.MediaVolumeSpec != nil && o.Spec.MediaVolumeSpec.MountPath == "" {
+		if o.Spec.CodeVolumeSpec != nil {
+			o.Spec.MediaVolumeSpec.MountPath = path.Join(o.Spec.MediaVolumeSpec.MountPath, mediaSubPath)
+		} else {
+			o.Spec.MediaVolumeSpec.MountPath = defaultMediaMountPath
+		}
 	}
 }

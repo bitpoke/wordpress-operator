@@ -208,6 +208,17 @@ func (wp *Wordpress) volumeMounts() (out []corev1.VolumeMount) {
 			SubPath:   wp.Spec.CodeVolumeSpec.ConfigSubPath,
 		})
 	}
+	if wp.hasMediaMounts() {
+		v := corev1.VolumeMount{
+			MountPath: wp.Spec.MediaVolumeSpec.MountPath,
+			Name:      mediaVolumeName,
+			ReadOnly:  wp.Spec.MediaVolumeSpec.ReadOnly,
+		}
+		if wp.Spec.MediaVolumeSpec.ContentSubPath != "" {
+			v.SubPath = wp.Spec.MediaVolumeSpec.ContentSubPath
+		}
+		out = append(out, v)
+	}
 	return out
 }
 
@@ -284,7 +295,11 @@ func (wp *Wordpress) mediaVolume() corev1.Volume {
 }
 
 func (wp *Wordpress) volumes() []corev1.Volume {
-	return append(wp.Spec.Volumes, wp.codeVolume(), wp.mediaVolume())
+	volumes := append(wp.Spec.Volumes, wp.codeVolume())
+	if wp.hasMediaMounts() {
+		volumes = append(volumes, wp.mediaVolume())
+	}
+	return volumes
 }
 
 func (wp *Wordpress) securityContext() *corev1.SecurityContext {
@@ -456,4 +471,19 @@ func (wp *Wordpress) JobPodTemplateSpec(cmd ...string) (out corev1.PodTemplateSp
 	}
 
 	return out
+}
+
+func (wp *Wordpress) hasMediaMounts() bool {
+	if wp.Spec.MediaVolumeSpec == nil {
+		return false
+	}
+	switch {
+	case wp.Spec.MediaVolumeSpec.PersistentVolumeClaim != nil:
+		return true
+	case wp.Spec.MediaVolumeSpec.HostPath != nil:
+		return true
+	case wp.Spec.MediaVolumeSpec.EmptyDir != nil:
+		return true
+	}
+	return false
 }

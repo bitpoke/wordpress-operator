@@ -158,6 +158,10 @@ spec:
                 the runtime container. If not specified, a media volume won't be mounted
                 at all.
               properties:
+                contentSubPath:
+                  description: ContentSubPath specifies where within the media volume,
+                    the media files are located.
+                  type: string
                 emptyDir:
                   description: EmptyDir to use if no HostPath is specified
                   type: object
@@ -186,6 +190,10 @@ spec:
                 hostPath:
                   description: HostPath to use if no PersistentVolumeClaim is specified
                   type: object
+                mountPath:
+                  description: MountPath specifies where should the media volume be
+                    mounted. Defaults to '/uploads' folder within the CodeVolumeSpec.MountPath
+                  type: string
                 persistentVolumeClaim:
                   description: PersistentVolumeClaim to use if no S3VolumeSource or
                     GCSVolumeSource are specified

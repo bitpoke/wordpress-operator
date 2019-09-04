@@ -211,6 +211,13 @@ type MediaVolumeSpec struct {
 	// ReadOnly specifies if the volume should be mounted read-only inside the
 	// wordpress runtime container
 	ReadOnly bool
+	// MountPath specifies where should the media volume be mounted.
+	// Defaults to '/uploads' folder within the CodeVolumeSpec.MountPath
+	// +optional
+	MountPath string `json:"mountPath,omitempty"`
+	// ContentSubPath specifies where within the media volume, the media files are located.
+	// +optional
+	ContentSubPath string `json:"contentSubPath,omitempty"`
 	// S3VolumeSource specifies the S3 object storage configuration for media
 	// files. It has the highest level of precedence over EmptyDir, HostPath
 	// and PersistentVolumeClaim
