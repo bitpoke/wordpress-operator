@@ -90,7 +90,7 @@ func (wp *Wordpress) mediaEnv() []corev1.EnvVar {
 	if wp.Spec.MediaVolumeSpec.S3VolumeSource != nil {
 		bucket := path.Join(wp.Spec.MediaVolumeSpec.S3VolumeSource.Bucket, wp.Spec.MediaVolumeSpec.S3VolumeSource.PathPrefix)
 		out = append(out, corev1.EnvVar{
-			Name:  "MEDIA_BUCKET",
+			Name:  "STACK_MEDIA_BUCKET",
 			Value: fmt.Sprintf("%s://%s", s3Prefix, bucket),
 		})
 		for _, env := range wp.Spec.MediaVolumeSpec.S3VolumeSource.Env {
@@ -105,7 +105,7 @@ func (wp *Wordpress) mediaEnv() []corev1.EnvVar {
 	if wp.Spec.MediaVolumeSpec.GCSVolumeSource != nil {
 		bucket := path.Join(wp.Spec.MediaVolumeSpec.GCSVolumeSource.Bucket, wp.Spec.MediaVolumeSpec.GCSVolumeSource.PathPrefix)
 		out = append(out, corev1.EnvVar{
-			Name:  "MEDIA_BUCKET",
+			Name:  "STACK_MEDIA_BUCKET",
 			Value: fmt.Sprintf("%s://%s", gcsPrefix, bucket),
 		})
 		for _, env := range wp.Spec.MediaVolumeSpec.GCSVolumeSource.Env {
