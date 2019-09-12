@@ -47,19 +47,19 @@ spec:
       secretRef:
         name: mysite-salt
   env:
-    - name: WORDPRESS_DB_HOST
+    - name: DB_HOST
       value: mysite-mysql-master
-    - name: WORDPRESS_DB_USER
+    - name: DB_USER
       valueFrom:
         secretKeyRef:
           name: mysite-db
           key: USER
-    - name: WORDPRESS_DB_PASSWORD
+    - name: DB_PASSWORD
       valueFrom:
         secretKeyRef:
           name: mysite-db
           key: PASSWORD
-    - name: WORDPRESS_DB_NAME
+    - name: DB_NAME
       valueFrom:
         secretKeyRef:
           name: mysite-db

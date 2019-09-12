@@ -88,18 +88,36 @@ spec:
           secretKeyRef:
             name: mysite
             key: PASSWORD
+      - name: WORDPRESS_BOOTSTRAP_EMAIL
+        valueFrom:
+          secretKeyRef:
+            name: mysite
+            key: EMAIL 
+      - name: WORDPRESS_BOOTSTRAP_TITLE
+        valueFrom:
+          secretKeyRef:
+            name: mysite
+            key: TITLE
   # extra volumes for the Wordpress container
   volumes: []
   # extra volume mounts for the Wordpress container
   volumeMounts: []
   # extra env variables for the Wordpress container
   env:
-    - name: WORDPRESS_DB_HOST
+    - name: DB_HOST
       value: mysite-mysql
-    - name: WORDPRESS_DB_PASSWORD
+    - name: DB_USER
+      valueFrom:
+        secretKeyRef: mysite-mysql
+        key: USER
+    - name: DB_PASSWORD
       valueFrom:
         secretKeyRef: mysite-mysql
         key: PASSWORD
+    - name: DB_NAME
+      valueFrom:
+        secretKeyRef: mysite-mysql
+        key: DATABASE
   envFrom: []
 
   # secret containg HTTPS certificate
