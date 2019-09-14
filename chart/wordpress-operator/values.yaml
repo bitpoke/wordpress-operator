@@ -3,6 +3,7 @@ replicaCount: 1
 
 image: quay.io/presslabs/wordpress-operator:latest
 imagePullPolicy: IfNotPresent
+imagePullSecrets: []
 
 nameOverride: ""
 fullnameOverride: ""
