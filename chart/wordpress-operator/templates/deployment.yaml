@@ -24,6 +24,7 @@ spec:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image }}"
           imagePullPolicy: {{ .Values.imagePullPolicy }}
+
           {{- with .Values.extraArgs }}
           args:
             {{- range $arg := . }}
@@ -32,6 +33,13 @@ spec:
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range $arg := . }}
+        - name: {{ $arg }}
+        {{- end }}
+      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
