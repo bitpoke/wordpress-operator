@@ -16,6 +16,12 @@ limitations under the License.
 
 package sync
 
+import (
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+)
+
 var controllerLabels = map[string]string{
 	"app.kubernetes.io/managed-by": "wordpress-operator.presslabs.org",
 }
+
+var log = logf.Log.WithName("wordpress-syncers")

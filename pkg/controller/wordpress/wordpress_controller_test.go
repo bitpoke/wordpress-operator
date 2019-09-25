@@ -39,6 +39,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
+	"github.com/presslabs/wordpress-operator/pkg/internal/wordpress"
 )
 
 const timeout = time.Second * 5
@@ -161,5 +162,20 @@ var _ = Describe("Wordpress controller", func() {
 			Eventually(func() error { return c.Get(context.TODO(), key, obj) }, timeout).Should(Succeed())
 		}, entries...)
 
+		It("should accept empty domain list", func() {
+			wp.Spec.Domains = []wordpressv1alpha1.Domain{}
+			Expect(c.Update(context.TODO(), wp)).To(Succeed())
+
+			// wait for reconciliation request
+			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
+
+			ingress := &extv1beta1.Ingress{}
+			ingressKey := types.NamespacedName{
+				Name:      wordpress.New(wp).ComponentName(wordpress.WordpressIngress),
+				Namespace: wp.Namespace,
+			}
+			Expect(c.Get(context.TODO(), ingressKey, ingress)).To(Succeed())
+			Expect(ingress.Spec.Rules[0].Host).To(Equal(fmt.Sprintf("%s.%s.svc.cluster.local", wp.Name, wp.Namespace)))
+		})
 	})
 })

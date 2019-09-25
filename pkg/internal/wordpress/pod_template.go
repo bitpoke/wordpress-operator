@@ -122,19 +122,14 @@ func (wp *Wordpress) mediaEnv() []corev1.EnvVar {
 }
 
 func (wp *Wordpress) env() []corev1.EnvVar {
-	scheme := "http"
-	if len(wp.Spec.TLSSecretRef) > 0 {
-		scheme = "https"
-	}
-
 	out := append([]corev1.EnvVar{
 		{
 			Name:  "WP_HOME",
-			Value: fmt.Sprintf("%s://%s", scheme, wp.Spec.Domains[0]),
+			Value: wp.HomeURL(),
 		},
 		{
 			Name:  "WP_SITEURL",
-			Value: fmt.Sprintf("%s://%s/wp", scheme, wp.Spec.Domains[0]),
+			Value: fmt.Sprintf("%s/wp", wp.HomeURL()),
 		},
 	}, wp.Spec.Env...)
 
@@ -335,12 +330,6 @@ func (wp *Wordpress) installWPContainer() []corev1.Container {
 		return []corev1.Container{}
 	}
 
-	scheme := "http"
-	if len(wp.Spec.TLSSecretRef) > 0 {
-		scheme = "https"
-	}
-	url := fmt.Sprintf("%s://%s/", scheme, wp.Spec.Domains[0])
-
 	return []corev1.Container{
 		{
 			Name:            "install-wp",
@@ -352,7 +341,7 @@ func (wp *Wordpress) installWPContainer() []corev1.Container {
 			Command:         []string{"wp-install"},
 			Args: []string{
 				"$(WORDPRESS_BOOTSTRAP_TITLE)",
-				url,
+				wp.HomeURL(),
 				"$(WORDPRESS_BOOTSTRAP_USER)",
 				"$(WORDPRESS_BOOTSTRAP_PASSWORD)",
 				"$(WORDPRESS_BOOTSTRAP_EMAIL)",

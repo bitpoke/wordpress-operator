@@ -54,8 +54,7 @@ type WordpressSpec struct {
 	Replicas *int32 `json:"replicas,omitempty"`
 	// Domains for which this this site answers.
 	// The first item is set as the "main domain" (eg. WP_HOME and WP_SITEURL constants).
-	// +kubebuilder:validation:MinItems=1
-	Domains []Domain `json:"domains"`
+	Domains []Domain `json:"domains,omitempty"`
 	// WordPress runtime image to use. Defaults to quay.io/presslabs/wordpress-runtime:<latest stable runtime tag>
 	// +optional
 	Image string `json:"image,omitempty"`

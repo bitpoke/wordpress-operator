@@ -77,6 +77,9 @@ func NewDeploymentSyncer(wp *wordpress.Wordpress, secret *corev1.Secret, c clien
 			out.Spec.Replicas = wp.Spec.Replicas
 		}
 
+		// sync replicas
+		wp.Status.Replicas = out.Status.Replicas
+
 		return nil
 	})
 }

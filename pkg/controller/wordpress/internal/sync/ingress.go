@@ -57,29 +57,14 @@ func NewIngressSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.
 			out.ObjectMeta.Annotations[k] = v
 		}
 
-		bk := extv1beta1.IngressBackend{
-			ServiceName: wp.ComponentName(wordpress.WordpressService),
-			ServicePort: intstr.FromString("http"),
-		}
-		bkpaths := []extv1beta1.HTTPIngressPath{
-			{
-				Path:    "/",
-				Backend: bk,
-			},
+		// if no domains are specified then don't create the ingress
+		// if ingress exists then update ingress with no domains
+		if len(wp.Spec.Domains) == 0 && out.CreationTimestamp.IsZero() {
+			log.Info("no domains are specified - skip creating the ingress", "site", wp.Name, "ingressName", obj.Name)
+			return syncer.ErrIgnore
 		}
 
-		rules := []extv1beta1.IngressRule{}
-		for _, d := range wp.Spec.Domains {
-			rules = append(rules, extv1beta1.IngressRule{
-				Host: string(d),
-				IngressRuleValue: extv1beta1.IngressRuleValue{
-					HTTP: &extv1beta1.HTTPIngressRuleValue{
-						Paths: bkpaths,
-					},
-				},
-			})
-		}
-		out.Spec.Rules = rules
+		out.Spec.Rules = composeIngressRules(wp)
 
 		if len(wp.Spec.TLSSecretRef) > 0 {
 			tls := extv1beta1.IngressTLS{
@@ -95,4 +80,34 @@ func NewIngressSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.
 
 		return nil
 	})
+}
+
+func composeIngressRules(wp *wordpress.Wordpress) []extv1beta1.IngressRule {
+
+	// set domains
+	domains := wp.Spec.Domains
+	if len(domains) == 0 {
+		domains = append(domains, wp.MainDomain())
+	}
+
+	bk := extv1beta1.IngressBackend{
+		ServiceName: wp.ComponentName(wordpress.WordpressService),
+		ServicePort: intstr.FromString("http"),
+	}
+
+	bkpaths := []extv1beta1.HTTPIngressPath{{Path: "/", Backend: bk}}
+
+	rules := []extv1beta1.IngressRule{}
+	for _, d := range domains {
+		rules = append(rules, extv1beta1.IngressRule{
+			Host: string(d),
+			IngressRuleValue: extv1beta1.IngressRuleValue{
+				HTTP: &extv1beta1.HTTPIngressRuleValue{
+					Paths: bkpaths,
+				},
+			},
+		})
+	}
+
+	return rules
 }

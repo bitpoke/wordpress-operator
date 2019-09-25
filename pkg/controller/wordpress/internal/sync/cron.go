@@ -68,7 +68,7 @@ func NewWPCronSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.S
 		out.Spec.JobTemplate.Spec.BackoffLimit = &backoffLimit
 		out.Spec.JobTemplate.Spec.ActiveDeadlineSeconds = &activeDeadlineSeconds
 
-		hostHeader := fmt.Sprintf("Host: %s", wp.Spec.Domains[0])
+		hostHeader := fmt.Sprintf("Host: %s", wp.MainDomain())
 		svcHostname := fmt.Sprintf("%s.%s.svc", wp.Name, wp.Namespace)
 		url := fmt.Sprintf("http://%s/wp/wp-cron.php?doing_wp_cron", svcHostname)
 

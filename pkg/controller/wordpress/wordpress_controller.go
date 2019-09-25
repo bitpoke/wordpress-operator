@@ -36,6 +36,7 @@ import (
 	"github.com/presslabs/controller-util/syncer"
 
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
+	"github.com/presslabs/wordpress-operator/pkg/cmd/options"
 	"github.com/presslabs/wordpress-operator/pkg/controller/wordpress/internal/sync"
 	"github.com/presslabs/wordpress-operator/pkg/internal/wordpress"
 )
@@ -73,7 +74,11 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		&corev1.PersistentVolumeClaim{},
 		&corev1.Service{},
 		&corev1.Secret{},
-		&extv1beta1.Ingress{},
+	}
+
+	// watch ingress if integration is enabled
+	if options.EnableIngressSyncer {
+		subresources = append(subresources, &extv1beta1.Ingress{})
 	}
 
 	for _, subresource := range subresources {
@@ -123,32 +128,12 @@ func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Res
 
 	r.scheme.Default(wp.Unwrap())
 	wp.SetDefaults()
+	oldStatus := wp.Status.DeepCopy()
 
-	secretSyncer := sync.NewSecretSyncer(wp, r.Client, r.scheme)
-	deploySyncer := sync.NewDeploymentSyncer(wp, secretSyncer.GetObject().(*corev1.Secret), r.Client, r.scheme)
-	syncers := []syncer.Interface{
-		secretSyncer,
-		deploySyncer,
-		sync.NewServiceSyncer(wp, r.Client, r.scheme),
-		sync.NewIngressSyncer(wp, r.Client, r.scheme),
-		sync.NewWPCronSyncer(wp, r.Client, r.scheme),
-		// sync.NewDBUpgradeJobSyncer(wp, r.Client, r.scheme),
-	}
-
-	if wp.Spec.CodeVolumeSpec != nil && wp.Spec.CodeVolumeSpec.PersistentVolumeClaim != nil {
-		syncers = append(syncers, sync.NewCodePVCSyncer(wp, r.Client, r.scheme))
-	}
-
-	if wp.Spec.MediaVolumeSpec != nil && wp.Spec.MediaVolumeSpec.PersistentVolumeClaim != nil {
-		syncers = append(syncers, sync.NewMediaPVCSyncer(wp, r.Client, r.scheme))
-	}
-
-	if err = r.sync(syncers); err != nil {
+	if err = r.sync(r.getSyncersList(wp)); err != nil {
 		return reconcile.Result{}, err
 	}
 
-	oldStatus := wp.Status.DeepCopy()
-	wp.Status.Replicas = deploySyncer.GetObject().(*appsv1.Deployment).Status.Replicas
 	if oldStatus.Replicas != wp.Status.Replicas {
 		if err := r.Status().Update(context.TODO(), wp.Unwrap()); err != nil {
 			return reconcile.Result{}, err
@@ -165,4 +150,30 @@ func (r *ReconcileWordpress) sync(syncers []syncer.Interface) error {
 		}
 	}
 	return nil
+}
+
+func (r *ReconcileWordpress) getSyncersList(wp *wordpress.Wordpress) []syncer.Interface {
+	secretSyncer := sync.NewSecretSyncer(wp, r.Client, r.scheme)
+	syncers := []syncer.Interface{
+		secretSyncer,
+		sync.NewDeploymentSyncer(wp, secretSyncer.GetObject().(*corev1.Secret), r.Client, r.scheme),
+		sync.NewServiceSyncer(wp, r.Client, r.scheme),
+		sync.NewWPCronSyncer(wp, r.Client, r.scheme),
+		// sync.NewDBUpgradeJobSyncer(wp, r.Client, r.scheme),
+	}
+
+	// watch ingress if integration is enabled
+	if options.EnableIngressSyncer {
+		syncers = append(syncers, sync.NewIngressSyncer(wp, r.Client, r.scheme))
+	}
+
+	if wp.Spec.CodeVolumeSpec != nil && wp.Spec.CodeVolumeSpec.PersistentVolumeClaim != nil {
+		syncers = append(syncers, sync.NewCodePVCSyncer(wp, r.Client, r.scheme))
+	}
+
+	if wp.Spec.MediaVolumeSpec != nil && wp.Spec.MediaVolumeSpec.PersistentVolumeClaim != nil {
+		syncers = append(syncers, sync.NewMediaPVCSyncer(wp, r.Client, r.scheme))
+	}
+
+	return syncers
 }

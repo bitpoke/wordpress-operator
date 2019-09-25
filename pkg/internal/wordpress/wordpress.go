@@ -126,3 +126,24 @@ func (o *Wordpress) JobPodLabels() labels.Set {
 	l["app.kubernetes.io/component"] = "wp-cli"
 	return l
 }
+
+// MainDomain returns the site main domain or a local domain <cluster-name>.<namespace>.svc.cluster.local
+func (o *Wordpress) MainDomain() wordpressv1alpha1.Domain {
+	if len(o.Spec.Domains) > 0 {
+		return o.Spec.Domains[0]
+	}
+
+	// return the local cluster name that points to wordpress service
+	return wordpressv1alpha1.Domain(fmt.Sprintf("%s.%s.svc.cluster.local", o.ComponentName(WordpressService), o.Namespace))
+}
+
+// HomeURL returns the WP_HOMEURL (e.g. http://example.com/ )
+func (o *Wordpress) HomeURL() string {
+
+	scheme := "http"
+	if len(o.Spec.TLSSecretRef) > 0 {
+		scheme = "https"
+	}
+
+	return fmt.Sprintf("%s://%s/", scheme, o.MainDomain())
+}

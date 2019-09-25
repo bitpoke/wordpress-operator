@@ -127,7 +127,6 @@ spec:
                 is set as the "main domain" (eg. WP_HOME and WP_SITEURL constants).
               items:
                 type: string
-              minItems: 1
               type: array
             env:
               description: Env defines environment variables which get passed into
@@ -269,8 +268,6 @@ spec:
               items:
                 type: object
               type: array
-          required:
-          - domains
           type: object
         status:
           properties:

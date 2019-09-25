@@ -27,6 +27,9 @@ var (
 
 	// IngressClass is the default ingress class used used for creating WordPress ingresses
 	IngressClass = ""
+
+	// EnableIngressSyncer specify if the operator should sync (create and update), or manage, the ingress
+	EnableIngressSyncer = true
 )
 
 // AddToFlagSet set command line arguments
@@ -34,4 +37,5 @@ func AddToFlagSet(flag *pflag.FlagSet) {
 	flag.StringVar(&GitCloneImage, "git-clone-image", GitCloneImage, "The image used when cloning code from git.")
 	flag.StringVar(&WordpressRuntimeImage, "wordpress-runtime-image", WordpressRuntimeImage, "The base image used for Wordpress.")
 	flag.StringVar(&IngressClass, "ingress-class", IngressClass, "The default ingress class for WordPress sites.")
+	flag.BoolVar(&EnableIngressSyncer, "enable-ingress-sync", EnableIngressSyncer, "Enable or disable the ingress sync.")
 }
