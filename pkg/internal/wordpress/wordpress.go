@@ -145,5 +145,5 @@ func (o *Wordpress) HomeURL() string {
 		scheme = "https"
 	}
 
-	return fmt.Sprintf("%s://%s/", scheme, o.MainDomain())
+	return fmt.Sprintf("%s://%s", scheme, o.MainDomain())
 }

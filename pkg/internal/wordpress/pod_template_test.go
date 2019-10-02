@@ -106,4 +106,15 @@ var _ = Describe("Web pod spec", func() {
 			return func() corev1.PodTemplateSpec { return wp.JobPodTemplateSpec("test") }, wp
 		}),
 	)
+
+	It("should give me the default domain", func() {
+		Expect(wp.MainDomain()).To(Equal(wordpressv1alpha1.Domain("test.com")))
+		wp.Spec.Domains = []wordpressv1alpha1.Domain{}
+
+		Expect(wp.MainDomain()).To(Equal(wordpressv1alpha1.Domain(fmt.Sprintf("%s.default.svc.cluster.local", wp.Name))))
+	})
+
+	It("should give me right home URL", func() {
+		Expect(wp.HomeURL()).To(Equal("http://test.com"))
+	})
 })
