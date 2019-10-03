@@ -18,6 +18,7 @@ package wordpress
 
 import (
 	"fmt"
+	"path"
 
 	"github.com/cooleo/slugify"
 	"k8s.io/apimachinery/pkg/labels"
@@ -125,4 +126,30 @@ func (o *Wordpress) JobPodLabels() labels.Set {
 	l := o.Labels()
 	l["app.kubernetes.io/component"] = "wp-cli"
 	return l
+}
+
+// MainDomain returns the site main domain or a local domain <cluster-name>.<namespace>.svc.cluster.local
+func (o *Wordpress) MainDomain() string {
+	if len(o.Spec.Routes) > 0 {
+		return o.Spec.Routes[0].Domain
+	}
+
+	// return the local cluster name that points to wordpress service
+	return fmt.Sprintf("%s.%s.svc", o.ComponentName(WordpressService), o.Namespace)
+}
+
+// HomeURL returns the WP_HOMEURL (e.g. http://example.com/)
+func (o *Wordpress) HomeURL(subPaths ...string) string {
+	scheme := "http"
+	if len(o.Spec.TLSSecretRef) > 0 {
+		scheme = "https"
+	}
+
+	paths := []string{"/"}
+	if len(o.Spec.Routes) > 0 {
+		paths = append(paths, o.Spec.Routes[0].Path)
+	}
+	paths = append(paths, subPaths...)
+
+	return fmt.Sprintf("%s://%s%s", scheme, o.MainDomain(), path.Join(paths...))
 }
