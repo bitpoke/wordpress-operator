@@ -32,6 +32,39 @@ import (
 
 const ingressClassAnnotationKey = "kubernetes.io/ingress.class"
 
+func upsertPath(rules []extv1beta1.IngressRule, domain, path string, bk extv1beta1.IngressBackend) []extv1beta1.IngressRule {
+	hostIdx := -1
+	for i := range rules {
+		if rules[i].Host == domain {
+			hostIdx = i
+		}
+	}
+	if hostIdx == -1 {
+		rules = append(rules, extv1beta1.IngressRule{Host: domain})
+		hostIdx = len(rules) - 1
+	}
+
+	if rules[hostIdx].HTTP == nil {
+		rules[hostIdx].HTTP = &extv1beta1.HTTPIngressRuleValue{}
+	}
+
+	idx := -1
+	for i := range rules[hostIdx].HTTP.Paths {
+		if rules[hostIdx].HTTP.Paths[i].Path == path {
+			idx = i
+		}
+	}
+	if idx == -1 {
+		rules[hostIdx].HTTP.Paths = append(rules[hostIdx].HTTP.Paths,
+			extv1beta1.HTTPIngressPath{Path: path})
+		idx = len(rules[hostIdx].HTTP.Paths) - 1
+	}
+
+	rules[hostIdx].HTTP.Paths[idx].Backend = bk
+
+	return rules
+}
+
 // NewIngressSyncer returns a new sync.Interface for reconciling web Ingress
 func NewIngressSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.Scheme) syncer.Interface {
 	objLabels := wp.ComponentLabels(wordpress.WordpressIngress)
@@ -41,6 +74,11 @@ func NewIngressSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.
 			Name:      wp.ComponentName(wordpress.WordpressIngress),
 			Namespace: wp.Namespace,
 		},
+	}
+
+	bk := extv1beta1.IngressBackend{
+		ServiceName: wp.ComponentName(wordpress.WordpressService),
+		ServicePort: intstr.FromString("http"),
 	}
 
 	return syncer.NewObjectSyncer("Ingress", wp.Unwrap(), obj, c, scheme, func(existing runtime.Object) error {
@@ -57,36 +95,23 @@ func NewIngressSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.
 			out.ObjectMeta.Annotations[k] = v
 		}
 
-		bk := extv1beta1.IngressBackend{
-			ServiceName: wp.ComponentName(wordpress.WordpressService),
-			ServicePort: intstr.FromString("http"),
-		}
-		bkpaths := []extv1beta1.HTTPIngressPath{
-			{
-				Path:    "/",
-				Backend: bk,
-			},
+		rules := []extv1beta1.IngressRule{}
+		for _, route := range wp.Spec.Routes {
+			path := route.Path
+			if path == "" {
+				path = "/"
+			}
+			rules = upsertPath(rules, route.Domain, path, bk)
 		}
 
-		rules := []extv1beta1.IngressRule{}
-		for _, d := range wp.Spec.Domains {
-			rules = append(rules, extv1beta1.IngressRule{
-				Host: string(d),
-				IngressRuleValue: extv1beta1.IngressRuleValue{
-					HTTP: &extv1beta1.HTTPIngressRuleValue{
-						Paths: bkpaths,
-					},
-				},
-			})
-		}
 		out.Spec.Rules = rules
 
 		if len(wp.Spec.TLSSecretRef) > 0 {
 			tls := extv1beta1.IngressTLS{
 				SecretName: string(wp.Spec.TLSSecretRef),
 			}
-			for _, d := range wp.Spec.Domains {
-				tls.Hosts = append(tls.Hosts, string(d))
+			for _, route := range wp.Spec.Routes {
+				tls.Hosts = append(tls.Hosts, route.Domain)
 			}
 			out.Spec.TLS = []extv1beta1.IngressTLS{tls}
 		} else {
