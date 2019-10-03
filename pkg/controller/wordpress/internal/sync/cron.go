@@ -18,6 +18,8 @@ package sync
 
 import (
 	"fmt"
+	"net/url"
+
 	"github.com/appscode/mergo"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -68,12 +70,17 @@ func NewWPCronSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.S
 		out.Spec.JobTemplate.Spec.BackoffLimit = &backoffLimit
 		out.Spec.JobTemplate.Spec.ActiveDeadlineSeconds = &activeDeadlineSeconds
 
-		hostHeader := fmt.Sprintf("Host: %s", wp.Spec.Domains[0])
+		hostHeader := fmt.Sprintf("Host: %s", wp.MainDomain())
 		svcHostname := fmt.Sprintf("%s.%s.svc", wp.Name, wp.Namespace)
-		url := fmt.Sprintf("http://%s/wp/wp-cron.php?doing_wp_cron", svcHostname)
+		u := wp.HomeURL("wp/wp-cron.php") + "?doing_wp_cron"
+		_u, err := url.Parse(u)
+		if err != nil {
+			return err
+		}
+		_u.Host = svcHostname
 
 		// curl -s -I --max-time 30 -H "Host: <Host>" "http://<site>.<namespace>.svc/wp-cron.php?doing_wp_cron"
-		cmd := []string{"curl", "-s", "-I", "--max-time", "30", "-H", hostHeader, url}
+		cmd := []string{"curl", "-s", "-I", "--max-time", "30", "-H", hostHeader, _u.String()}
 
 		template := corev1.PodTemplateSpec{}
 		template.ObjectMeta.Labels = wp.JobPodLabels()
@@ -88,7 +95,7 @@ func NewWPCronSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.S
 
 		out.Spec.JobTemplate.Spec.Template.ObjectMeta = template.ObjectMeta
 
-		err := mergo.Merge(&out.Spec.JobTemplate.Spec.Template.Spec, template.Spec,
+		err = mergo.Merge(&out.Spec.JobTemplate.Spec.Template.Spec, template.Spec,
 			mergo.WithTransformers(transformers.PodSpec))
 
 		if err != nil {

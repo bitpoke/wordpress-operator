@@ -47,7 +47,11 @@ var _ = Describe("Web pod spec", func() {
 				Labels:    map[string]string{"app.kubernetes.io/part-of": "test"},
 			},
 			Spec: wordpressv1alpha1.WordpressSpec{
-				Domains: []wordpressv1alpha1.Domain{"test.com"},
+				Routes: []wordpressv1alpha1.RouteSpec{
+					{
+						Domain: "test.com",
+					},
+				},
 			},
 		})
 		wp.SetDefaults()
@@ -106,4 +110,21 @@ var _ = Describe("Web pod spec", func() {
 			return func() corev1.PodTemplateSpec { return wp.JobPodTemplateSpec("test") }, wp
 		}),
 	)
+
+	It("should give me the default domain", func() {
+		Expect(wp.MainDomain()).To(Equal("test.com"))
+		wp.Spec.Routes = []wordpressv1alpha1.RouteSpec{}
+
+		Expect(wp.MainDomain()).To(Equal(fmt.Sprintf("%s.default.svc", wp.Name)))
+	})
+
+	It("should give me right home URL for subpath", func() {
+		Expect(wp.HomeURL("foo")).To(Equal("http://test.com/foo"))
+		Expect(wp.HomeURL("foo", "bar")).To(Equal("http://test.com/foo/bar"))
+		Expect(wp.HomeURL("foo/bar")).To(Equal("http://test.com/foo/bar"))
+	})
+
+	It("should give me right home URL", func() {
+		Expect(wp.HomeURL()).To(Equal("http://test.com/"))
+	})
 })
