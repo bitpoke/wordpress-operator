@@ -180,6 +180,7 @@ func (r *ReconcileWordpress) maybeMigrate(wp *wordpressv1alpha1.Wordpress) (*wor
 		for i := range out.Spec.Domains {
 			out.Spec.Routes = append(out.Spec.Routes, wordpressv1alpha1.RouteSpec{
 				Domain: string(out.Spec.Domains[i]),
+				Path:   "/",
 			})
 			needsMigration = true
 		}

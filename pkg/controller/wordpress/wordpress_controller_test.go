@@ -89,13 +89,17 @@ var _ = Describe("Wordpress controller", func() {
 		BeforeEach(func() {
 			r := rand.Int31()
 			name := fmt.Sprintf("wp-%d", r)
-			domain := wordpressv1alpha1.Domain(fmt.Sprintf("%s.example.com", name))
+			routes := []wordpressv1alpha1.RouteSpec{
+				{
+					Domain: fmt.Sprintf("%s.example.com", name),
+				},
+			}
 			expectedRequest = reconcile.Request{NamespacedName: types.NamespacedName{Name: name, Namespace: "default"}}
 
 			wp = &wordpressv1alpha1.Wordpress{
 				ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "default"},
 				Spec: wordpressv1alpha1.WordpressSpec{
-					Domains:         []wordpressv1alpha1.Domain{domain},
+					Routes:          routes,
 					CodeVolumeSpec:  &wordpressv1alpha1.CodeVolumeSpec{},
 					MediaVolumeSpec: &wordpressv1alpha1.MediaVolumeSpec{},
 				},
