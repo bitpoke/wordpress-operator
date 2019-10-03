@@ -123,11 +123,12 @@ spec:
                   type: boolean
               type: object
             domains:
-              description: Domains for which this this site answers. The first item
+              description: 'Domains for which this this site answers. The first item
                 is set as the "main domain" (eg. WP_HOME and WP_SITEURL constants).
+                DEPRECATED: use Routes instead. This field will be dropped in next
+                release.'
               items:
                 type: string
-              minItems: 1
               type: array
             env:
               description: Env defines environment variables which get passed into
@@ -244,6 +245,24 @@ spec:
               description: 'If specified, the resources required by wordpress container.
                 More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
               type: object
+            routes:
+              description: Routes for which the ingress is created The first item
+                is set the WP_HOME and WP_SITEURL constants. If no routes are specified,
+                ingress syncing is disabled and WP_HOME de defaults to NAME.NAMESPACE.svc.
+              items:
+                properties:
+                  domain:
+                    description: Domain for the route
+                    minLength: 1
+                    type: string
+                  path:
+                    description: The path for the route. Defaults to /.
+                    type: string
+                required:
+                - domain
+                - path
+                type: object
+              type: array
             serviceAccountName:
               description: 'ServiceAccountName is the name of the ServiceAccount to
                 use to run this site''s pods More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/'
@@ -269,8 +288,6 @@ spec:
               items:
                 type: object
               type: array
-          required:
-          - domains
           type: object
         status:
           properties:

@@ -27,6 +27,16 @@ type SecretRef string
 // Domain represents a valid domain name
 type Domain string
 
+// RouteSpec defines a desired state for a route
+type RouteSpec struct {
+	// Domain for the route
+	// +kubebuilder:validation:MinLength=1
+	Domain string `json:"domain"`
+	// The path for the route. Defaults to /.
+	// +optional
+	Path string `json:"path"`
+}
+
 // WordpressConditionType defines condition types of a backup resources
 type WordpressConditionType string
 
@@ -54,8 +64,14 @@ type WordpressSpec struct {
 	Replicas *int32 `json:"replicas,omitempty"`
 	// Domains for which this this site answers.
 	// The first item is set as the "main domain" (eg. WP_HOME and WP_SITEURL constants).
-	// +kubebuilder:validation:MinItems=1
-	Domains []Domain `json:"domains"`
+	// DEPRECATED: use Routes instead. This field will be dropped in next release.
+	// +optional
+	Domains []Domain `json:"domains,omitempty"`
+	// Routes for which the ingress is created
+	// The first item is set the WP_HOME and WP_SITEURL constants.
+	// If no routes are specified, ingress syncing is disabled and WP_HOME de defaults to NAME.NAMESPACE.svc.
+	// +optional
+	Routes []RouteSpec `json:"routes,omitempty"`
 	// WordPress runtime image to use. Defaults to quay.io/presslabs/wordpress-runtime:<latest stable runtime tag>
 	// +optional
 	Image string `json:"image,omitempty"`
