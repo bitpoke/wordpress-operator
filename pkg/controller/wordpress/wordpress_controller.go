@@ -112,12 +112,11 @@ func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Res
 	wp := wordpress.New(&wordpressv1alpha1.Wordpress{})
 	err := r.Get(context.TODO(), request.NamespacedName, wp.Unwrap())
 	if err != nil {
-		if errors.IsNotFound(err) {
-			// Object not found, return.  Created objects are automatically garbage collected.
-			// For additional cleanup logic use finalizers.
-			return reconcile.Result{}, nil
-		}
-		// Error reading the object - requeue the request.
+		return reconcile.Result{}, ignoreNotFound(err)
+	}
+
+	if updated, needsMigration := r.maybeMigrate(wp.Unwrap()); needsMigration {
+		err = r.Update(context.TODO(), updated)
 		return reconcile.Result{}, err
 	}
 
@@ -158,6 +157,13 @@ func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Res
 	return reconcile.Result{}, nil
 }
 
+func ignoreNotFound(err error) error {
+	if errors.IsNotFound(err) {
+		return nil
+	}
+	return err
+}
+
 func (r *ReconcileWordpress) sync(syncers []syncer.Interface) error {
 	for _, s := range syncers {
 		if err := syncer.Sync(context.TODO(), s, r.recorder); err != nil {
@@ -165,4 +171,19 @@ func (r *ReconcileWordpress) sync(syncers []syncer.Interface) error {
 		}
 	}
 	return nil
+}
+
+func (r *ReconcileWordpress) maybeMigrate(wp *wordpressv1alpha1.Wordpress) (*wordpressv1alpha1.Wordpress, bool) {
+	var needsMigration bool
+	out := wp.DeepCopy()
+	if len(out.Spec.Routes) == 0 {
+		for i := range out.Spec.Domains {
+			out.Spec.Routes = append(out.Spec.Routes, wordpressv1alpha1.RouteSpec{
+				Domain: string(out.Spec.Domains[i]),
+			})
+			needsMigration = true
+		}
+	}
+	out.Spec.Domains = nil
+	return out, needsMigration
 }
