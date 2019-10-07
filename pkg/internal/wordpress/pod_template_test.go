@@ -113,18 +113,21 @@ var _ = Describe("Web pod spec", func() {
 
 	It("should give me the default domain", func() {
 		Expect(wp.MainDomain()).To(Equal("test.com"))
-		wp.Spec.Routes = []wordpressv1alpha1.RouteSpec{}
 
+		wp.Spec.Routes = []wordpressv1alpha1.RouteSpec{}
 		Expect(wp.MainDomain()).To(Equal(fmt.Sprintf("%s.default.svc", wp.Name)))
+	})
+
+	It("should give me right home URL", func() {
+		Expect(wp.HomeURL()).To(Equal("http://test.com/"))
 	})
 
 	It("should give me right home URL for subpath", func() {
 		Expect(wp.HomeURL("foo")).To(Equal("http://test.com/foo"))
 		Expect(wp.HomeURL("foo", "bar")).To(Equal("http://test.com/foo/bar"))
 		Expect(wp.HomeURL("foo/bar")).To(Equal("http://test.com/foo/bar"))
-	})
 
-	It("should give me right home URL", func() {
-		Expect(wp.HomeURL()).To(Equal("http://test.com/"))
+		wp.Spec.Routes[0].Path = "/subpath"
+		Expect(wp.HomeURL()).To(Equal("http://test.com/subpath"))
 	})
 })
