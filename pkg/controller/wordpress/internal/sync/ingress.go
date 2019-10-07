@@ -33,34 +33,37 @@ import (
 const ingressClassAnnotationKey = "kubernetes.io/ingress.class"
 
 func upsertPath(rules []extv1beta1.IngressRule, domain, path string, bk extv1beta1.IngressBackend) []extv1beta1.IngressRule {
-	hostIdx := -1
+	var rule *extv1beta1.IngressRule
 	for i := range rules {
 		if rules[i].Host == domain {
-			hostIdx = i
+			rule = &rules[i]
+			break
 		}
 	}
-	if hostIdx == -1 {
+
+	if rule == nil {
 		rules = append(rules, extv1beta1.IngressRule{Host: domain})
-		hostIdx = len(rules) - 1
+		rule = &rules[len(rules)-1]
 	}
 
-	if rules[hostIdx].HTTP == nil {
-		rules[hostIdx].HTTP = &extv1beta1.HTTPIngressRuleValue{}
+	if rule.HTTP == nil {
+		rule.HTTP = &extv1beta1.HTTPIngressRuleValue{}
 	}
 
-	idx := -1
-	for i := range rules[hostIdx].HTTP.Paths {
-		if rules[hostIdx].HTTP.Paths[i].Path == path {
-			idx = i
+	var httpPath *extv1beta1.HTTPIngressPath
+	for i := range rule.HTTP.Paths {
+		if rule.HTTP.Paths[i].Path == path {
+			httpPath = &rule.HTTP.Paths[i]
+			break
 		}
 	}
-	if idx == -1 {
-		rules[hostIdx].HTTP.Paths = append(rules[hostIdx].HTTP.Paths,
-			extv1beta1.HTTPIngressPath{Path: path})
-		idx = len(rules[hostIdx].HTTP.Paths) - 1
+
+	if httpPath == nil {
+		rule.HTTP.Paths = append(rule.HTTP.Paths, extv1beta1.HTTPIngressPath{Path: path})
+		httpPath = &rule.HTTP.Paths[len(rule.HTTP.Paths)-1]
 	}
 
-	rules[hostIdx].HTTP.Paths[idx].Backend = bk
+	httpPath.Backend = bk
 
 	return rules
 }
