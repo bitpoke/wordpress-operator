@@ -118,8 +118,11 @@ var _ = Describe("Web pod spec", func() {
 		Expect(wp.MainDomain()).To(Equal(fmt.Sprintf("%s.default.svc", wp.Name)))
 	})
 
-	It("should give me right home URL", func() {
-		Expect(wp.HomeURL()).To(Equal("http://test.com/"))
+	It("should give me right home URL, without trailing slash", func() {
+		// WP_HOME and WP_SITEURL should not contain a trailing slash,
+		// as per: https://wordpress.org/support/article/changing-the-site-url/
+
+		Expect(wp.HomeURL()).To(Equal("http://test.com"))
 	})
 
 	It("should give me right home URL for subpath", func() {

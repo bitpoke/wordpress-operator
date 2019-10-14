@@ -150,6 +150,10 @@ func (o *Wordpress) HomeURL(subPaths ...string) string {
 		paths = append(paths, o.Spec.Routes[0].Path)
 	}
 	paths = append(paths, subPaths...)
+	p := path.Join(paths...)
+	if p == "/" {
+		p = ""
+	}
 
-	return fmt.Sprintf("%s://%s%s", scheme, o.MainDomain(), path.Join(paths...))
+	return fmt.Sprintf("%s://%s%s", scheme, o.MainDomain(), p)
 }
