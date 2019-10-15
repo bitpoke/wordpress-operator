@@ -111,6 +111,57 @@ var _ = Describe("Web pod spec", func() {
 		}),
 	)
 
+	It("should generate a valid STACK_ROUTES", func() {
+		spec := wp.WebPodTemplateSpec()
+		e, found := lookupEnvVar("STACK_ROUTES", spec.Spec.Containers[0].Env)
+		Expect(found).To(BeTrue())
+		Expect(e.Value).To(Equal("test.com"))
+	})
+
+	It("should generate a valid STACK_ROUTES when routes list is empty", func() {
+		wp.Spec.Routes = []wordpressv1alpha1.RouteSpec{}
+		spec := wp.WebPodTemplateSpec()
+		e, found := lookupEnvVar("STACK_ROUTES", spec.Spec.Containers[0].Env)
+		Expect(found).To(BeTrue())
+		Expect(e.Value).To(Equal(fmt.Sprintf("%s.default.svc", wp.Name)))
+	})
+
+	It("should generate a valid STACK_ROUTES keeping routes order", func() {
+		wp.Spec.Routes = []wordpressv1alpha1.RouteSpec{
+			{
+				Domain: "test.com",
+			},
+			{
+				Domain: "test.org",
+			},
+		}
+		spec := wp.WebPodTemplateSpec()
+		e, found := lookupEnvVar("STACK_ROUTES", spec.Spec.Containers[0].Env)
+		Expect(found).To(BeTrue())
+		Expect(e.Value).To(Equal("test.com,test.org"))
+	})
+
+	It("should generate a valid STACK_ROUTES with paths w/o trailing slash", func() {
+		wp.Spec.Routes = []wordpressv1alpha1.RouteSpec{
+			{
+				Domain: "test.com",
+				Path:   "/",
+			},
+			{
+				Domain: "test.org",
+				Path:   "/abc",
+			},
+			{
+				Domain: "test.net",
+				Path:   "/xyz/",
+			},
+		}
+		spec := wp.WebPodTemplateSpec()
+		e, found := lookupEnvVar("STACK_ROUTES", spec.Spec.Containers[0].Env)
+		Expect(found).To(BeTrue())
+		Expect(e.Value).To(Equal("test.com,test.org/abc,test.net/xyz"))
+	})
+
 	It("should give me the default domain", func() {
 		Expect(wp.MainDomain()).To(Equal("test.com"))
 
@@ -134,3 +185,12 @@ var _ = Describe("Web pod spec", func() {
 		Expect(wp.HomeURL()).To(Equal("http://test.com/subpath"))
 	})
 })
+
+func lookupEnvVar(name string, env []corev1.EnvVar) (corev1.EnvVar, bool) {
+	for _, e := range env {
+		if e.Name == name {
+			return e, true
+		}
+	}
+	return corev1.EnvVar{}, false
+}

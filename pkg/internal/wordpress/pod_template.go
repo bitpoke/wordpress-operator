@@ -23,6 +23,8 @@ import (
 
 	"path"
 
+	"strings"
+
 	"github.com/presslabs/wordpress-operator/pkg/cmd/options"
 )
 
@@ -121,6 +123,17 @@ func (wp *Wordpress) mediaEnv() []corev1.EnvVar {
 
 }
 
+func (wp *Wordpress) routes() []string {
+	if len(wp.Spec.Routes) == 0 {
+		return []string{wp.MainDomain()}
+	}
+	var out = make([]string, len(wp.Spec.Routes))
+	for i, r := range wp.Spec.Routes {
+		out[i] = path.Join(r.Domain, r.Path)
+	}
+	return out
+}
+
 func (wp *Wordpress) env() []corev1.EnvVar {
 	out := append([]corev1.EnvVar{
 		{
@@ -130,6 +143,10 @@ func (wp *Wordpress) env() []corev1.EnvVar {
 		{
 			Name:  "WP_SITEURL",
 			Value: wp.HomeURL("wp"),
+		},
+		{
+			Name:  "STACK_ROUTES",
+			Value: strings.Join(wp.routes(), ","),
 		},
 	}, wp.Spec.Env...)
 
