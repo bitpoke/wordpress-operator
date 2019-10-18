@@ -11,7 +11,7 @@ The main goals of the operator are:
 2. Allow best practices for en masse upgrades (canary, slow rollout, etc.)
 3. Friendly to devops (monitoring, availability, scalability and backup stories solved)
 
-The project is in pre-alpha state.
+The project is actively developed and maintained and has reached stable beta state. Check [here](https://github.com/presslabs/wordpress-operator/releases) the project releases.
 
 ## Components
 
