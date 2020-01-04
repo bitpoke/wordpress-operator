@@ -110,6 +110,7 @@ type ReconcileWordpress struct {
 func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	// Fetch the Wordpress instance
 	wp := wordpress.New(&wordpressv1alpha1.Wordpress{})
+
 	err := r.Get(context.TODO(), request.NamespacedName, wp.Unwrap())
 	if err != nil {
 		return reconcile.Result{}, ignoreNotFound(err)
@@ -148,6 +149,7 @@ func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Res
 
 	oldStatus := wp.Status.DeepCopy()
 	wp.Status.Replicas = deploySyncer.GetObject().(*appsv1.Deployment).Status.Replicas
+
 	if oldStatus.Replicas != wp.Status.Replicas {
 		if err := r.Status().Update(context.TODO(), wp.Unwrap()); err != nil {
 			return reconcile.Result{}, err
@@ -161,6 +163,7 @@ func ignoreNotFound(err error) error {
 	if errors.IsNotFound(err) {
 		return nil
 	}
+
 	return err
 }
 
@@ -170,11 +173,13 @@ func (r *ReconcileWordpress) sync(syncers []syncer.Interface) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
 func (r *ReconcileWordpress) maybeMigrate(wp *wordpressv1alpha1.Wordpress) (*wordpressv1alpha1.Wordpress, bool) {
 	var needsMigration bool
+
 	out := wp.DeepCopy()
 	if len(out.Spec.Routes) == 0 {
 		for i := range out.Spec.Domains {
@@ -185,6 +190,8 @@ func (r *ReconcileWordpress) maybeMigrate(wp *wordpressv1alpha1.Wordpress) (*wor
 			needsMigration = true
 		}
 	}
+
 	out.Spec.Domains = nil
+
 	return out, needsMigration
 }

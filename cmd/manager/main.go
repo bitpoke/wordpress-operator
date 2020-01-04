@@ -37,6 +37,7 @@ var log = logf.Log.WithName("wordpress-operator")
 func main() {
 	fs := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 	options.AddToFlagSet(fs)
+
 	if err := fs.Parse(os.Args); err != nil {
 		log.Error(err, "unable to parse args")
 		os.Exit(1)

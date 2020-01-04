@@ -34,6 +34,7 @@ const ingressClassAnnotationKey = "kubernetes.io/ingress.class"
 
 func upsertPath(rules []extv1beta1.IngressRule, domain, path string, bk extv1beta1.IngressBackend) []extv1beta1.IngressRule {
 	var rule *extv1beta1.IngressRule
+
 	for i := range rules {
 		if rules[i].Host == domain {
 			rule = &rules[i]
@@ -51,6 +52,7 @@ func upsertPath(rules []extv1beta1.IngressRule, domain, path string, bk extv1bet
 	}
 
 	var httpPath *extv1beta1.HTTPIngressPath
+
 	for i := range rule.HTTP.Paths {
 		if rule.HTTP.Paths[i].Path == path {
 			httpPath = &rule.HTTP.Paths[i]

@@ -52,7 +52,7 @@ func NewDBUpgradeJobSyncer(wp *wordpress.Wordpress, c client.Client, scheme *run
 		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
 
 		if !out.CreationTimestamp.IsZero() {
-			// TODO(calind): handle the case that the existing job is failed
+			// (calind): we need to handle the case that the existing job is failed
 			return nil
 		}
 

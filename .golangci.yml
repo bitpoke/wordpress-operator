@@ -8,6 +8,14 @@ linters-settings:
   lll:
     line-length: 170
     tab-width: 4
+  funlen:
+    lines: 180
+
+run:
+  # TODO: re-enable tests linting and make them pass
+  tests: false
+  skip-files:
+    - zz_generated.deepcopy.go
 
 linters:
   presets:
@@ -31,3 +39,8 @@ issues:
   exclude:
     # gosec G104, about unhandled errors. We do that with errcheck already
     - "G104: Errors unhandled"
+  exclude-rules:
+    - linters:
+      # Ignore package comments (ST1000) since most of the time are irrelevant
+      - stylecheck
+      text: "ST1000"

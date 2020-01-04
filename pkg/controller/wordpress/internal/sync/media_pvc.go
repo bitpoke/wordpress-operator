@@ -41,6 +41,7 @@ func NewMediaPVCSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime
 			Namespace: wp.Namespace,
 		},
 	}
+
 	return syncer.NewObjectSyncer("MediaPVC", wp.Unwrap(), obj, c, scheme, func(existing runtime.Object) error {
 		out := existing.(*corev1.PersistentVolumeClaim)
 		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)

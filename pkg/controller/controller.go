@@ -30,5 +30,6 @@ func AddToManager(m manager.Manager) error {
 			return err
 		}
 	}
+
 	return nil
 }
