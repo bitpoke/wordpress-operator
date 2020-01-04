@@ -325,6 +325,11 @@ func (in *WordpressSpec) DeepCopyInto(out *WordpressSpec) {
 		*out = make([]RouteSpec, len(*in))
 		copy(*out, *in)
 	}
+	if in.RunAsUser != nil {
+		in, out := &in.RunAsUser, &out.RunAsUser
+		*out = new(int64)
+		**out = **in
+	}
 	if in.ImagePullSecrets != nil {
 		in, out := &in.ImagePullSecrets, &out.ImagePullSecrets
 		*out = make([]v1.LocalObjectReference, len(*in))

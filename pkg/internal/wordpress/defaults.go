@@ -37,6 +37,8 @@ const (
 	defaultMediaMountPath = defaultCodeMountPath + "/" + mediaSubPath
 )
 
+var wwwDataUserID int64 = 33
+
 // SetDefaults sets Wordpress field defaults
 // nolint: gocyclo
 func (o *Wordpress) SetDefaults() {
@@ -66,5 +68,9 @@ func (o *Wordpress) SetDefaults() {
 		} else {
 			o.Spec.MediaVolumeSpec.MountPath = defaultMediaMountPath
 		}
+	}
+
+	if o.Spec.RunAsUser == nil {
+		o.Spec.RunAsUser = &wwwDataUserID
 	}
 }

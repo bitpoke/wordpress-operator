@@ -66,10 +66,6 @@ git checkout -B "$GIT_CLONE_REF" "origin/$GIT_CLONE_REF"
 `
 
 var (
-	wwwDataUserID int64 = 33
-)
-
-var (
 	s3EnvVars = map[string]string{
 		"AWS_ACCESS_KEY_ID":     "AWS_ACCESS_KEY_ID",
 		"AWS_SECRET_ACCESS_KEY": "AWS_SECRET_ACCESS_KEY",
@@ -320,7 +316,7 @@ func (wp *Wordpress) volumes() []corev1.Volume {
 func (wp *Wordpress) securityContext() *corev1.SecurityContext {
 	defaultProcMount := corev1.DefaultProcMount
 	return &corev1.SecurityContext{
-		RunAsUser: &wwwDataUserID,
+		RunAsUser: wp.Spec.RunAsUser,
 		ProcMount: &defaultProcMount,
 	}
 }
@@ -427,7 +423,7 @@ func (wp *Wordpress) WebPodTemplateSpec() (out corev1.PodTemplateSpec) {
 	}
 
 	out.Spec.SecurityContext = &corev1.PodSecurityContext{
-		FSGroup: &wwwDataUserID,
+		FSGroup: wp.Spec.RunAsUser,
 	}
 
 	return out
@@ -476,7 +472,7 @@ func (wp *Wordpress) JobPodTemplateSpec(cmd ...string) (out corev1.PodTemplateSp
 	}
 
 	out.Spec.SecurityContext = &corev1.PodSecurityContext{
-		FSGroup: &wwwDataUserID,
+		FSGroup: wp.Spec.RunAsUser,
 	}
 
 	return out

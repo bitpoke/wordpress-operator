@@ -263,6 +263,11 @@ spec:
                 - path
                 type: object
               type: array
+            runAsUser:
+              description: RunAsUser is used to set the running user ID for the web
+                container and the pod as well. Defaults to 33.
+              format: int64
+              type: integer
             serviceAccountName:
               description: 'ServiceAccountName is the name of the ServiceAccount to
                 use to run this site''s pods More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/'

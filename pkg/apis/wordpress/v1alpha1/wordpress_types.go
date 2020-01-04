@@ -79,6 +79,10 @@ type WordpressSpec struct {
 	// +kubebuilder:validation:Enum=Always,IfNotPresent,Never
 	// +optional
 	ImagePullPolicy corev1.PullPolicy `json:"imagePullPolicy,omitempty"`
+	// RunAsUser is used to set the running user ID for the web container and the pod as well.
+	// Defaults to 33.
+	// +optional
+	RunAsUser *int64 `json:"runAsUser,omitempty"`
 	// ImagePullSecrets defines additional secrets to use when pulling images
 	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 	// ServiceAccountName is the name of the ServiceAccount to use to run this
