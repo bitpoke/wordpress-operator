@@ -368,7 +368,7 @@ func (wp *Wordpress) installWPContainer() []corev1.Container {
 }
 
 func (wp *Wordpress) initContainers() []corev1.Container {
-	containers := []corev1.Container{}
+	containers := wp.Spec.InitContainers
 
 	if wp.Spec.CodeVolumeSpec != nil && wp.Spec.CodeVolumeSpec.GitDir != nil {
 		containers = append(containers, wp.gitCloneContainer())
@@ -391,24 +391,23 @@ func (wp *Wordpress) WebPodTemplateSpec() (out corev1.PodTemplateSpec) {
 	}
 
 	out.Spec.InitContainers = wp.initContainers()
-	out.Spec.Containers = []corev1.Container{
-		{
-			Name:            "wordpress",
-			Image:           wp.Spec.Image,
-			ImagePullPolicy: wp.Spec.ImagePullPolicy,
-			VolumeMounts:    wp.volumeMounts(),
-			Env:             wp.env(),
-			EnvFrom:         wp.envFrom(),
-			Resources:       wp.Spec.Resources,
-			Ports: []corev1.ContainerPort{
-				{
-					Name:          "http",
-					ContainerPort: int32(InternalHTTPPort),
-				},
+	wordpressContainer := corev1.Container{
+		Name:            "wordpress",
+		Image:           wp.Spec.Image,
+		ImagePullPolicy: wp.Spec.ImagePullPolicy,
+		VolumeMounts:    wp.volumeMounts(),
+		Env:             wp.env(),
+		EnvFrom:         wp.envFrom(),
+		Resources:       wp.Spec.Resources,
+		Ports: []corev1.ContainerPort{
+			{
+				Name:          "http",
+				ContainerPort: int32(InternalHTTPPort),
 			},
-			SecurityContext: wp.securityContext(),
 		},
+		SecurityContext: wp.securityContext(),
 	}
+	out.Spec.Containers = append([]corev1.Container{wordpressContainer}, wp.Spec.Sidecars...)
 
 	out.Spec.Volumes = wp.volumes()
 
@@ -446,18 +445,17 @@ func (wp *Wordpress) JobPodTemplateSpec(cmd ...string) (out corev1.PodTemplateSp
 	out.Spec.RestartPolicy = corev1.RestartPolicyNever
 
 	out.Spec.InitContainers = wp.initContainers()
-	out.Spec.Containers = []corev1.Container{
-		{
-			Name:            "wp-cli",
-			Image:           wp.Spec.Image,
-			ImagePullPolicy: wp.Spec.ImagePullPolicy,
-			Args:            cmd,
-			VolumeMounts:    wp.volumeMounts(),
-			Env:             wp.env(),
-			EnvFrom:         wp.envFrom(),
-			SecurityContext: wp.securityContext(),
-		},
+	wordpressContainer := corev1.Container{
+		Name:            "wp-cli",
+		Image:           wp.Spec.Image,
+		ImagePullPolicy: wp.Spec.ImagePullPolicy,
+		Args:            cmd,
+		VolumeMounts:    wp.volumeMounts(),
+		Env:             wp.env(),
+		EnvFrom:         wp.envFrom(),
+		SecurityContext: wp.securityContext(),
 	}
+	out.Spec.Containers = append([]corev1.Container{wordpressContainer}, wp.Spec.Sidecars...)
 
 	out.Spec.Volumes = wp.volumes()
 

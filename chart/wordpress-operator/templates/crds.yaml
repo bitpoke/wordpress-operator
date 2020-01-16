@@ -162,6 +162,11 @@ spec:
             ingressAnnotations:
               description: IngressAnnotations for this Wordpress site
               type: object
+            initContainers:
+              description: Additional init containers
+              items:
+                type: object
+              type: array
             media:
               description: MediaVolumeSpec specifies how media files get mounted into
                 the runtime container. If not specified, a media volume won't be mounted
@@ -267,6 +272,12 @@ spec:
               description: 'ServiceAccountName is the name of the ServiceAccount to
                 use to run this site''s pods More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/'
               type: string
+            sidecars:
+              description: Additional sidecar containers (eg. blackfire or tideways
+                agent)
+              items:
+                type: object
+              type: array
             tlsSecretRef:
               description: TLSSecretRef a secret containing the TLS certificates for
                 this site.

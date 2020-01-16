@@ -134,6 +134,12 @@ type WordpressSpec struct {
 	// IngressAnnotations for this Wordpress site
 	// +optional
 	IngressAnnotations map[string]string `json:"ingressAnnotations,omitempty"`
+	// Additional init containers
+	// +optional
+	InitContainers []corev1.Container `json:"initContainers,omitempty"`
+	// Additional sidecar containers (eg. blackfire or tideways agent)
+	// +optional
+	Sidecars []corev1.Container `json:"sidecars,omitempty"`
 }
 
 // GitVolumeSource is the desired spec for git code source
