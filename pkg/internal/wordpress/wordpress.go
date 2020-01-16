@@ -62,47 +62,47 @@ func New(obj *wordpressv1alpha1.Wordpress) *Wordpress {
 }
 
 // Unwrap returns the wrapped wordpressv1alpha1.Wordpress object
-func (o *Wordpress) Unwrap() *wordpressv1alpha1.Wordpress {
-	return o.Wordpress
+func (wp *Wordpress) Unwrap() *wordpressv1alpha1.Wordpress {
+	return wp.Wordpress
 }
 
 // Labels returns default label set for wordpressv1alpha1.Wordpress
-func (o *Wordpress) Labels() labels.Set {
+func (wp *Wordpress) Labels() labels.Set {
 	partOf := "wordpress"
-	if o.ObjectMeta.Labels != nil && len(o.ObjectMeta.Labels["app.kubernetes.io/part-of"]) > 0 {
-		partOf = o.ObjectMeta.Labels["app.kubernetes.io/part-of"]
+	if wp.ObjectMeta.Labels != nil && len(wp.ObjectMeta.Labels["app.kubernetes.io/part-of"]) > 0 {
+		partOf = wp.ObjectMeta.Labels["app.kubernetes.io/part-of"]
 	}
 
 	labels := labels.Set{
 		"app.kubernetes.io/name":     "wordpress",
 		"app.kubernetes.io/part-of":  partOf,
-		"app.kubernetes.io/instance": o.ObjectMeta.Name,
+		"app.kubernetes.io/instance": wp.ObjectMeta.Name,
 	}
 
 	return labels
 }
 
 // ComponentLabels returns labels for a label set for a wordpressv1alpha1.Wordpress component
-func (o *Wordpress) ComponentLabels(component component) labels.Set {
-	l := o.Labels()
+func (wp *Wordpress) ComponentLabels(component component) labels.Set {
+	l := wp.Labels()
 	l["app.kubernetes.io/component"] = component.name
 
 	if component == WordpressDBUpgrade {
-		l["wordpress.presslabs.org/upgrade-for"] = o.ImageVersion()
+		l["wordpress.presslabs.org/upgrade-for"] = wp.ImageVersion()
 	}
 
 	return l
 }
 
 // ComponentName returns the object name for a component
-func (o *Wordpress) ComponentName(component component) string {
+func (wp *Wordpress) ComponentName(component component) string {
 	name := component.objName
 	if len(component.objNameFmt) > 0 {
-		name = fmt.Sprintf(component.objNameFmt, o.ObjectMeta.Name)
+		name = fmt.Sprintf(component.objNameFmt, wp.ObjectMeta.Name)
 	}
 
 	if component == WordpressDBUpgrade {
-		name = fmt.Sprintf("%s-for-%s", name, o.ImageVersion())
+		name = fmt.Sprintf("%s-for-%s", name, wp.ImageVersion())
 	}
 
 	return name
@@ -110,44 +110,44 @@ func (o *Wordpress) ComponentName(component component) string {
 
 // ImageVersion returns the version from the image in a format suitable
 // for kubernetes object names and labels
-func (o *Wordpress) ImageVersion() string {
-	return slugify.Slugify(o.Spec.Image)
+func (wp *Wordpress) ImageVersion() string {
+	return slugify.Slugify(wp.Spec.Image)
 }
 
 // WebPodLabels return labels to apply to web pods
-func (o *Wordpress) WebPodLabels() labels.Set {
-	l := o.Labels()
+func (wp *Wordpress) WebPodLabels() labels.Set {
+	l := wp.Labels()
 	l["app.kubernetes.io/component"] = "web"
 	return l
 }
 
 // JobPodLabels return labels to apply to cli job pods
-func (o *Wordpress) JobPodLabels() labels.Set {
-	l := o.Labels()
+func (wp *Wordpress) JobPodLabels() labels.Set {
+	l := wp.Labels()
 	l["app.kubernetes.io/component"] = "wp-cli"
 	return l
 }
 
 // MainDomain returns the site main domain or a local domain <cluster-name>.<namespace>.svc.cluster.local
-func (o *Wordpress) MainDomain() string {
-	if len(o.Spec.Routes) > 0 {
-		return o.Spec.Routes[0].Domain
+func (wp *Wordpress) MainDomain() string {
+	if len(wp.Spec.Routes) > 0 {
+		return wp.Spec.Routes[0].Domain
 	}
 
 	// return the local cluster name that points to wordpress service
-	return fmt.Sprintf("%s.%s.svc", o.ComponentName(WordpressService), o.Namespace)
+	return fmt.Sprintf("%s.%s.svc", wp.ComponentName(WordpressService), wp.Namespace)
 }
 
 // HomeURL returns the WP_HOMEURL (e.g. http://example.com/)
-func (o *Wordpress) HomeURL(subPaths ...string) string {
+func (wp *Wordpress) HomeURL(subPaths ...string) string {
 	scheme := "http"
-	if len(o.Spec.TLSSecretRef) > 0 {
+	if len(wp.Spec.TLSSecretRef) > 0 {
 		scheme = "https"
 	}
 
 	paths := []string{"/"}
-	if len(o.Spec.Routes) > 0 {
-		paths = append(paths, o.Spec.Routes[0].Path)
+	if len(wp.Spec.Routes) > 0 {
+		paths = append(paths, wp.Spec.Routes[0].Path)
 	}
 	paths = append(paths, subPaths...)
 	p := path.Join(paths...)
@@ -155,5 +155,5 @@ func (o *Wordpress) HomeURL(subPaths ...string) string {
 		p = ""
 	}
 
-	return fmt.Sprintf("%s://%s%s", scheme, o.MainDomain(), p)
+	return fmt.Sprintf("%s://%s%s", scheme, wp.MainDomain(), p)
 }

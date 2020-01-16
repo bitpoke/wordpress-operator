@@ -1,3 +1,7 @@
+run:
+  skip-files:
+    - zz_generated
+
 linters-settings:
   dupl:
     threshold: 400
@@ -22,6 +26,8 @@ linters:
   disable:
     - goimports
     - maligned
+    - wsl
+    - gomnd
     - gochecknoglobals
     - gochecknoinits
 
@@ -31,3 +37,7 @@ issues:
   exclude:
     # gosec G104, about unhandled errors. We do that with errcheck already
     - "G104: Errors unhandled"
+    # TODO: reenable
+    - "ST1000: at least one file in a package should have a package comment"
+    # Allow TODOs
+    - "Line contains TODO/BUG/FIXME"

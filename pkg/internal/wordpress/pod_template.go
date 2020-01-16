@@ -120,7 +120,6 @@ func (wp *Wordpress) mediaEnv() []corev1.EnvVar {
 	}
 
 	return out
-
 }
 
 func (wp *Wordpress) routes() []string {

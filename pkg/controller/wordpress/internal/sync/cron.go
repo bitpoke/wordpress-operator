@@ -37,6 +37,7 @@ import (
 const curlImage = "buildpack-deps:stretch-curl"
 
 // NewWPCronSyncer returns a new sync.Interface for reconciling wp-cron CronJob
+// nolint: funlen
 func NewWPCronSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.Scheme) syncer.Interface {
 	objLabels := wp.ComponentLabels(wordpress.WordpressCron)
 

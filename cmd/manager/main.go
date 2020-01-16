@@ -32,6 +32,8 @@ import (
 	"github.com/presslabs/wordpress-operator/pkg/controller"
 )
 
+const genericErrorExitCode = 1
+
 var log = logf.Log.WithName("wordpress-operator")
 
 func main() {
@@ -39,7 +41,7 @@ func main() {
 	options.AddToFlagSet(fs)
 	if err := fs.Parse(os.Args); err != nil {
 		log.Error(err, "unable to parse args")
-		os.Exit(1)
+		os.Exit(genericErrorExitCode)
 	}
 
 	logf.SetLogger(logf.ZapLogger(true))
@@ -50,31 +52,31 @@ func main() {
 	cfg, err := config.GetConfig()
 	if err != nil {
 		log.Error(err, "unable to get configuration")
-		os.Exit(1)
+		os.Exit(genericErrorExitCode)
 	}
 
 	// Create a new Cmd to provide shared dependencies and start components
 	mgr, err := manager.New(cfg, manager.Options{})
 	if err != nil {
 		log.Error(err, "unable to create a new manager")
-		os.Exit(1)
+		os.Exit(genericErrorExitCode)
 	}
 
 	// Setup Scheme for all resources
 	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
 		log.Error(err, "unable to register types to scheme")
-		os.Exit(1)
+		os.Exit(genericErrorExitCode)
 	}
 
 	// Setup all Controllers
 	if err := controller.AddToManager(mgr); err != nil {
 		log.Error(err, "unable to setup controllers")
-		os.Exit(1)
+		os.Exit(genericErrorExitCode)
 	}
 
 	// Start the Cmd
 	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
 		log.Error(err, "unable to start the manager")
-		os.Exit(1)
+		os.Exit(genericErrorExitCode)
 	}
 }

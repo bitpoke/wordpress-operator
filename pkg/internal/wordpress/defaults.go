@@ -39,32 +39,32 @@ const (
 
 // SetDefaults sets Wordpress field defaults
 // nolint: gocyclo
-func (o *Wordpress) SetDefaults() {
-	if len(o.Spec.Image) == 0 {
-		o.Spec.Image = options.WordpressRuntimeImage
+func (wp *Wordpress) SetDefaults() {
+	if len(wp.Spec.Image) == 0 {
+		wp.Spec.Image = options.WordpressRuntimeImage
 	}
 
-	if len(o.Spec.ImagePullPolicy) == 0 {
-		o.Spec.ImagePullPolicy = corev1.PullAlways
+	if len(wp.Spec.ImagePullPolicy) == 0 {
+		wp.Spec.ImagePullPolicy = corev1.PullAlways
 	}
 
-	if o.Spec.CodeVolumeSpec != nil && o.Spec.CodeVolumeSpec.MountPath == "" {
-		o.Spec.CodeVolumeSpec.MountPath = defaultCodeMountPath
+	if wp.Spec.CodeVolumeSpec != nil && wp.Spec.CodeVolumeSpec.MountPath == "" {
+		wp.Spec.CodeVolumeSpec.MountPath = defaultCodeMountPath
 	}
 
-	if o.Spec.CodeVolumeSpec != nil && o.Spec.CodeVolumeSpec.ContentSubPath == "" {
-		o.Spec.CodeVolumeSpec.ContentSubPath = defaultRepoCodeSubPath
+	if wp.Spec.CodeVolumeSpec != nil && wp.Spec.CodeVolumeSpec.ContentSubPath == "" {
+		wp.Spec.CodeVolumeSpec.ContentSubPath = defaultRepoCodeSubPath
 	}
 
-	if o.Spec.CodeVolumeSpec != nil && o.Spec.CodeVolumeSpec.ConfigSubPath == "" {
-		o.Spec.CodeVolumeSpec.ConfigSubPath = defaultRepoConfigSubPath
+	if wp.Spec.CodeVolumeSpec != nil && wp.Spec.CodeVolumeSpec.ConfigSubPath == "" {
+		wp.Spec.CodeVolumeSpec.ConfigSubPath = defaultRepoConfigSubPath
 	}
 
-	if o.Spec.MediaVolumeSpec != nil && o.Spec.MediaVolumeSpec.MountPath == "" {
-		if o.Spec.CodeVolumeSpec != nil {
-			o.Spec.MediaVolumeSpec.MountPath = path.Join(o.Spec.MediaVolumeSpec.MountPath, mediaSubPath)
+	if wp.Spec.MediaVolumeSpec != nil && wp.Spec.MediaVolumeSpec.MountPath == "" {
+		if wp.Spec.CodeVolumeSpec != nil {
+			wp.Spec.MediaVolumeSpec.MountPath = path.Join(wp.Spec.MediaVolumeSpec.MountPath, mediaSubPath)
 		} else {
-			o.Spec.MediaVolumeSpec.MountPath = defaultMediaMountPath
+			wp.Spec.MediaVolumeSpec.MountPath = defaultMediaMountPath
 		}
 	}
 }
