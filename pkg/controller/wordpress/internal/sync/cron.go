@@ -34,7 +34,7 @@ import (
 	"github.com/presslabs/wordpress-operator/pkg/internal/wordpress"
 )
 
-const curlImage = "buildpack-deps:stretch-curl"
+const curlImage = "curlimages/curl:7.68.0"
 
 // NewWPCronSyncer returns a new sync.Interface for reconciling wp-cron CronJob
 // nolint: funlen
@@ -78,10 +78,12 @@ func NewWPCronSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.S
 		if err != nil {
 			return err
 		}
+
+		_u.Scheme = "http"
 		_u.Host = svcHostname
 
 		// curl -s -I --max-time 30 -H "Host: <Host>" "http://<site>.<namespace>.svc/wp-cron.php?doing_wp_cron"
-		cmd := []string{"curl", "-s", "-I", "--max-time", "30", "-H", hostHeader, _u.String()}
+		cmd := []string{"--fail", "-s", "-D-", "--max-time", "30", "-H", hostHeader, _u.String()}
 
 		template := corev1.PodTemplateSpec{}
 		template.ObjectMeta.Labels = wp.JobPodLabels()
