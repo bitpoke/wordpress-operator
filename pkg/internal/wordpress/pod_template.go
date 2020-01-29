@@ -405,6 +405,24 @@ func (wp *Wordpress) WebPodTemplateSpec() (out corev1.PodTemplateSpec) {
 			},
 		},
 		SecurityContext: wp.securityContext(),
+		Lifecycle: &corev1.Lifecycle{
+			PostStart: &corev1.Handler{
+				Exec: &corev1.ExecAction{
+					Command: []string{
+						"/bin/sh", "-c",
+						"if test -n \"$POST_START_SCRIPTS\" && command -v run-parts >/dev/null 2>&1 && test -d \"$POST_START_SCRIPTS\"  ; then run-parts --exit-on-error -v \"$POST_START_SCRIPTS\" ; fi", // nolint: lll
+					},
+				},
+			},
+			PreStop: &corev1.Handler{
+				Exec: &corev1.ExecAction{
+					Command: []string{
+						"/bin/sh", "-c",
+						"if test -n \"$PRE_STOP_SCRIPTS\" && command -v run-parts >/dev/null 2>&1 && test -d \"$PRE_STOP_SCRIPTS\"  ; then run-parts --exit-on-error -v \"$PRE_STOP_SCRIPTS\" ; fi", // nolint: lll
+					},
+				},
+			},
+		},
 	}
 	out.Spec.Containers = append([]corev1.Container{wordpressContainer}, wp.Spec.Sidecars...)
 
