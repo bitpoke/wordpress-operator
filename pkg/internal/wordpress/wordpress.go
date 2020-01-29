@@ -157,3 +157,10 @@ func (wp *Wordpress) HomeURL(subPaths ...string) string {
 
 	return fmt.Sprintf("%s://%s%s", scheme, wp.MainDomain(), p)
 }
+
+// SiteURL returns the WP_SITEURL (e.g. http://example.com/wp)
+func (wp *Wordpress) SiteURL(subPaths ...string) string {
+	p := []string{wp.Spec.WordpressPathPrefix}
+	p = append(p, subPaths...)
+	return wp.HomeURL(p...)
+}

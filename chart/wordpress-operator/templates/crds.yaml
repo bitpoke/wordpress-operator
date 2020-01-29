@@ -299,6 +299,10 @@ spec:
               items:
                 type: object
               type: array
+            wordpressPathPrefix:
+              description: WordpressPathPrefix is the path prefix under which wordpress
+                is available. It defaults to /wp.
+              type: string
           type: object
         status:
           properties:

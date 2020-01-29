@@ -141,7 +141,11 @@ func (wp *Wordpress) env() []corev1.EnvVar {
 		},
 		{
 			Name:  "WP_SITEURL",
-			Value: wp.HomeURL("wp"),
+			Value: wp.SiteURL(),
+		},
+		{
+			Name:  "WP_CORE_DIRECTORY",
+			Value: wp.Spec.WordpressPathPrefix,
 		},
 		{
 			Name:  "STACK_ROUTES",
@@ -380,6 +384,7 @@ func (wp *Wordpress) initContainers() []corev1.Container {
 }
 
 // WebPodTemplateSpec generates a pod template spec suitable for use in Wordpress deployment
+// nolint: funlen
 func (wp *Wordpress) WebPodTemplateSpec() (out corev1.PodTemplateSpec) {
 	out = corev1.PodTemplateSpec{}
 	out.ObjectMeta.Labels = wp.WebPodLabels()

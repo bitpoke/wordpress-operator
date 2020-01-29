@@ -73,7 +73,7 @@ func NewWPCronSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.S
 
 		hostHeader := fmt.Sprintf("Host: %s", wp.MainDomain())
 		svcHostname := fmt.Sprintf("%s.%s.svc", wp.Name, wp.Namespace)
-		u := wp.HomeURL("wp/wp-cron.php") + "?doing_wp_cron"
+		u := wp.SiteURL("wp-cron.php") + "?doing_wp_cron"
 		_u, err := url.Parse(u)
 		if err != nil {
 			return err

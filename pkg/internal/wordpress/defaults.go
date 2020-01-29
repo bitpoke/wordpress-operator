@@ -67,4 +67,8 @@ func (wp *Wordpress) SetDefaults() {
 			wp.Spec.MediaVolumeSpec.MountPath = defaultMediaMountPath
 		}
 	}
+
+	if wp.Spec.WordpressPathPrefix == "" {
+		wp.Spec.WordpressPathPrefix = "/wp"
+	}
 }

@@ -103,6 +103,10 @@ type WordpressSpec struct {
 	// WordpressBootstrapSpec specifies credentials used to install wordpress, on the first run.
 	// +optional
 	WordpressBootstrapSpec *WordpressBootstrapSpec `json:"bootstrap,omitempty"`
+	// WordpressPathPrefix is the path prefix under which wordpress is available.
+	// It defaults to /wp.
+	// +optional
+	WordpressPathPrefix string `json:"wordpressPathPrefix,omitempty"`
 	// VolumeMountsSpec defines additional mounts which get injected into web
 	// and cli pods.
 	// +optional
