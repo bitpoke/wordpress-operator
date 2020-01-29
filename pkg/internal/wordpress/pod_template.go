@@ -17,7 +17,9 @@ limitations under the License.
 package wordpress
 
 import (
+	"bytes"
 	"fmt"
+	"text/template"
 
 	corev1 "k8s.io/api/core/v1"
 
@@ -35,6 +37,8 @@ const (
 	mediaVolumeName  = "media"
 	s3Prefix         = "s3"
 	gcsPrefix        = "gs"
+
+	prepareVolumesImage = "gcr.io/google-containers/busybox@sha256:545e6a6310a27636260920bc07b994a299b6708a1b26910cfefd335fdfb60d2b"
 )
 
 const gitCloneScript = `#!/bin/bash
@@ -65,8 +69,14 @@ cd "$SRC_DIR"
 git checkout -B "$GIT_CLONE_REF" "origin/$GIT_CLONE_REF"
 `
 
+const prepareVolumesScriptTpl = `#!/bin/sh
+test -d /mnt/code && chown {{ .wwwDataUserID }}:{{ .wwwDataUserID }} /mnt/code
+test -d /mnt/media && chown {{ .wwwDataUserID }}:{{ .wwwDataUserID }} /mnt/media
+`
+
 var (
-	wwwDataUserID int64 = 33
+	wwwDataUserID                int64 = 33
+	prepareVolumesScriptTemplate       = template.Must(template.New("").Parse(prepareVolumesScriptTpl))
 )
 
 var (
@@ -345,6 +355,46 @@ func (wp *Wordpress) gitCloneContainer() corev1.Container {
 	}
 }
 
+func (wp *Wordpress) prepareVolumesContainer() corev1.Container {
+	var script bytes.Buffer
+
+	// nolint: errcheck
+	prepareVolumesScriptTemplate.Execute(&script, map[string]string{
+		"wwwDataUserID": fmt.Sprintf("%d", wwwDataUserID),
+	})
+
+	c := corev1.Container{
+		Name:         "prepare-volumes",
+		Args:         []string{"/bin/sh", "-c", script.String()},
+		Image:        prepareVolumesImage,
+		VolumeMounts: []corev1.VolumeMount{},
+	}
+
+	if wp.hasCodeMounts() && !wp.Spec.CodeVolumeSpec.ReadOnly {
+		m := corev1.VolumeMount{
+			Name:      codeVolumeName,
+			MountPath: "/mnt/code",
+		}
+		if wp.Wordpress.Spec.CodeVolumeSpec.ContentSubPath != "" {
+			m.SubPath = wp.Wordpress.Spec.CodeVolumeSpec.ContentSubPath
+		}
+		c.VolumeMounts = append(c.VolumeMounts, m)
+	}
+
+	if wp.hasMediaMounts() && !wp.Spec.MediaVolumeSpec.ReadOnly {
+		m := corev1.VolumeMount{
+			Name:      mediaVolumeName,
+			MountPath: "/mnt/media",
+		}
+		if wp.Wordpress.Spec.MediaVolumeSpec.ContentSubPath != "" {
+			m.SubPath = wp.Wordpress.Spec.MediaVolumeSpec.ContentSubPath
+		}
+		c.VolumeMounts = append(c.VolumeMounts, m)
+	}
+
+	return c
+}
+
 func (wp *Wordpress) installWPContainer() []corev1.Container {
 	if wp.Spec.WordpressBootstrapSpec == nil {
 		return []corev1.Container{}
@@ -371,7 +421,11 @@ func (wp *Wordpress) installWPContainer() []corev1.Container {
 }
 
 func (wp *Wordpress) initContainers() []corev1.Container {
-	containers := wp.Spec.InitContainers
+	containers := []corev1.Container{}
+	if wp.hasMediaMounts() || wp.hasCodeMounts() {
+		containers = append(containers, wp.prepareVolumesContainer())
+	}
+	containers = append(containers, wp.Spec.InitContainers...)
 
 	if wp.Spec.CodeVolumeSpec != nil && wp.Spec.CodeVolumeSpec.GitDir != nil {
 		containers = append(containers, wp.gitCloneContainer())
@@ -445,10 +499,6 @@ func (wp *Wordpress) WebPodTemplateSpec() (out corev1.PodTemplateSpec) {
 
 	if len(wp.Spec.PriorityClassName) > 0 {
 		out.Spec.PriorityClassName = wp.Spec.PriorityClassName
-	}
-
-	out.Spec.SecurityContext = &corev1.PodSecurityContext{
-		FSGroup: &wwwDataUserID,
 	}
 
 	return out
