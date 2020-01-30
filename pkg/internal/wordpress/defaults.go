@@ -62,7 +62,7 @@ func (wp *Wordpress) SetDefaults() {
 
 	if wp.Spec.MediaVolumeSpec != nil && wp.Spec.MediaVolumeSpec.MountPath == "" {
 		if wp.Spec.CodeVolumeSpec != nil {
-			wp.Spec.MediaVolumeSpec.MountPath = path.Join(wp.Spec.MediaVolumeSpec.MountPath, mediaSubPath)
+			wp.Spec.MediaVolumeSpec.MountPath = path.Join(wp.Spec.CodeVolumeSpec.MountPath, mediaSubPath)
 		} else {
 			wp.Spec.MediaVolumeSpec.MountPath = defaultMediaMountPath
 		}
