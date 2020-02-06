@@ -101,6 +101,9 @@ func NewWPCronSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.S
 		err = mergo.Merge(&out.Spec.JobTemplate.Spec.Template.Spec, template.Spec,
 			mergo.WithTransformers(transformers.PodSpec))
 
+		out.Spec.JobTemplate.Spec.Template.Spec.NodeSelector = wp.Spec.NodeSelector
+		out.Spec.JobTemplate.Spec.Template.Spec.Tolerations = wp.Spec.Tolerations
+
 		if err != nil {
 			return err
 		}
