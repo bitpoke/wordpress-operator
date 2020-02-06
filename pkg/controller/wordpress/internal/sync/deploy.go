@@ -73,6 +73,9 @@ func NewDeploymentSyncer(wp *wordpress.Wordpress, secret *corev1.Secret, c clien
 			return err
 		}
 
+		out.Spec.Template.Spec.NodeSelector = wp.Spec.NodeSelector
+		out.Spec.Template.Spec.Tolerations = wp.Spec.Tolerations
+
 		if wp.Spec.Replicas != nil {
 			out.Spec.Replicas = wp.Spec.Replicas
 		}
