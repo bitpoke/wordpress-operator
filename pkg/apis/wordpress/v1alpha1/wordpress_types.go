@@ -205,6 +205,8 @@ type GCSVolumeSource struct {
 // CodeVolumeSpec is the desired spec for mounting code into the wordpress
 // runtime container
 type CodeVolumeSpec struct {
+	// Metadata for the media volume. Currently only labels and annotations are set if a PVC is specified
+	metav1.ObjectMeta `json:"metadata,omitempty"`
 	// ReadOnly specifies if the volume should be mounted read-only inside the
 	// wordpress runtime container
 	ReadOnly bool `json:"readOnly,omitempty"`
@@ -237,9 +239,11 @@ type CodeVolumeSpec struct {
 
 // MediaVolumeSpec is the desired spec for handling media files at runtime
 type MediaVolumeSpec struct {
+	// Metadata for the media volume. Currently only labels and annotations are set if a PVC is specified
+	metav1.ObjectMeta `json:"metadata,omitempty"`
 	// ReadOnly specifies if the volume should be mounted read-only inside the
 	// wordpress runtime container
-	ReadOnly bool
+	ReadOnly bool `json:"readOnly,omitempty"`
 	// MountPath specifies where should the media volume be mounted.
 	// Defaults to '/uploads' folder within the CodeVolumeSpec.MountPath
 	// +optional

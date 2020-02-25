@@ -110,6 +110,10 @@ spec:
                 hostPath:
                   description: HostPath to use if no PersistentVolumeClaim is specified
                   type: object
+                metadata:
+                  description: Metadata for the media volume. Currently only labels
+                    and annotations are set if a PVC is specified
+                  type: object
                 mountPath:
                   description: MountPath specifies where should the code volume be
                     mounted. Defaults to /app/web/wp-content
@@ -208,6 +212,10 @@ spec:
                 hostPath:
                   description: HostPath to use if no PersistentVolumeClaim is specified
                   type: object
+                metadata:
+                  description: Metadata for the media volume. Currently only labels
+                    and annotations are set if a PVC is specified
+                  type: object
                 mountPath:
                   description: MountPath specifies where should the media volume be
                     mounted. Defaults to '/uploads' folder within the CodeVolumeSpec.MountPath
@@ -216,6 +224,10 @@ spec:
                   description: PersistentVolumeClaim to use if no S3VolumeSource or
                     GCSVolumeSource are specified
                   type: object
+                readOnly:
+                  description: ReadOnly specifies if the volume should be mounted
+                    read-only inside the wordpress runtime container
+                  type: boolean
                 s3:
                   description: S3VolumeSource specifies the S3 object storage configuration
                     for media files. It has the highest level of precedence over EmptyDir,

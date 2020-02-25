@@ -43,7 +43,8 @@ func NewCodePVCSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.
 	}
 	return syncer.NewObjectSyncer("CodePVC", wp.Unwrap(), obj, c, scheme, func(existing runtime.Object) error {
 		out := existing.(*corev1.PersistentVolumeClaim)
-		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
+		out.Labels = labels.Merge(labels.Merge(wp.Spec.CodeVolumeSpec.Labels, objLabels), controllerLabels)
+		out.Annotations = wp.Spec.CodeVolumeSpec.Annotations
 
 		if wp.Spec.CodeVolumeSpec == nil || wp.Spec.CodeVolumeSpec.PersistentVolumeClaim == nil {
 			return fmt.Errorf(".spec.code.persistentVolumeClaim is not defined")
