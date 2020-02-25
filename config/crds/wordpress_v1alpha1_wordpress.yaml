@@ -114,6 +114,10 @@ spec:
                     read-only inside the wordpress runtime container
                   type: boolean
               type: object
+            deploymentStrategy:
+              description: DeploymentStrategy allows setting the deployment strategy
+                for the WordPress site
+              type: object
             domains:
               description: 'Domains for which this this site answers. The first item
                 is set as the "main domain" (eg. WP_HOME and WP_SITEURL constants).

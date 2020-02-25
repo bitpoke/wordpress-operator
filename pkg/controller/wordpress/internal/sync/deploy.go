@@ -80,6 +80,10 @@ func NewDeploymentSyncer(wp *wordpress.Wordpress, secret *corev1.Secret, c clien
 			out.Spec.Replicas = wp.Spec.Replicas
 		}
 
+		if wp.Spec.DeploymentStrategy != nil {
+			out.Spec.Strategy = *wp.Spec.DeploymentStrategy
+		}
+
 		return nil
 	})
 }

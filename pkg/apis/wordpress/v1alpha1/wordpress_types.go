@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -89,6 +90,8 @@ type WordpressSpec struct {
 	// TLSSecretRef a secret containing the TLS certificates for this site.
 	// +optional
 	TLSSecretRef SecretRef `json:"tlsSecretRef,omitempty"`
+	// DeploymentStrategy allows setting the deployment strategy for the WordPress site
+	DeploymentStrategy *appsv1.DeploymentStrategy `json:"deploymentStrategy,omitempty"`
 	// CodeVolumeSpec specifies how the site's code gets mounted into the
 	// container. If not specified, a code volume won't get mounted at all.
 	// +optional

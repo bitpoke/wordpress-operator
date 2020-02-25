@@ -165,5 +165,23 @@ var _ = Describe("Wordpress controller", func() {
 			Eventually(func() error { return c.Get(context.TODO(), key, obj) }, timeout).Should(Succeed())
 		}, entries...)
 
+		It("allows specifying deployment strategy", func() {
+			key := types.NamespacedName{
+				Name:      wp.Name,
+				Namespace: wp.Namespace,
+			}
+			deploy := &appsv1.Deployment{}
+			Eventually(func() error { return c.Get(context.TODO(), key, deploy) }, timeout).Should(Succeed())
+			Expect(deploy.Spec.Strategy.Type).To(Equal(appsv1.RollingUpdateDeploymentStrategyType))
+
+			wp.Spec.DeploymentStrategy = &appsv1.DeploymentStrategy{
+				Type: appsv1.RecreateDeploymentStrategyType,
+			}
+			Expect(c.Update(context.TODO(), wp)).To(Succeed())
+			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
+
+			Expect(c.Get(context.TODO(), key, deploy)).To(Succeed())
+			Expect(deploy.Spec.Strategy.Type).To(Equal(appsv1.RecreateDeploymentStrategyType))
+		})
 	})
 })
