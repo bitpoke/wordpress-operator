@@ -44,7 +44,10 @@ func NewMediaPVCSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime
 	return syncer.NewObjectSyncer("MediaPVC", wp.Unwrap(), obj, c, scheme, func(existing runtime.Object) error {
 		out := existing.(*corev1.PersistentVolumeClaim)
 		out.Labels = labels.Merge(labels.Merge(wp.Spec.MediaVolumeSpec.Labels, objLabels), controllerLabels)
-		out.Annotations = wp.Spec.MediaVolumeSpec.Annotations
+
+		if len(wp.Spec.MediaVolumeSpec.Annotations) > 0 {
+			out.Annotations = labels.Merge(out.Annotations, wp.Spec.MediaVolumeSpec.Annotations)
+		}
 
 		if wp.Spec.MediaVolumeSpec == nil || wp.Spec.MediaVolumeSpec.PersistentVolumeClaim == nil {
 			return fmt.Errorf(".spec.media.persistentVolumeClaim is not defined")
