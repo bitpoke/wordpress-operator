@@ -89,7 +89,7 @@ func NewWPCronSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.S
 		template.ObjectMeta.Labels = wp.JobPodLabels()
 		template.Spec.Containers = []corev1.Container{
 			{
-				Name:  "curl",
+				Name:  "wp-cron-trigger",
 				Image: curlImage,
 				Args:  cmd,
 			},
