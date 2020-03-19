@@ -44,7 +44,8 @@ func main() {
 		os.Exit(genericErrorExitCode)
 	}
 
-	logf.SetLogger(logf.ZapLogger(true))
+	development := os.Getenv("DEV") == "true"
+	logf.SetLogger(logf.ZapLogger(development))
 
 	fmt.Fprintln(os.Stderr, "Starting wordpress-operator...")
 
