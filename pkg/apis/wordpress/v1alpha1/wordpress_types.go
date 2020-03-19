@@ -303,6 +303,7 @@ type WordpressStatus struct {
 
 // Wordpress is the Schema for the wordpresses API
 // +k8s:openapi-gen=true
+// +kubebuilder:resource:shortName=wp
 // +kubebuilder:subresource:status
 // +kubebuilder:subresource:scale:specpath=.spec.replicas,statuspath=.status.replicas
 type Wordpress struct {

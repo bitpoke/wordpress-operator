@@ -10,6 +10,8 @@ spec:
   names:
     kind: Wordpress
     plural: wordpresses
+    shortNames:
+    - wp
   scope: Namespaced
   subresources:
     scale:

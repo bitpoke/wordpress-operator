@@ -22,14 +22,11 @@ linters:
     - complexity
     - performance
 
-  # we should re-enable them and make lint pass
   disable:
-    - goimports
-    - maligned
-    - wsl
-    - gomnd
     - gochecknoglobals
+    - goimports
     - gochecknoinits
+    - wsl
 
 issues:
   max-same-issues: 0
@@ -37,7 +34,13 @@ issues:
   exclude:
     # gosec G104, about unhandled errors. We do that with errcheck already
     - "G104: Errors unhandled"
-    # TODO: reenable
-    - "ST1000: at least one file in a package should have a package comment"
-    # Allow TODOs
+    - "mnd: "
     - "Line contains TODO/BUG/FIXME"
+  exclude-rules:
+    - linters:
+        - godox
+      text: "TODO:"
+    - linters:
+      # Ignore package comments (ST1000) since most of the time are irrelevant
+      - stylecheck
+      text: "ST1000"

@@ -17,8 +17,9 @@ limitations under the License.
 package sync
 
 import (
-	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	"testing"
+
+	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

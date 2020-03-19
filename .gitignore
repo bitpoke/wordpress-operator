@@ -18,4 +18,8 @@
 bin/*
 webroot/*
 
+.work
+.cache
+_output
+
 build

@@ -1,12 +1,12 @@
 ---
 kind: pipeline
-name: build
+name: default
 
 clone:
   disable: true
 
 workspace:
-  base: /root/go
+  base: /workspace
   path: src/github.com/presslabs/wordpress-operator
 
 steps:
@@ -17,93 +17,58 @@ steps:
     depth: 0
     tags: true
 
-- name: dependencies
+- name: install dependencies
   pull: always
-  image: quay.io/presslabs/bfc
+  image: quay.io/presslabs/bfc:build
   commands:
-  - make dependencies
+  - make -j4 build.tools
 
-- name: verify
-  image: quay.io/presslabs/bfc
+- name: verify generated code
+  image: quay.io/presslabs/bfc:build
   commands:
-  - make -s fmt generate manifests
+  - make -j4 generate
   - git diff --exit-code
 
 - name: lint
-  image: quay.io/presslabs/bfc
+  image: quay.io/presslabs/bfc:build
   commands:
-  - make lint
-  - helm lint chart/wordpress-operator
-  - helm dep build chart/wordpress-operator
+  - make -j4 lint
 
-- name: build
-  image: quay.io/presslabs/bfc
+- name: test
+  image: quay.io/presslabs/bfc:build
   commands:
-  - make chart
   - make test
 
-- name: publish docker image
-  image: plugins/docker
-  settings:
-    group: publish
-    registry: quay.io
-    repo: quay.io/presslabs/wordpress-operator
-    tags:
-    - ${DRONE_BRANCH/master/latest}
-    - ${DRONE_COMMIT_SHA:0:7}
-    username: presslabs+drone
+- name: build
+  image: quay.io/presslabs/bfc:build
+  commands:
+  - make -j4 build
+
+- name: publish
+  image: quay.io/presslabs/bfc:build
   environment:
+    DOCKER_REGISTRY: quay.io
+    DOCKER_USERNAME: presslabs+drone
     DOCKER_PASSWORD:
       from_secret: QUAY_TOKEN
+  commands:
+  - /usr/local/bin/setup-credentials-helper.sh
+  - make publish
   when:
     event:
       - push
----
-kind: pipeline
-name: publish
+      - tag
 
-clone:
-  disable: true
-
-steps:
-- name: git
-  pull: default
-  image: plugins/git
-  settings:
-    depth: 0
-    tags: true
-
-- name: publish docker image
-  image: plugins/docker
-  settings:
-    group: publish
-    registry: quay.io
-    repo: quay.io/presslabs/wordpress-operator
-    auto_tag: true
-    username: presslabs+drone
-  environment:
-    DOCKER_PASSWORD:
-      from_secret: QUAY_TOKEN
-
-- name: publish helm chart
-  pull: default
-  image: quay.io/presslabs/bfc
+services:
+- name: docker
+  image: docker:dind
+  privileged: true
   commands:
-  - make chart
-  - cd chart
-  - helm package wordpress-operator
-  - CHART="$(basename *.tgz)" ; MESSAGE="Publish $(basename $CHART .tgz)"
-  - /usr/local/bin/gh put --skip-existing -m "$MESSAGE" "$CHART" "presslabs/charts/docs/"
-  settings:
-    group: publish
-  environment:
-    GH_PASSWORD:
-      from_secret: GH_PASSWORD
-    GH_USER: presslabs-bot
-
-depends_on:
-  - build
+    - /usr/local/bin/dockerd-entrypoint.sh dockerd --host "unix:///workspace/docker.sock" --storage-driver overlay2 --log-level error
 
 trigger:
-  event:
-  - tag
+  ref:
+    - refs/pull/**
+    - refs/heads/master
+    - refs/heads/release-*
+    - refs/tags/**
