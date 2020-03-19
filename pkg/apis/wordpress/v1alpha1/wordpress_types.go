@@ -317,6 +317,7 @@ type WordpressStatus struct {
 // +kubebuilder:resource:shortName=wp
 // +kubebuilder:subresource:status
 // +kubebuilder:subresource:scale:specpath=.spec.replicas,statuspath=.status.replicas
+// +kubebuilder:printcolumn:name="wp-cron",type="string",JSONPath=".status.conditions[?(@.type == "WPCronTriggering")].status",description="wp-cron triggering status"
 type Wordpress struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

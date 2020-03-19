@@ -12,6 +12,11 @@ metadata:
   annotations:
     helm.sh/hook: crd-install
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .status.conditions[?(@.type == "WPCronTriggering")].status
+    description: wp-cron triggering status
+    name: wp-cron
+    type: string
   group: wordpress.presslabs.org
   names:
     kind: Wordpress

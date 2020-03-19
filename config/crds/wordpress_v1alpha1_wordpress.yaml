@@ -6,6 +6,11 @@ metadata:
     controller-tools.k8s.io: "1.0"
   name: wordpresses.wordpress.presslabs.org
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .status.conditions[?(@.type == "WPCronTriggering")].status
+    description: wp-cron triggering status
+    name: wp-cron
+    type: string
   group: wordpress.presslabs.org
   names:
     kind: Wordpress
