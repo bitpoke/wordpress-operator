@@ -57,6 +57,17 @@ type WordpressCondition struct {
 	Message string `json:"message"`
 }
 
+const (
+	// WPCronTriggeringCondition signals that health of wp-cron trigger
+	WPCronTriggeringCondition WordpressConditionType = "WPCronTriggering"
+
+	// WPCronTriggerErrorReason is the generic reason for cron failures
+	WPCronTriggerErrorReason = "WPCronTriggerError"
+
+	// WPCronTriggeringReason is the reason for successfully triggering wp-cron
+	WPCronTriggeringReason = "WPCronTriggering"
+)
+
 // WordpressSpec defines the desired state of Wordpress
 type WordpressSpec struct {
 	// Number of desired web pods. This is a pointer to distinguish between

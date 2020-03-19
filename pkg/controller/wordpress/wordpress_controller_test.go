@@ -27,7 +27,6 @@ import (
 
 	"golang.org/x/net/context"
 	appsv1 "k8s.io/api/apps/v1"
-	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	extv1beta1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -83,7 +82,6 @@ var _ = Describe("Wordpress controller", func() {
 			Entry("reconciles the ingress", "%s", &extv1beta1.Ingress{}),
 			Entry("reconciles the code pvc", "%s-code", &corev1.PersistentVolumeClaim{}),
 			Entry("reconciles the media pvc", "%s-media", &corev1.PersistentVolumeClaim{}),
-			Entry("reconciles the wp-cron", "%s-wp-cron", &batchv1beta1.CronJob{}),
 		}
 
 		BeforeEach(func() {

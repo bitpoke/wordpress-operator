@@ -34,7 +34,6 @@ rules:
 - apiGroups:
   - batch
   resources:
-  - cronjobs
   - jobs
   verbs:
   - get
@@ -48,6 +47,19 @@ rules:
   - extensions
   resources:
   - ingresses
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - wordpress.presslabs.org
+  resources:
+  - wordpresses
+  - wordpresses/status
   verbs:
   - get
   - list

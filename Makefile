@@ -44,4 +44,4 @@ GO_LDFLAGS += -X github.com/presslabs/wordpress-operator/pkg/version.buildDate=$
 	@echo '{{- end }}' >> $(HELM_CHARTS_DIR)/wordpress-operator/templates/controller-clusterrole.yaml
 	@rm $(HELM_CHARTS_DIR)/wordpress-operator/templates/_rbac.yaml
 	@$(OK) updating helm RBAC and CRDs from kubebuilder manifests
-$(HELM_OUTPUT_DIR)/wordpress-operator-$(HELM_CHART_VERSION).tgz: .kubebuilder.update.chart $(shell find config -type f)
+.generate.run: .kubebuilder.update.chart

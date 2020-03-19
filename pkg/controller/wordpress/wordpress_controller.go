@@ -20,7 +20,6 @@ import (
 	"context"
 
 	appsv1 "k8s.io/api/apps/v1"
-	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	extv1beta1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -69,7 +68,6 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 
 	subresources := []runtime.Object{
 		&appsv1.Deployment{},
-		&batchv1beta1.CronJob{},
 		&corev1.PersistentVolumeClaim{},
 		&corev1.Service{},
 		&corev1.Secret{},
@@ -104,7 +102,7 @@ type ReconcileWordpress struct {
 // Automatically generate RBAC rules to allow the Controller to read and write Deployments
 // +kubebuilder:rbac:groups=,resources=secrets;services;persistentvolumeclaims;events,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=batch,resources=cronjobs;jobs,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=extensions,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=wordpress.presslabs.org,resources=wordpresses;wordpresses/status,verbs=get;list;watch;create;update;patch;delete
 func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Result, error) {
@@ -130,7 +128,6 @@ func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Res
 		deploySyncer,
 		sync.NewServiceSyncer(wp, r.Client, r.scheme),
 		sync.NewIngressSyncer(wp, r.Client, r.scheme),
-		sync.NewWPCronSyncer(wp, r.Client, r.scheme),
 		// sync.NewDBUpgradeJobSyncer(wp, r.Client, r.scheme),
 	}
 

@@ -9,7 +9,7 @@ img.build:
 	@$(INFO) docker build $(IMAGE) $(PLATFORM)
 	@cp -La . $(IMAGE_TEMP_DIR)
 	@mkdir -p $(IMAGE_TEMP_DIR)/rootfs
-	@cp $(OUTPUT_DIR)/bin/linux_$(ARCH)/wordpress-operator $(IMAGE_TEMP_DIR)/rootfs/dashboard
+	@cp $(OUTPUT_DIR)/bin/linux_$(ARCH)/wordpress-operator $(IMAGE_TEMP_DIR)/rootfs/wordpress-operator
 	@docker build $(BUILD_ARGS) \
 		--build-arg ARCH=$(ARCH) \
 		--build-arg TINI_VERSION=$(TINI_VERSION) \
