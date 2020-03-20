@@ -34,6 +34,14 @@
   revision = "3a771d992973f24aa725d07868b467d1ddfceafb"
 
 [[projects]]
+  digest = "1:a9656e694e65f31dbb577b7def0c38beb7c42b3635ac9030d72d26a7da1aae8a"
+  name = "github.com/blendle/zapdriver"
+  packages = ["."]
+  pruneopts = "T"
+  revision = "40e509ee21fffea4721c27da7d42ead69bfb6d5b"
+  version = "v1.3.1"
+
+[[projects]]
   branch = "master"
   digest = "1:c26eb5dcbeff0f2d70b66bd48aec761c4a623f3993f901205f0e572532110a7c"
   name = "github.com/cooleo/slugify"
@@ -353,16 +361,17 @@
   version = "v0.8.0"
 
 [[projects]]
-  digest = "1:053d573098421bb4793ff0ce5a132c1bb2b75be3544debdd2710c92b1ca6ecd0"
+  digest = "1:dec9623483ee2d9d5102cb253bad838a21e70c4e5879692dd89c18807f51eb08"
   name = "github.com/presslabs/controller-util"
   packages = [
+    "log",
     "mergo/transformers",
     "rand",
     "syncer",
   ]
   pruneopts = "T"
-  revision = "518c2f5005ed101cc42c8075ff1bc25076275116"
-  version = "v0.1.14"
+  revision = "ae3859927b0ac707d5ba14bfaab506a83c1f43ad"
+  version = "v0.1.16"
 
 [[projects]]
   digest = "1:3b5729e3fc486abc6fc16ce026331c3d196e788c3b973081ecf5d28ae3e1050d"
@@ -940,9 +949,11 @@
     "github.com/appscode/mergo",
     "github.com/cooleo/slugify",
     "github.com/emicklei/go-restful",
+    "github.com/go-logr/logr",
     "github.com/onsi/ginkgo",
     "github.com/onsi/ginkgo/extensions/table",
     "github.com/onsi/gomega",
+    "github.com/presslabs/controller-util/log",
     "github.com/presslabs/controller-util/mergo/transformers",
     "github.com/presslabs/controller-util/rand",
     "github.com/presslabs/controller-util/syncer",
@@ -950,7 +961,6 @@
     "golang.org/x/net/context",
     "k8s.io/api/apps/v1",
     "k8s.io/api/batch/v1",
-    "k8s.io/api/batch/v1beta1",
     "k8s.io/api/core/v1",
     "k8s.io/api/extensions/v1beta1",
     "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1",

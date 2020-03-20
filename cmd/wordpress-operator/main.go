@@ -17,14 +17,13 @@ limitations under the License.
 package main
 
 import (
-	"fmt"
 	"os"
 
+	logf "github.com/presslabs/controller-util/log"
 	flag "github.com/spf13/pflag"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 
 	"github.com/presslabs/wordpress-operator/pkg/apis"
@@ -34,50 +33,51 @@ import (
 
 const genericErrorExitCode = 1
 
-var log = logf.Log.WithName("wordpress-operator")
+var setupLog = logf.Log.WithName("wordpress-operator")
 
 func main() {
 	fs := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 	options.AddToFlagSet(fs)
-	if err := fs.Parse(os.Args); err != nil {
-		log.Error(err, "unable to parse args")
+	err := fs.Parse(os.Args)
+	if err != nil {
+		setupLog.Error(err, "unable to parse args")
 		os.Exit(genericErrorExitCode)
 	}
 
 	development := os.Getenv("DEV") == "true"
 	logf.SetLogger(logf.ZapLogger(development))
 
-	fmt.Fprintln(os.Stderr, "Starting wordpress-operator...")
+	setupLog.Info("Starting wordpress-operator...")
 
 	// Get a config to talk to the apiserver
 	cfg, err := config.GetConfig()
 	if err != nil {
-		log.Error(err, "unable to get configuration")
+		setupLog.Error(err, "unable to get configuration")
 		os.Exit(genericErrorExitCode)
 	}
 
 	// Create a new Cmd to provide shared dependencies and start components
 	mgr, err := manager.New(cfg, manager.Options{})
 	if err != nil {
-		log.Error(err, "unable to create a new manager")
+		setupLog.Error(err, "unable to create a new manager")
 		os.Exit(genericErrorExitCode)
 	}
 
 	// Setup Scheme for all resources
 	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
-		log.Error(err, "unable to register types to scheme")
+		setupLog.Error(err, "unable to register types to scheme")
 		os.Exit(genericErrorExitCode)
 	}
 
 	// Setup all Controllers
 	if err := controller.AddToManager(mgr); err != nil {
-		log.Error(err, "unable to setup controllers")
+		setupLog.Error(err, "unable to setup controllers")
 		os.Exit(genericErrorExitCode)
 	}
 
 	// Start the Cmd
 	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
-		log.Error(err, "unable to start the manager")
+		setupLog.Error(err, "unable to start the manager")
 		os.Exit(genericErrorExitCode)
 	}
 }

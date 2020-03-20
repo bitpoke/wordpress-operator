@@ -59,7 +59,7 @@ func Add(mgr manager.Manager) error {
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	return &ReconcileWordpress{
 		Client:   mgr.GetClient(),
-		Log:      logf.Log.WithName(controllerName),
+		Log:      logf.Log.WithName(controllerName).WithValues("controller", controllerName),
 		scheme:   mgr.GetScheme(),
 		recorder: mgr.GetRecorder(controllerName),
 	}
@@ -107,7 +107,7 @@ func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Res
 	r.scheme.Default(wp.Unwrap())
 	wp.SetDefaults()
 
-	log := r.Log.WithValues("obj", wp.Unwrap())
+	log := r.Log.WithValues("key", request.NamespacedName)
 
 	requeue := reconcile.Result{
 		Requeue:      true,
@@ -130,7 +130,7 @@ func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Res
 
 	err = r.pingURL(ctx, _u.String(), wp.MainDomain())
 	if err != nil {
-		log.Error(err, "error while triggering wp-cron", "obj", wp.Unwrap())
+		log.Error(err, "error while triggering wp-cron")
 	}
 
 	err = r.updateWPCronStatus(wp, err)
