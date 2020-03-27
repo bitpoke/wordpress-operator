@@ -259,6 +259,10 @@ spec:
             nodeSelector:
               description: If specified, Pod node selector
               type: object
+            podMetadata:
+              description: PodMetadata allow setting custom labels/annotations on
+                wordpress pods
+              type: object
             priorityClassName:
               description: If specified, indicates the pod's priority class
               type: string

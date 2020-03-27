@@ -114,6 +114,9 @@ type WordpressSpec struct {
 	// Volumes defines additional volumes to get injected into web and cli pods
 	// +optional
 	Volumes []corev1.Volume `json:"volumes,omitempty"`
+	// PodMetadata allow setting custom labels/annotations on wordpress pods
+	// +optional
+	PodMetadata *metav1.ObjectMeta `json:"podMetadata,omitempty"`
 	// WordpressBootstrapSpec specifies credentials used to install wordpress, on the first run.
 	// +optional
 	WordpressBootstrapSpec *WordpressBootstrapSpec `json:"bootstrap,omitempty"`

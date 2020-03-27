@@ -23,6 +23,7 @@ package v1alpha1
 import (
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -355,6 +356,11 @@ func (in *WordpressSpec) DeepCopyInto(out *WordpressSpec) {
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
+	}
+	if in.PodMetadata != nil {
+		in, out := &in.PodMetadata, &out.PodMetadata
+		*out = new(metav1.ObjectMeta)
+		(*in).DeepCopyInto(*out)
 	}
 	if in.WordpressBootstrapSpec != nil {
 		in, out := &in.WordpressBootstrapSpec, &out.WordpressBootstrapSpec

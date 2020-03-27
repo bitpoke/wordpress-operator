@@ -27,6 +27,8 @@ import (
 
 	"strings"
 
+	"k8s.io/apimachinery/pkg/labels"
+
 	"github.com/presslabs/wordpress-operator/pkg/cmd/options"
 )
 
@@ -441,7 +443,10 @@ func (wp *Wordpress) initContainers() []corev1.Container {
 // nolint: funlen
 func (wp *Wordpress) WebPodTemplateSpec() (out corev1.PodTemplateSpec) {
 	out = corev1.PodTemplateSpec{}
-	out.ObjectMeta.Labels = wp.WebPodLabels()
+	if wp.Spec.PodMetadata != nil {
+		wp.Spec.PodMetadata.DeepCopyInto(&out.ObjectMeta)
+	}
+	out.ObjectMeta.Labels = labels.Merge(out.ObjectMeta.Labels, wp.WebPodLabels())
 
 	out.Spec.ImagePullSecrets = wp.Spec.ImagePullSecrets
 	if len(wp.Spec.ServiceAccountName) > 0 {
@@ -507,7 +512,10 @@ func (wp *Wordpress) WebPodTemplateSpec() (out corev1.PodTemplateSpec) {
 // JobPodTemplateSpec generates a pod template spec suitable for use in wp-cli jobs
 func (wp *Wordpress) JobPodTemplateSpec(cmd ...string) (out corev1.PodTemplateSpec) {
 	out = corev1.PodTemplateSpec{}
-	out.ObjectMeta.Labels = wp.JobPodLabels()
+	if wp.Spec.PodMetadata != nil {
+		wp.Spec.PodMetadata.DeepCopyInto(&out.ObjectMeta)
+	}
+	out.ObjectMeta.Labels = labels.Merge(out.ObjectMeta.Labels, wp.JobPodLabels())
 
 	out.Spec.ImagePullSecrets = wp.Spec.ImagePullSecrets
 	if len(wp.Spec.ServiceAccountName) > 0 {
