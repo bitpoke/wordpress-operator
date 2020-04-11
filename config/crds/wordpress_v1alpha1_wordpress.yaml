@@ -7,6 +7,10 @@ metadata:
   name: wordpresses.wordpress.presslabs.org
 spec:
   additionalPrinterColumns:
+  - JSONPath: .spec.image
+    description: wordpress image
+    name: image
+    type: string
   - JSONPath: .status.conditions[?(@.type == "WPCronTriggering")].status
     description: wp-cron triggering status
     name: wp-cron
