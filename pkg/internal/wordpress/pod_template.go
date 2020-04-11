@@ -74,6 +74,8 @@ git checkout -B "$GIT_CLONE_REF" "origin/$GIT_CLONE_REF"
 const prepareVolumesScriptTpl = `#!/bin/sh
 test -d /mnt/code && chown {{ .wwwDataUserID }}:{{ .wwwDataUserID }} /mnt/code
 test -d /mnt/media && chown {{ .wwwDataUserID }}:{{ .wwwDataUserID }} /mnt/media
+test -d {{ .knativeVarLogDir }} && chown {{ .wwwDataUserID }}:{{ .wwwDataUserID }} {{ .knativeVarLogDir }}
+ln -sf ../log {{ .knativeInternalDir }}/${POD_NAMESPACE}_${POD_NAME}_wordpress
 `
 
 var (
@@ -214,8 +216,14 @@ func (wp *Wordpress) gitCloneEnv() []corev1.EnvVar {
 	return out
 }
 
-func (wp *Wordpress) volumeMounts() (out []corev1.VolumeMount) {
-	out = wp.Spec.VolumeMounts
+func (wp *Wordpress) volumeMounts() []corev1.VolumeMount {
+	out := []corev1.VolumeMount{
+		{
+			MountPath: knativeVarLogMountPath,
+			Name:      knativeVarLogVolume,
+		},
+	}
+	out = append(out, wp.Spec.VolumeMounts...)
 	if wp.hasCodeMounts() {
 		out = append(out, corev1.VolumeMount{
 			MountPath: codeSrcMountPath,
@@ -322,7 +330,23 @@ func (wp *Wordpress) mediaVolume() corev1.Volume {
 }
 
 func (wp *Wordpress) volumes() []corev1.Volume {
-	volumes := wp.Spec.Volumes
+	volumes := []corev1.Volume{
+		{
+			Name: knativeInternalVolume,
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{},
+			},
+		},
+		{
+			Name: knativeVarLogVolume,
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{
+					SizeLimit: &varLogSizeLimit,
+				},
+			},
+		},
+	}
+	volumes = append(volumes, wp.Spec.Volumes...)
 	if wp.hasCodeMounts() {
 		volumes = append(volumes, wp.codeVolume())
 	}
@@ -357,19 +381,49 @@ func (wp *Wordpress) gitCloneContainer() corev1.Container {
 	}
 }
 
+// nolint: funlen
 func (wp *Wordpress) prepareVolumesContainer() corev1.Container {
 	var script bytes.Buffer
 
 	// nolint: errcheck
 	prepareVolumesScriptTemplate.Execute(&script, map[string]string{
-		"wwwDataUserID": fmt.Sprintf("%d", wwwDataUserID),
+		"wwwDataUserID":      fmt.Sprintf("%d", wwwDataUserID),
+		"knativeInternalDir": knativeInternalMountPath,
+		"knativeVarLogDir":   knativeVarLogMountPath,
 	})
 
 	c := corev1.Container{
-		Name:         "prepare-volumes",
-		Args:         []string{"/bin/sh", "-c", script.String()},
-		Image:        prepareVolumesImage,
-		VolumeMounts: []corev1.VolumeMount{},
+		Name:  "prepare-volumes",
+		Args:  []string{"/bin/sh", "-c", script.String()},
+		Image: prepareVolumesImage,
+		VolumeMounts: []corev1.VolumeMount{
+			{
+				Name:      knativeInternalVolume,
+				MountPath: knativeInternalMountPath,
+			},
+			{
+				Name:      knativeVarLogVolume,
+				MountPath: knativeVarLogMountPath,
+			},
+		},
+		Env: []corev1.EnvVar{
+			{
+				Name: "POD_NAMESPACE",
+				ValueFrom: &corev1.EnvVarSource{
+					FieldRef: &corev1.ObjectFieldSelector{
+						FieldPath: "metadata.namespace",
+					},
+				},
+			},
+			{
+				Name: "POD_NAME",
+				ValueFrom: &corev1.EnvVarSource{
+					FieldRef: &corev1.ObjectFieldSelector{
+						FieldPath: "metadata.name",
+					},
+				},
+			},
+		},
 	}
 
 	if wp.hasCodeMounts() && !wp.Spec.CodeVolumeSpec.ReadOnly {

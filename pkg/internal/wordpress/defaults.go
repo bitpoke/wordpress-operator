@@ -17,9 +17,10 @@ limitations under the License.
 package wordpress
 
 import (
-	corev1 "k8s.io/api/core/v1"
-
 	"path"
+
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 
 	"github.com/presslabs/wordpress-operator/pkg/cmd/options"
 )
@@ -35,6 +36,16 @@ const (
 
 	mediaSubPath          = "uploads"
 	defaultMediaMountPath = defaultCodeMountPath + "/" + mediaSubPath
+
+	knativeVarLogVolume    = "knative-var-log"
+	knativeVarLogMountPath = "/var/log"
+
+	knativeInternalVolume    = "knative-internal"
+	knativeInternalMountPath = "/var/knative-internal"
+)
+
+var (
+	varLogSizeLimit = resource.MustParse("1Gi")
 )
 
 // SetDefaults sets Wordpress field defaults
