@@ -361,7 +361,7 @@
   version = "v0.8.0"
 
 [[projects]]
-  digest = "1:dec9623483ee2d9d5102cb253bad838a21e70c4e5879692dd89c18807f51eb08"
+  digest = "1:cd7674d373a1ee9f7293843aa29f8bc43a734809eda7b670b5a06f6aff9f3c58"
   name = "github.com/presslabs/controller-util"
   packages = [
     "log",
@@ -370,8 +370,8 @@
     "syncer",
   ]
   pruneopts = "T"
-  revision = "ae3859927b0ac707d5ba14bfaab506a83c1f43ad"
-  version = "v0.1.16"
+  revision = "ed096bc34f3e6a344f28cdcad2a4755d6cdae887"
+  version = "v0.1.18"
 
 [[projects]]
   digest = "1:3b5729e3fc486abc6fc16ce026331c3d196e788c3b973081ecf5d28ae3e1050d"
