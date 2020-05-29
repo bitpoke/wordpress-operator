@@ -21,11 +21,13 @@ import (
 
 	"github.com/presslabs/controller-util/syncer"
 	appsv1 "k8s.io/api/apps/v1"
+	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	netv1beta1 "k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -146,8 +148,8 @@ func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Res
 	oldStatus := wp.Status.DeepCopy()
 	wp.Status.Replicas = deploySyncer.Object().(*appsv1.Deployment).Status.Replicas
 	if oldStatus.Replicas != wp.Status.Replicas {
-		if err := r.Status().Update(context.TODO(), wp.Unwrap()); err != nil {
-			return reconcile.Result{}, err
+		if errUp := r.Status().Update(context.TODO(), wp.Unwrap()); errUp != nil {
+			return reconcile.Result{}, errUp
 		}
 	}
 
