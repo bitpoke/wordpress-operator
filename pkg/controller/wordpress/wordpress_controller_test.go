@@ -28,7 +28,7 @@ import (
 	"golang.org/x/net/context"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	extv1beta1 "k8s.io/api/extensions/v1beta1"
+	netv1beta1 "k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -79,7 +79,7 @@ var _ = Describe("Wordpress controller", func() {
 			Entry("reconciles the wp secret", "%s-wp", &corev1.Secret{}),
 			Entry("reconciles the deployment", "%s", &appsv1.Deployment{}),
 			Entry("reconciles the service", "%s", &corev1.Service{}),
-			Entry("reconciles the ingress", "%s", &extv1beta1.Ingress{}),
+			Entry("reconciles the ingress", "%s", &netv1beta1.Ingress{}),
 			Entry("reconciles the code pvc", "%s-code", &corev1.PersistentVolumeClaim{}),
 			Entry("reconciles the media pvc", "%s-media", &corev1.PersistentVolumeClaim{}),
 		}

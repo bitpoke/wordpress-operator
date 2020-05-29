@@ -49,8 +49,7 @@ var _ = BeforeSuite(func() {
 		CRDDirectoryPaths: []string{filepath.Join("..", "..", "..", "config", "crds")},
 	}
 
-	// nolint: errcheck
-	apis.AddToScheme(scheme.Scheme)
+	Expect(apis.AddToScheme(scheme.Scheme)).To(Succeed())
 
 	cfg, err = t.Start()
 	Expect(err).NotTo(HaveOccurred())
@@ -77,6 +76,7 @@ func SetupTestReconcile(inner reconcile.Reconciler) (reconcile.Reconciler, chan 
 func StartTestManager(mgr manager.Manager) chan struct{} {
 	stop := make(chan struct{})
 	go func() {
+		defer GinkgoRecover()
 		Expect(mgr.Start(stop)).To(Succeed())
 	}()
 	return stop
