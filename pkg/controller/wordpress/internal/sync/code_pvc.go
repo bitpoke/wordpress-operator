@@ -42,11 +42,10 @@ func NewCodePVCSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.
 		},
 	}
 	return syncer.NewObjectSyncer("CodePVC", wp.Unwrap(), obj, c, scheme, func() error {
-		out := obj
-		out.Labels = labels.Merge(labels.Merge(wp.Spec.CodeVolumeSpec.Labels, objLabels), controllerLabels)
+		obj.Labels = labels.Merge(labels.Merge(wp.Spec.CodeVolumeSpec.Labels, objLabels), controllerLabels)
 
 		if len(wp.Spec.CodeVolumeSpec.Annotations) > 0 {
-			out.Annotations = labels.Merge(out.Annotations, wp.Spec.CodeVolumeSpec.Annotations)
+			obj.Annotations = labels.Merge(obj.Annotations, wp.Spec.CodeVolumeSpec.Annotations)
 		}
 
 		if wp.Spec.CodeVolumeSpec == nil || wp.Spec.CodeVolumeSpec.PersistentVolumeClaim == nil {
@@ -54,11 +53,11 @@ func NewCodePVCSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.
 		}
 
 		// PVC spec is immutable
-		if !reflect.DeepEqual(out.Spec, corev1.PersistentVolumeClaimSpec{}) {
+		if !reflect.DeepEqual(obj.Spec, corev1.PersistentVolumeClaimSpec{}) {
 			return nil
 		}
 
-		out.Spec = *wp.Spec.CodeVolumeSpec.PersistentVolumeClaim
+		obj.Spec = *wp.Spec.CodeVolumeSpec.PersistentVolumeClaim
 
 		return nil
 	})

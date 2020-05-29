@@ -42,11 +42,10 @@ func NewMediaPVCSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime
 		},
 	}
 	return syncer.NewObjectSyncer("MediaPVC", wp.Unwrap(), obj, c, scheme, func() error {
-		out := obj
-		out.Labels = labels.Merge(labels.Merge(wp.Spec.MediaVolumeSpec.Labels, objLabels), controllerLabels)
+		obj.Labels = labels.Merge(labels.Merge(wp.Spec.MediaVolumeSpec.Labels, objLabels), controllerLabels)
 
 		if len(wp.Spec.MediaVolumeSpec.Annotations) > 0 {
-			out.Annotations = labels.Merge(out.Annotations, wp.Spec.MediaVolumeSpec.Annotations)
+			obj.Annotations = labels.Merge(obj.Annotations, wp.Spec.MediaVolumeSpec.Annotations)
 		}
 
 		if wp.Spec.MediaVolumeSpec == nil || wp.Spec.MediaVolumeSpec.PersistentVolumeClaim == nil {
@@ -54,11 +53,11 @@ func NewMediaPVCSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime
 		}
 
 		// PVC spec is immutable
-		if !reflect.DeepEqual(out.Spec, corev1.PersistentVolumeClaimSpec{}) {
+		if !reflect.DeepEqual(obj.Spec, corev1.PersistentVolumeClaimSpec{}) {
 			return nil
 		}
 
-		out.Spec = *wp.Spec.MediaVolumeSpec.PersistentVolumeClaim
+		obj.Spec = *wp.Spec.MediaVolumeSpec.PersistentVolumeClaim
 
 		return nil
 	})

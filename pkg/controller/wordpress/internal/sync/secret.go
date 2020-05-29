@@ -54,20 +54,19 @@ func NewSecretSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.S
 	}
 
 	return syncer.NewObjectSyncer("Secret", wp.Unwrap(), obj, c, scheme, func() error {
-		out := obj
-		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
+		obj.Labels = labels.Merge(labels.Merge(obj.Labels, objLabels), controllerLabels)
 
-		if len(out.Data) == 0 {
-			out.Data = make(map[string][]byte)
+		if len(obj.Data) == 0 {
+			obj.Data = make(map[string][]byte)
 		}
 
 		for name, size := range generatedSalts {
-			if len(out.Data[name]) == 0 {
+			if len(obj.Data[name]) == 0 {
 				random, err := rand.ASCIIString(size)
 				if err != nil {
 					return err
 				}
-				out.Data[name] = []byte(random)
+				obj.Data[name] = []byte(random)
 			}
 		}
 

@@ -48,23 +48,22 @@ func NewDBUpgradeJobSyncer(wp *wordpress.Wordpress, c client.Client, scheme *run
 	)
 
 	return syncer.NewObjectSyncer("DBUpgradeJob", wp.Unwrap(), obj, c, scheme, func() error {
-		out := obj
-		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
+		obj.Labels = labels.Merge(labels.Merge(obj.Labels, objLabels), controllerLabels)
 
-		if !out.CreationTimestamp.IsZero() {
+		if !obj.CreationTimestamp.IsZero() {
 			// TODO(calind): handle the case that the existing job is failed
 			return nil
 		}
 
-		out.Spec.BackoffLimit = &backoffLimit
-		out.Spec.ActiveDeadlineSeconds = &activeDeadlineSeconds
+		obj.Spec.BackoffLimit = &backoffLimit
+		obj.Spec.ActiveDeadlineSeconds = &activeDeadlineSeconds
 
 		cmd := []string{"/bin/sh", "-c", "wp core update-db --network || wp core update-db && wp cache flush"}
 		template := wp.JobPodTemplateSpec(cmd...)
 
-		out.Spec.Template.ObjectMeta = template.ObjectMeta
+		obj.Spec.Template.ObjectMeta = template.ObjectMeta
 
-		err := mergo.Merge(&out.Spec.Template.Spec, template.Spec, mergo.WithTransformers(transformers.PodSpec))
+		err := mergo.Merge(&obj.Spec.Template.Spec, template.Spec, mergo.WithTransformers(transformers.PodSpec))
 		if err != nil {
 			return err
 		}

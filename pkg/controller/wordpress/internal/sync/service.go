@@ -43,25 +43,24 @@ func NewServiceSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.
 	}
 
 	return syncer.NewObjectSyncer("Service", wp.Unwrap(), obj, c, scheme, func() error {
-		out := obj
-		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
+		obj.Labels = labels.Merge(labels.Merge(obj.Labels, objLabels), controllerLabels)
 
 		selector := wp.WebPodLabels()
-		if !labels.Equals(selector, out.Spec.Selector) {
-			if out.ObjectMeta.CreationTimestamp.IsZero() {
-				out.Spec.Selector = selector
+		if !labels.Equals(selector, obj.Spec.Selector) {
+			if obj.ObjectMeta.CreationTimestamp.IsZero() {
+				obj.Spec.Selector = selector
 			} else {
 				return fmt.Errorf("service selector is immutable")
 			}
 		}
 
-		if len(out.Spec.Ports) != 1 {
-			out.Spec.Ports = make([]corev1.ServicePort, 1)
+		if len(obj.Spec.Ports) != 1 {
+			obj.Spec.Ports = make([]corev1.ServicePort, 1)
 		}
 
-		out.Spec.Ports[0].Name = "http"
-		out.Spec.Ports[0].Port = int32(80)
-		out.Spec.Ports[0].TargetPort = intstr.FromInt(wordpress.InternalHTTPPort)
+		obj.Spec.Ports[0].Name = "http"
+		obj.Spec.Ports[0].Port = int32(80)
+		obj.Spec.Ports[0].TargetPort = intstr.FromInt(wordpress.InternalHTTPPort)
 
 		return nil
 	})

@@ -85,17 +85,16 @@ func NewIngressSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.
 	}
 
 	return syncer.NewObjectSyncer("Ingress", wp.Unwrap(), obj, c, scheme, func() error {
-		out := obj
-		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
+		obj.Labels = labels.Merge(labels.Merge(obj.Labels, objLabels), controllerLabels)
 
-		if len(out.ObjectMeta.Annotations) == 0 && (len(wp.Spec.IngressAnnotations) > 0 || options.IngressClass != "") {
-			out.ObjectMeta.Annotations = make(map[string]string)
+		if len(obj.ObjectMeta.Annotations) == 0 && (len(wp.Spec.IngressAnnotations) > 0 || options.IngressClass != "") {
+			obj.ObjectMeta.Annotations = make(map[string]string)
 		}
 		if options.IngressClass != "" {
-			out.ObjectMeta.Annotations[ingressClassAnnotationKey] = options.IngressClass
+			obj.ObjectMeta.Annotations[ingressClassAnnotationKey] = options.IngressClass
 		}
 		for k, v := range wp.Spec.IngressAnnotations {
-			out.ObjectMeta.Annotations[k] = v
+			obj.ObjectMeta.Annotations[k] = v
 		}
 
 		rules := []netv1beta1.IngressRule{}
@@ -107,7 +106,7 @@ func NewIngressSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.
 			rules = upsertPath(rules, route.Domain, path, bk)
 		}
 
-		out.Spec.Rules = rules
+		obj.Spec.Rules = rules
 
 		if len(wp.Spec.TLSSecretRef) > 0 {
 			tls := netv1beta1.IngressTLS{
@@ -116,9 +115,9 @@ func NewIngressSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.
 			for _, route := range wp.Spec.Routes {
 				tls.Hosts = append(tls.Hosts, route.Domain)
 			}
-			out.Spec.TLS = []netv1beta1.IngressTLS{tls}
+			obj.Spec.TLS = []netv1beta1.IngressTLS{tls}
 		} else {
-			out.Spec.TLS = nil
+			obj.Spec.TLS = nil
 		}
 
 		return nil
