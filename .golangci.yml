@@ -6,7 +6,7 @@ linters-settings:
   dupl:
     threshold: 400
   gocyclo:
-    min-complexity: 10
+    min-complexity: 15
   govet:
     check-shadowing: true
   lll:
