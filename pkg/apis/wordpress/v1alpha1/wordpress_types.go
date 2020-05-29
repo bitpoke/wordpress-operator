@@ -88,7 +88,7 @@ type WordpressSpec struct {
 	// +optional
 	Image string `json:"image,omitempty"`
 	// ImagePullPolicy overrides WordpressRuntime spec.imagePullPolicy
-	// +kubebuilder:validation:Enum=Always,IfNotPresent,Never
+	// +kubebuilder:validation:Enum=Always;IfNotPresent;Never
 	// +optional
 	ImagePullPolicy corev1.PullPolicy `json:"imagePullPolicy,omitempty"`
 	// ImagePullSecrets defines additional secrets to use when pulling images
@@ -321,7 +321,7 @@ type WordpressStatus struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:subresource:scale:specpath=.spec.replicas,statuspath=.status.replicas
 // +kubebuilder:printcolumn:name="image",type="string",JSONPath=".spec.image",description="wordpress image"
-// +kubebuilder:printcolumn:name="wp-cron",type="string",JSONPath=".status.conditions[?(@.type == "WPCronTriggering")].status",description="wp-cron triggering status"
+// +kubebuilder:printcolumn:name="wp-cron",type="string",JSONPath=".status.conditions[?(@.type == 'WPCronTriggering')].status",description="wp-cron triggering status"
 type Wordpress struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

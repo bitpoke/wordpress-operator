@@ -6,6 +6,8 @@ PLATFORMS = linux_amd64 darwin_amd64
 
 DOCKER_REGISTRY := quay.io/presslabs
 
+GO111MODULE=on
+
 include build/makelib/common.mk
 
 IMAGES ?= wordpress-operator
@@ -15,7 +17,7 @@ include build/makelib/image.mk
 GO_STATIC_PACKAGES = $(GO_PROJECT)/cmd/wordpress-operator
 
 include build/makelib/golang.mk
-include build/makelib/kubebuilder-v1.mk
+include build/makelib/kubebuilder-v2.mk
 include build/makelib/helm.mk
 
 GO_LDFLAGS += -X github.com/presslabs/wordpress-operator/pkg/version.buildDate=$(BUILD_DATE) \
