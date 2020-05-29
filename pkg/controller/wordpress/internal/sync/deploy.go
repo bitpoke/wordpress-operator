@@ -47,8 +47,7 @@ func NewDeploymentSyncer(wp *wordpress.Wordpress, secret *corev1.Secret, c clien
 	}
 
 	return syncer.NewObjectSyncer("Deployment", wp.Unwrap(), obj, c, scheme, func() error {
-		out := obj
-		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
+		obj.Labels = labels.Merge(labels.Merge(obj.Labels, objLabels), controllerLabels)
 
 		template := wp.WebPodTemplateSpec()
 
@@ -57,31 +56,31 @@ func NewDeploymentSyncer(wp *wordpress.Wordpress, secret *corev1.Secret, c clien
 		}
 		template.Annotations["wordpress.presslabs.org/secretVersion"] = secret.ResourceVersion
 
-		out.Spec.Template.ObjectMeta = template.ObjectMeta
+		obj.Spec.Template.ObjectMeta = template.ObjectMeta
 
 		selector := metav1.SetAsLabelSelector(wp.WebPodLabels())
-		if !reflect.DeepEqual(selector, out.Spec.Selector) {
-			if out.ObjectMeta.CreationTimestamp.IsZero() {
-				out.Spec.Selector = selector
+		if !reflect.DeepEqual(selector, obj.Spec.Selector) {
+			if obj.ObjectMeta.CreationTimestamp.IsZero() {
+				obj.Spec.Selector = selector
 			} else {
 				return fmt.Errorf("deployment selector is immutable")
 			}
 		}
 
-		err := mergo.Merge(&out.Spec.Template.Spec, template.Spec, mergo.WithTransformers(transformers.PodSpec))
+		err := mergo.Merge(&obj.Spec.Template.Spec, template.Spec, mergo.WithTransformers(transformers.PodSpec))
 		if err != nil {
 			return err
 		}
 
-		out.Spec.Template.Spec.NodeSelector = wp.Spec.NodeSelector
-		out.Spec.Template.Spec.Tolerations = wp.Spec.Tolerations
+		obj.Spec.Template.Spec.NodeSelector = wp.Spec.NodeSelector
+		obj.Spec.Template.Spec.Tolerations = wp.Spec.Tolerations
 
 		if wp.Spec.Replicas != nil {
-			out.Spec.Replicas = wp.Spec.Replicas
+			obj.Spec.Replicas = wp.Spec.Replicas
 		}
 
 		if wp.Spec.DeploymentStrategy != nil {
-			out.Spec.Strategy = *wp.Spec.DeploymentStrategy
+			obj.Spec.Strategy = *wp.Spec.DeploymentStrategy
 		}
 
 		return nil
