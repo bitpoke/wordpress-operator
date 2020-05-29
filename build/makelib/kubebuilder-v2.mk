@@ -93,7 +93,7 @@ export KUBEBULDERV2_HELPTEXT
 	@echo "$$KUBEBULDERV2_HELPTEXT"
 
 .help: .kubebuilder.help
-.generate.run: kubebuilder.manifests
+go.generate: kubebuilder.manifests
 
 .PHONY: .kubebuilder.help kubebuilder.manifests
 
