@@ -24,6 +24,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	netv1beta1 "k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -150,6 +151,11 @@ func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Res
 		}
 	}
 
+	// remove old cron job if exists
+	if err = r.cleanupCronJob(wp); err != nil {
+		return reconcile.Result{}, err
+	}
+
 	return reconcile.Result{}, nil
 }
 
@@ -183,4 +189,35 @@ func (r *ReconcileWordpress) maybeMigrate(wp *wordpressv1alpha1.Wordpress) (*wor
 	}
 	out.Spec.Domains = nil
 	return out, needsMigration
+}
+
+func (r *ReconcileWordpress) cleanupCronJob(wp *wordpress.Wordpress) error {
+	cronKey := types.NamespacedName{
+		Name:      wp.ComponentName(wordpress.WordpressCron),
+		Namespace: wp.Namespace,
+	}
+
+	cronJob := &batchv1beta1.CronJob{}
+	if err := r.Get(context.TODO(), cronKey, cronJob); err != nil {
+		return ignoreNotFound(err)
+	}
+
+	if !isOwnedBy(cronJob.OwnerReferences, wp) {
+		return nil
+	}
+
+	if err := r.Delete(context.TODO(), cronJob); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func isOwnedBy(refs []metav1.OwnerReference, owner *wordpress.Wordpress) bool {
+	for _, ref := range refs {
+		if (ref.Kind == "Wordpress" || ref.Kind == "wordpress") && ref.Name == owner.Name {
+			return true
+		}
+	}
+	return false
 }
