@@ -18,7 +18,6 @@ package v1alpha1_test
 
 import (
 	"path/filepath"
-	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
@@ -27,6 +26,7 @@ import (
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
+	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 
 	. "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )

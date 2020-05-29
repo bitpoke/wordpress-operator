@@ -17,11 +17,12 @@ limitations under the License.
 package wordpress
 
 import (
-	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 

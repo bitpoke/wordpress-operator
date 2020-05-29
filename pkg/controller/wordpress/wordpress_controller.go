@@ -19,9 +19,10 @@ package wordpress
 import (
 	"context"
 
+	"github.com/presslabs/controller-util/syncer"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	extv1beta1 "k8s.io/api/extensions/v1beta1"
+	netv1beta1 "k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
@@ -31,8 +32,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-
-	"github.com/presslabs/controller-util/syncer"
 
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 	"github.com/presslabs/wordpress-operator/pkg/controller/wordpress/internal/sync"
@@ -71,7 +70,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		&corev1.PersistentVolumeClaim{},
 		&corev1.Service{},
 		&corev1.Secret{},
-		&extv1beta1.Ingress{},
+		&netv1beta1.Ingress{},
 	}
 
 	for _, subresource := range subresources {

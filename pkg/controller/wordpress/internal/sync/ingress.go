@@ -17,7 +17,7 @@ limitations under the License.
 package sync
 
 import (
-	extv1beta1 "k8s.io/api/extensions/v1beta1"
+	netv1beta1 "k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -32,8 +32,8 @@ import (
 
 const ingressClassAnnotationKey = "kubernetes.io/ingress.class"
 
-func upsertPath(rules []extv1beta1.IngressRule, domain, path string, bk extv1beta1.IngressBackend) []extv1beta1.IngressRule {
-	var rule *extv1beta1.IngressRule
+func upsertPath(rules []netv1beta1.IngressRule, domain, path string, bk netv1beta1.IngressBackend) []netv1beta1.IngressRule {
+	var rule *netv1beta1.IngressRule
 	for i := range rules {
 		if rules[i].Host == domain {
 			rule = &rules[i]
@@ -42,15 +42,15 @@ func upsertPath(rules []extv1beta1.IngressRule, domain, path string, bk extv1bet
 	}
 
 	if rule == nil {
-		rules = append(rules, extv1beta1.IngressRule{Host: domain})
+		rules = append(rules, netv1beta1.IngressRule{Host: domain})
 		rule = &rules[len(rules)-1]
 	}
 
 	if rule.HTTP == nil {
-		rule.HTTP = &extv1beta1.HTTPIngressRuleValue{}
+		rule.HTTP = &netv1beta1.HTTPIngressRuleValue{}
 	}
 
-	var httpPath *extv1beta1.HTTPIngressPath
+	var httpPath *netv1beta1.HTTPIngressPath
 	for i := range rule.HTTP.Paths {
 		if rule.HTTP.Paths[i].Path == path {
 			httpPath = &rule.HTTP.Paths[i]
@@ -59,7 +59,7 @@ func upsertPath(rules []extv1beta1.IngressRule, domain, path string, bk extv1bet
 	}
 
 	if httpPath == nil {
-		rule.HTTP.Paths = append(rule.HTTP.Paths, extv1beta1.HTTPIngressPath{Path: path})
+		rule.HTTP.Paths = append(rule.HTTP.Paths, netv1beta1.HTTPIngressPath{Path: path})
 		httpPath = &rule.HTTP.Paths[len(rule.HTTP.Paths)-1]
 	}
 
@@ -72,14 +72,14 @@ func upsertPath(rules []extv1beta1.IngressRule, domain, path string, bk extv1bet
 func NewIngressSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.Scheme) syncer.Interface {
 	objLabels := wp.ComponentLabels(wordpress.WordpressIngress)
 
-	obj := &extv1beta1.Ingress{
+	obj := &netv1beta1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      wp.ComponentName(wordpress.WordpressIngress),
 			Namespace: wp.Namespace,
 		},
 	}
 
-	bk := extv1beta1.IngressBackend{
+	bk := netv1beta1.IngressBackend{
 		ServiceName: wp.ComponentName(wordpress.WordpressService),
 		ServicePort: intstr.FromString("http"),
 	}
@@ -98,7 +98,7 @@ func NewIngressSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.
 			out.ObjectMeta.Annotations[k] = v
 		}
 
-		rules := []extv1beta1.IngressRule{}
+		rules := []netv1beta1.IngressRule{}
 		for _, route := range wp.Spec.Routes {
 			path := route.Path
 			if path == "" {
@@ -110,13 +110,13 @@ func NewIngressSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.
 		out.Spec.Rules = rules
 
 		if len(wp.Spec.TLSSecretRef) > 0 {
-			tls := extv1beta1.IngressTLS{
+			tls := netv1beta1.IngressTLS{
 				SecretName: string(wp.Spec.TLSSecretRef),
 			}
 			for _, route := range wp.Spec.Routes {
 				tls.Hosts = append(tls.Hosts, route.Domain)
 			}
-			out.Spec.TLS = []extv1beta1.IngressTLS{tls}
+			out.Spec.TLS = []netv1beta1.IngressTLS{tls}
 		} else {
 			out.Spec.TLS = nil
 		}
