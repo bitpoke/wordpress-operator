@@ -47,8 +47,8 @@ func NewDBUpgradeJobSyncer(wp *wordpress.Wordpress, c client.Client, scheme *run
 		activeDeadlineSeconds int64 = 10
 	)
 
-	return syncer.NewObjectSyncer("DBUpgradeJob", wp.Unwrap(), obj, c, scheme, func(existing runtime.Object) error {
-		out := existing.(*batchv1.Job)
+	return syncer.NewObjectSyncer("DBUpgradeJob", wp.Unwrap(), obj, c, scheme, func() error {
+		out := obj
 		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
 
 		if !out.CreationTimestamp.IsZero() {

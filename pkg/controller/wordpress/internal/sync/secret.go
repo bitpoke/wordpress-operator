@@ -53,8 +53,8 @@ func NewSecretSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.S
 		},
 	}
 
-	return syncer.NewObjectSyncer("Secret", wp.Unwrap(), obj, c, scheme, func(existing runtime.Object) error {
-		out := existing.(*corev1.Secret)
+	return syncer.NewObjectSyncer("Secret", wp.Unwrap(), obj, c, scheme, func() error {
+		out := obj
 		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
 
 		if len(out.Data) == 0 {

@@ -46,8 +46,8 @@ func NewDeploymentSyncer(wp *wordpress.Wordpress, secret *corev1.Secret, c clien
 		},
 	}
 
-	return syncer.NewObjectSyncer("Deployment", wp.Unwrap(), obj, c, scheme, func(existing runtime.Object) error {
-		out := existing.(*appsv1.Deployment)
+	return syncer.NewObjectSyncer("Deployment", wp.Unwrap(), obj, c, scheme, func() error {
+		out := obj
 		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
 
 		template := wp.WebPodTemplateSpec()
