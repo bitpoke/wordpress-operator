@@ -41,8 +41,8 @@ func NewCodePVCSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.
 			Namespace: wp.Namespace,
 		},
 	}
-	return syncer.NewObjectSyncer("CodePVC", wp.Unwrap(), obj, c, scheme, func(existing runtime.Object) error {
-		out := existing.(*corev1.PersistentVolumeClaim)
+	return syncer.NewObjectSyncer("CodePVC", wp.Unwrap(), obj, c, scheme, func() error {
+		out := obj
 		out.Labels = labels.Merge(labels.Merge(wp.Spec.CodeVolumeSpec.Labels, objLabels), controllerLabels)
 
 		if len(wp.Spec.CodeVolumeSpec.Annotations) > 0 {

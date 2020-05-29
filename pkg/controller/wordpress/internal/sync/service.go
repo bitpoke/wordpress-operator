@@ -42,8 +42,8 @@ func NewServiceSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.
 		},
 	}
 
-	return syncer.NewObjectSyncer("Service", wp.Unwrap(), obj, c, scheme, func(existing runtime.Object) error {
-		out := existing.(*corev1.Service)
+	return syncer.NewObjectSyncer("Service", wp.Unwrap(), obj, c, scheme, func() error {
+		out := obj
 		out.Labels = labels.Merge(labels.Merge(out.Labels, objLabels), controllerLabels)
 
 		selector := wp.WebPodLabels()

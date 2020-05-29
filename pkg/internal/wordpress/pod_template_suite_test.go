@@ -17,9 +17,8 @@ limitations under the License.
 package wordpress
 
 import (
+	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 	"testing"
-
-	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -29,5 +28,5 @@ import (
 func TestPodTemplate(t *testing.T) {
 	logf.SetLogger(logf.ZapLoggerTo(GinkgoWriter, true))
 	RegisterFailHandler(Fail)
-	RunSpecsWithDefaultAndCustomReporters(t, "Pod Template Suite", []Reporter{envtest.NewlineReporter{}})
+	RunSpecsWithDefaultAndCustomReporters(t, "Pod Template Suite", []Reporter{printer.NewlineReporter{}})
 }

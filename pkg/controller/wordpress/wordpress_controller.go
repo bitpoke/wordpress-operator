@@ -49,7 +49,7 @@ func Add(mgr manager.Manager) error {
 
 // newReconciler returns a new reconcile.Reconciler
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &ReconcileWordpress{Client: mgr.GetClient(), scheme: mgr.GetScheme(), recorder: mgr.GetRecorder(controllerName)}
+	return &ReconcileWordpress{Client: mgr.GetClient(), scheme: mgr.GetScheme(), recorder: mgr.GetEventRecorderFor(controllerName)}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -122,7 +122,7 @@ func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Res
 	wp.SetDefaults()
 
 	secretSyncer := sync.NewSecretSyncer(wp, r.Client, r.scheme)
-	deploySyncer := sync.NewDeploymentSyncer(wp, secretSyncer.GetObject().(*corev1.Secret), r.Client, r.scheme)
+	deploySyncer := sync.NewDeploymentSyncer(wp, secretSyncer.Object().(*corev1.Secret), r.Client, r.scheme)
 	syncers := []syncer.Interface{
 		secretSyncer,
 		deploySyncer,
@@ -144,7 +144,7 @@ func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Res
 	}
 
 	oldStatus := wp.Status.DeepCopy()
-	wp.Status.Replicas = deploySyncer.GetObject().(*appsv1.Deployment).Status.Replicas
+	wp.Status.Replicas = deploySyncer.Object().(*appsv1.Deployment).Status.Replicas
 	if oldStatus.Replicas != wp.Status.Replicas {
 		if err := r.Status().Update(context.TODO(), wp.Unwrap()); err != nil {
 			return reconcile.Result{}, err
