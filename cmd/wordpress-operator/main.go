@@ -14,6 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// nolint: staticcheck
+// staticcheck has some false positive for package deprecation
+
 package main
 
 import (
@@ -24,7 +27,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
+	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 
 	"github.com/presslabs/wordpress-operator/pkg/apis"
 	"github.com/presslabs/wordpress-operator/pkg/cmd/options"
