@@ -3,14 +3,17 @@ kind: Config
 build:
   artifacts:
   - image: quay.io/presslabs/wordpress-operator
+    docker:
+      dockerfile: hack/Dockerfile.skaffold
 deploy:
   helm:
     releases:
     - name: wp-operator
-      namespace: presslabs-sys
-      chartPath: chart/wordpress-operator
+      chartPath: deploy/charts/wordpress-operator
       setValues:
         imagePullPolicy: Always
+      valuesFiles:
+        - hack/skaffold-values.yaml
       values:
         image: quay.io/presslabs/wordpress-operator
 

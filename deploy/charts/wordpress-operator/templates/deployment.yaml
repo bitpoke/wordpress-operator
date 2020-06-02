@@ -25,6 +25,14 @@ spec:
           image: "{{ .Values.image }}"
           imagePullPolicy: {{ .Values.imagePullPolicy }}
 
+          {{- with .Values.extraEnv }}
+          env:
+            {{- range $name, $value := . }}
+            - name: {{ $name }}
+              value: {{ $value | quote }}
+            {{ end }}
+          {{- end }}
+
           {{- with .Values.extraArgs }}
           args:
             {{- range $arg := . }}
