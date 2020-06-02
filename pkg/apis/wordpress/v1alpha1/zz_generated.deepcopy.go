@@ -437,9 +437,7 @@ func (in *WordpressStatus) DeepCopyInto(out *WordpressStatus) {
 	if in.Conditions != nil {
 		in, out := &in.Conditions, &out.Conditions
 		*out = make([]WordpressCondition, len(*in))
-		for i := range *in {
-			(*in)[i].DeepCopyInto(&(*out)[i])
-		}
+		copy(*out, *in)
 	}
 }
 

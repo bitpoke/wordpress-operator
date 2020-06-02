@@ -98,15 +98,15 @@ type ReconcileWordpress struct {
 	recorder record.EventRecorder
 }
 
-// Reconcile reads that state of the cluster for a Wordpress object and makes changes based on the state read
-// and what is in the Wordpress.Spec
-//
 // Automatically generate RBAC rules to allow the Controller to read and write Deployments
-// +kubebuilder:rbac:groups=,resources=secrets;services;persistentvolumeclaims;events,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=secrets;services;persistentvolumeclaims;events,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=extensions,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=wordpress.presslabs.org,resources=wordpresses;wordpresses/status,verbs=get;list;watch;create;update;patch;delete
+
+// Reconcile reads that state of the cluster for a Wordpress object and makes changes based on the state read
+// and what is in the Wordpress.Spec
 func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	// Fetch the Wordpress instance
 	wp := wordpress.New(&wordpressv1alpha1.Wordpress{})
