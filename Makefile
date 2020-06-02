@@ -37,7 +37,7 @@ GO_LDFLAGS += -X github.com/presslabs/wordpress-operator/pkg/version.buildDate=$
 	@cat $(HELM_CHARTS_DIR)/wordpress-operator/templates/_crds.yaml >> $(HELM_CHARTS_DIR)/wordpress-operator/templates/crds.yaml
 	@echo '{{- end }}' >> $(HELM_CHARTS_DIR)/wordpress-operator/templates/crds.yaml
 	@rm $(HELM_CHARTS_DIR)/wordpress-operator/templates/_crds.yaml
-	@cp config/rbac/rbac_role.yaml $(HELM_CHARTS_DIR)/wordpress-operator/templates/_rbac.yaml
+	@cp config/rbac/role.yaml $(HELM_CHARTS_DIR)/wordpress-operator/templates/_rbac.yaml
 	@yq m -d'*' -i $(HELM_CHARTS_DIR)/wordpress-operator/templates/_rbac.yaml hack/chart-metadata.yaml
 	@yq d -d'*' -i $(HELM_CHARTS_DIR)/wordpress-operator/templates/_rbac.yaml metadata.creationTimestamp
 	@yq w -d'*' -i $(HELM_CHARTS_DIR)/wordpress-operator/templates/_rbac.yaml metadata.name '{{ template "wordpress-operator.fullname" . }}'
