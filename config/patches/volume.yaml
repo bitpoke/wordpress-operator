@@ -1,0 +1,4 @@
+- op: replace
+  path: /spec/validation/openAPIV3Schema/properties/spec/properties/volumes/items
+  value:
+    type: object
