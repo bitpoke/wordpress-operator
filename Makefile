@@ -28,7 +28,7 @@ GO_LDFLAGS += -X github.com/presslabs/wordpress-operator/pkg/version.buildDate=$
 .PHONY: .kubebuilder.update.chart
 .kubebuilder.update.chart: kubebuilder.manifests $(YQ)
 	@$(INFO) updating helm RBAC and CRDs from kubebuilder manifests
-	@awk 'FNR==1 && NR!=1 {print "---"}{print}' config/crds/*.yaml > $(HELM_CHARTS_DIR)/wordpress-operator/templates/_crds.yaml
+	@kustomize build config/ > $(HELM_CHARTS_DIR)/wordpress-operator/templates/_crds.yaml
 	@yq m -d'*' -i $(HELM_CHARTS_DIR)/wordpress-operator/templates/_crds.yaml hack/chart-metadata.yaml
 	@yq w -d'*' -i $(HELM_CHARTS_DIR)/wordpress-operator/templates/_crds.yaml 'metadata.annotations[helm.sh/hook]' crd-install
 	@yq d -d'*' -i $(HELM_CHARTS_DIR)/wordpress-operator/templates/_crds.yaml metadata.creationTimestamp

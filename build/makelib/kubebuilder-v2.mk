@@ -68,8 +68,6 @@ $(eval $(call common.target,kubebuilder.manifests))
 .do.kubebuilder.manifests: $(CONTROLLER_GEN)
 	@$(INFO) Generating Kubebuilder manifests
 	@# first delete the CRD_DIR, to remove the CRDs of types that no longer exist
-	@rm -rf $(CRD_DIR)
-	@rm -rf $(RBAC_DIR)
 
 	@$(CONTROLLER_GEN) paths="./pkg/..." $(GEN_CRD_OPTIONS) $(GEN_RBAC_OPTIONS) $(GEN_WEBHOOK_OPTIONS) $(GEN_OBJECT_OPTIONS) $(GEN_OUTPUTS_OPTIONS)
 
