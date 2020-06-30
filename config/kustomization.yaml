@@ -3,7 +3,7 @@ resources:
 
 
 patchesJson6902:
-#https://github.com/kubernetes/kubernetes/issues/84880
+# https://github.com/kubernetes/kubernetes/issues/84880
 - target:
     group: apiextensions.k8s.io
     version: v1beta1
@@ -11,3 +11,10 @@ patchesJson6902:
     name: wordpresses.wordpress.presslabs.org
   path: patches/volume.yaml
 
+# https://github.com/kubernetes-sigs/controller-tools/issues/444
+- target:
+    group: apiextensions.k8s.io
+    version: v1beta1
+    kind: CustomResourceDefinition
+    name: wordpresses.wordpress.presslabs.org
+  path: patches/x-kubernetes-list-map-keys.yaml
