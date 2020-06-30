@@ -28,15 +28,13 @@ GO_LDFLAGS += -X github.com/presslabs/wordpress-operator/pkg/version.buildDate=$
 .PHONY: .kubebuilder.update.chart
 .kubebuilder.update.chart: kubebuilder.manifests $(YQ)
 	@$(INFO) updating helm RBAC and CRDs from kubebuilder manifests
-	@kustomize build config/ > $(HELM_CHARTS_DIR)/wordpress-operator/templates/_crds.yaml
-	@yq m -d'*' -i $(HELM_CHARTS_DIR)/wordpress-operator/templates/_crds.yaml hack/chart-metadata.yaml
-	@yq w -d'*' -i $(HELM_CHARTS_DIR)/wordpress-operator/templates/_crds.yaml 'metadata.annotations[helm.sh/hook]' crd-install
-	@yq d -d'*' -i $(HELM_CHARTS_DIR)/wordpress-operator/templates/_crds.yaml metadata.creationTimestamp
-	@yq d -d'*' -i $(HELM_CHARTS_DIR)/wordpress-operator/templates/_crds.yaml status metadata.creationTimestamp
-	@echo '{{- if and .Values.crd.install (not (.Capabilities.APIVersions.Has "wordpress.presslabs.org/v1alpha1")) }}' > $(HELM_CHARTS_DIR)/wordpress-operator/templates/crds.yaml
-	@cat $(HELM_CHARTS_DIR)/wordpress-operator/templates/_crds.yaml >> $(HELM_CHARTS_DIR)/wordpress-operator/templates/crds.yaml
-	@echo '{{- end }}' >> $(HELM_CHARTS_DIR)/wordpress-operator/templates/crds.yaml
-	@rm $(HELM_CHARTS_DIR)/wordpress-operator/templates/_crds.yaml
+	@kustomize build config/ > $(HELM_CHARTS_DIR)/wordpress-operator/crds/_crds.yaml
+	@yq w -d'*' -i $(HELM_CHARTS_DIR)/wordpress-operator/crds/_crds.yaml 'metadata.annotations[helm.sh/hook]' crd-install
+	@yq w -d'*' -i $(HELM_CHARTS_DIR)/wordpress-operator/crds/_crds.yaml 'metadata.labels[app]' wordpress-operator
+	@yq d -d'*' -i $(HELM_CHARTS_DIR)/wordpress-operator/crds/_crds.yaml metadata.creationTimestamp
+	@yq d -d'*' -i $(HELM_CHARTS_DIR)/wordpress-operator/crds/_crds.yaml status metadata.creationTimestamp
+	@mv $(HELM_CHARTS_DIR)/wordpress-operator/crds/_crds.yaml $(HELM_CHARTS_DIR)/wordpress-operator/crds/crds.yaml
+
 	@cp config/rbac/role.yaml $(HELM_CHARTS_DIR)/wordpress-operator/templates/_rbac.yaml
 	@yq m -d'*' -i $(HELM_CHARTS_DIR)/wordpress-operator/templates/_rbac.yaml hack/chart-metadata.yaml
 	@yq d -d'*' -i $(HELM_CHARTS_DIR)/wordpress-operator/templates/_rbac.yaml metadata.creationTimestamp
