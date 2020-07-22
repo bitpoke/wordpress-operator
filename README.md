@@ -3,6 +3,8 @@ wordpress-operator
 ===
 WordPress operator enables managing multiple WordPress installments at scale.
 
+
+
 ## Goals and status
 
 The main goals of the operator are:
@@ -13,22 +15,44 @@ The main goals of the operator are:
 
 The project is actively developed and maintained and has reached stable beta state. Check [here](https://github.com/presslabs/wordpress-operator/releases) the project releases.
 
+
+
 ## Components
 
 1. WordPress operator - this project
 2. WordPress runtime - container image supporting the project goals (https://github.com/presslabs/runtime)
 
-## Controller deploy
+
+
+## Deploy
+
+### Install CRDs
+
+#### This step is optional. By default helm will install CRDs.
+
+Install kustomize. New to kustomize? Check https://kustomize.io/
+
+To install CRDs use the following command:
+
+```shell
+kustomize build github.com/presslabs/wordpress-operator/config | kubectl apply -f-
+```
+
+
+### Install controller
 
 Install helm. New to helm? Check https://github.com/helm/helm#install 
 
 Install kubectl. For more details, see: https://kubernetes.io/docs/tasks/tools/install-kubectl/ 
 
 To deploy this controller, use the provided helm chart, by running:
+
 ```shell
 helm repo add presslabs https://presslabs.github.io/charts
 helm install presslabs/wordpress-operator --name wordpress-operator
 ```
+
+
 
 ## Deploying a Wordpress Site
 
@@ -125,6 +149,8 @@ spec:
   # extra ingress annotations
   ingressAnnotations: {}
 ```
+
+
 
 ## License
 
