@@ -507,6 +507,12 @@ func (wp *Wordpress) readinessProbe() *corev1.Probe {
 			HTTPGet: &corev1.HTTPGetAction{
 				Path: "/",
 				Port: intstr.FromInt(InternalHTTPPort),
+				HTTPHeaders: []corev1.HTTPHeader{
+					{
+						Name:  "Host",
+						Value: wp.MainDomain(),
+					},
+				},
 			},
 		},
 		FailureThreshold:    3,
