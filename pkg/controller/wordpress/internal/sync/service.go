@@ -54,7 +54,7 @@ func NewServiceSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.
 			}
 		}
 
-		if len(obj.Spec.Ports) != 1 {
+		if len(obj.Spec.Ports) != 2 {
 			obj.Spec.Ports = make([]corev1.ServicePort, 2)
 		}
 
