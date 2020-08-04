@@ -55,12 +55,16 @@ func NewServiceSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.
 		}
 
 		if len(obj.Spec.Ports) != 1 {
-			obj.Spec.Ports = make([]corev1.ServicePort, 1)
+			obj.Spec.Ports = make([]corev1.ServicePort, 2)
 		}
 
 		obj.Spec.Ports[0].Name = "http"
 		obj.Spec.Ports[0].Port = int32(80)
 		obj.Spec.Ports[0].TargetPort = intstr.FromInt(wordpress.InternalHTTPPort)
+
+		obj.Spec.Ports[1].Name = "prometheus"
+		obj.Spec.Ports[1].Port = int32(wordpress.MetricsExporterPort)
+		obj.Spec.Ports[1].TargetPort = intstr.FromInt(wordpress.MetricsExporterPort)
 
 		return nil
 	})
