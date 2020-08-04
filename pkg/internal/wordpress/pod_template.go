@@ -33,10 +33,12 @@ import (
 const (
 	// InternalHTTPPort represents the internal port used by the runtime container
 	InternalHTTPPort = 8080
-	codeVolumeName   = "code"
-	mediaVolumeName  = "media"
-	s3Prefix         = "s3"
-	gcsPrefix        = "gs"
+	// MetricsExporterPort represents the exposed port where metrics can be found
+	MetricsExporterPort = 9145
+	codeVolumeName      = "code"
+	mediaVolumeName     = "media"
+	s3Prefix            = "s3"
+	gcsPrefix           = "gs"
 
 	prepareVolumesImage = "gcr.io/google-containers/busybox@sha256:545e6a6310a27636260920bc07b994a299b6708a1b26910cfefd335fdfb60d2b"
 )
@@ -162,6 +164,14 @@ func (wp *Wordpress) env() []corev1.EnvVar {
 		{
 			Name:  "STACK_ROUTES",
 			Value: strings.Join(wp.routes(), ","),
+		},
+		{
+			Name:  "STACK_SITE_NAME",
+			Value: wp.Name,
+		},
+		{
+			Name:  "STACK_SITE_NAMESPACE",
+			Value: wp.Namespace,
 		},
 	}, wp.Spec.Env...)
 
@@ -566,6 +576,10 @@ func (wp *Wordpress) WebPodTemplateSpec() (out corev1.PodTemplateSpec) {
 			{
 				Name:          "http",
 				ContainerPort: int32(InternalHTTPPort),
+			},
+			{
+				Name:          "prometheus",
+				ContainerPort: MetricsExporterPort,
 			},
 		},
 		SecurityContext: wp.securityContext(),
