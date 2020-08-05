@@ -512,6 +512,10 @@ func (wp *Wordpress) readinessProbe() *corev1.Probe {
 	//	* https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/
 	//	  Any code greater than or equal to 200 and less than 400 indicates success.
 
+	if wp.Spec.ReadinessProbe != nil {
+		return wp.Spec.ReadinessProbe
+	}
+
 	return &corev1.Probe{
 		Handler: corev1.Handler{
 			HTTPGet: &corev1.HTTPGetAction{
@@ -534,6 +538,10 @@ func (wp *Wordpress) readinessProbe() *corev1.Probe {
 }
 
 func (wp *Wordpress) livenessProbe() *corev1.Probe {
+	if wp.Spec.LivenessProbe != nil {
+		return wp.Spec.LivenessProbe
+	}
+
 	return &corev1.Probe{
 		Handler: corev1.Handler{
 			HTTPGet: &corev1.HTTPGetAction{

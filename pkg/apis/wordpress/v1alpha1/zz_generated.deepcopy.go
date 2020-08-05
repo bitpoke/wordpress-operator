@@ -352,6 +352,16 @@ func (in *WordpressSpec) DeepCopyInto(out *WordpressSpec) {
 		*out = new(metav1.ObjectMeta)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.ReadinessProbe != nil {
+		in, out := &in.ReadinessProbe, &out.ReadinessProbe
+		*out = new(v1.Probe)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.LivenessProbe != nil {
+		in, out := &in.LivenessProbe, &out.LivenessProbe
+		*out = new(v1.Probe)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.WordpressBootstrapSpec != nil {
 		in, out := &in.WordpressBootstrapSpec, &out.WordpressBootstrapSpec
 		*out = new(WordpressBootstrapSpec)

@@ -26,6 +26,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 	"github.com/presslabs/wordpress-operator/pkg/cmd/options"
@@ -184,6 +185,81 @@ var _ = Describe("Web pod spec", func() {
 		wp.Spec.Routes[0].Path = "/subpath"
 		Expect(wp.HomeURL()).To(Equal("http://test.com/subpath"))
 	})
+
+	It("should give me the default readiness probe", func() {
+		spec := wp.WebPodTemplateSpec()
+
+		Expect(*spec.Spec.Containers[0].ReadinessProbe).To(Equal(corev1.Probe{
+			Handler: corev1.Handler{
+				HTTPGet: &corev1.HTTPGetAction{
+					Path: "/",
+					Port: intstr.FromInt(InternalHTTPPort),
+					HTTPHeaders: []corev1.HTTPHeader{
+						{
+							Name:  "Host",
+							Value: wp.MainDomain(),
+						},
+					},
+				},
+			},
+			FailureThreshold:    3,
+			InitialDelaySeconds: 10,
+			PeriodSeconds:       5,
+			SuccessThreshold:    1,
+			TimeoutSeconds:      30,
+		}))
+	})
+
+	It("should give me the custom readiness probe specified in the Wordpress resource", func() {
+		probe := corev1.Probe{
+			Handler: corev1.Handler{
+				HTTPGet: &corev1.HTTPGetAction{
+					Path: "/custom",
+					Port: intstr.FromInt(InternalHTTPPort),
+				},
+			},
+		}
+
+		wp.Spec.ReadinessProbe = &probe
+		spec := wp.WebPodTemplateSpec()
+
+		Expect(*spec.Spec.Containers[0].ReadinessProbe).To(Equal(probe))
+	})
+
+	It("should give me the default liveness probe", func() {
+		spec := wp.WebPodTemplateSpec()
+
+		Expect(*spec.Spec.Containers[0].LivenessProbe).To(Equal(corev1.Probe{
+			Handler: corev1.Handler{
+				HTTPGet: &corev1.HTTPGetAction{
+					Path: "/-/php-ping",
+					Port: intstr.FromInt(InternalHTTPPort),
+				},
+			},
+			FailureThreshold:    3,
+			InitialDelaySeconds: 10,
+			PeriodSeconds:       5,
+			SuccessThreshold:    1,
+			TimeoutSeconds:      30,
+		}))
+	})
+
+	It("should give me the custom liveness probe specified in the Wordpress resource", func() {
+		probe := corev1.Probe{
+			Handler: corev1.Handler{
+				HTTPGet: &corev1.HTTPGetAction{
+					Path: "/custom",
+					Port: intstr.FromInt(InternalHTTPPort),
+				},
+			},
+		}
+
+		wp.Spec.LivenessProbe = &probe
+		spec := wp.WebPodTemplateSpec()
+
+		Expect(*spec.Spec.Containers[0].LivenessProbe).To(Equal(probe))
+	})
+
 })
 
 // nolint: unparam
