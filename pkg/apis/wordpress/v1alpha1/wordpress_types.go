@@ -117,6 +117,14 @@ type WordpressSpec struct {
 	// PodMetadata allow setting custom labels/annotations on wordpress pods
 	// +optional
 	PodMetadata *metav1.ObjectMeta `json:"podMetadata,omitempty"`
+	// ReadinessProbe allows setting a custom readiness probe for the wordpress container.
+	// If not specified, a default probe that makes a HTTP request on the "/" path will be used.
+	// +optional
+	ReadinessProbe *corev1.Probe `json:"readinessProbe,omitempty"`
+	// LivenessProbe allows setting a custom liveness probe for the wordpress container.
+	// If not specified, a default probe that makes a HTTP request on the "/-/php-ping" path will be used.
+	// +optional
+	LivenessProbe *corev1.Probe `json:"livenessProbe,omitempty"`
 	// WordpressBootstrapSpec specifies credentials used to install wordpress, on the first run.
 	// +optional
 	WordpressBootstrapSpec *WordpressBootstrapSpec `json:"bootstrap,omitempty"`
