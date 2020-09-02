@@ -1,4 +1,6 @@
 run:
+  # TODO: re-enable tests linting and make them pass
+  tests: false
   skip-files:
     - zz_generated
 
@@ -24,9 +26,7 @@ linters:
 
   disable:
     - gochecknoglobals
-    - goimports
     - gochecknoinits
-    - wsl
 
 issues:
   max-same-issues: 0

@@ -29,20 +29,18 @@ import (
 	"github.com/presslabs/wordpress-operator/pkg/internal/wordpress"
 )
 
-var (
-	generatedSalts = map[string]int{
-		"AUTH_KEY":         64,
-		"SECURE_AUTH_KEY":  64,
-		"LOGGED_IN_KEY":    64,
-		"NONCE_KEY":        64,
-		"AUTH_SALT":        64,
-		"SECURE_AUTH_SALT": 64,
-		"LOGGED_IN_SALT":   64,
-		"NONCE_SALT":       64,
-	}
-)
+var generatedSalts = map[string]int{
+	"AUTH_KEY":         64,
+	"SECURE_AUTH_KEY":  64,
+	"LOGGED_IN_KEY":    64,
+	"NONCE_KEY":        64,
+	"AUTH_SALT":        64,
+	"SECURE_AUTH_SALT": 64,
+	"LOGGED_IN_SALT":   64,
+	"NONCE_SALT":       64,
+}
 
-// NewSecretSyncer returns a new sync.Interface for reconciling wordpress secret
+// NewSecretSyncer returns a new sync.Interface for reconciling wordpress secret.
 func NewSecretSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.Scheme) syncer.Interface {
 	objLabels := wp.ComponentLabels(wordpress.WordpressSecret)
 

@@ -17,7 +17,7 @@ limitations under the License.
 package sync
 
 import (
-	"fmt"
+	"errors"
 	"reflect"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -35,7 +35,9 @@ import (
 	"github.com/presslabs/wordpress-operator/pkg/internal/wordpress"
 )
 
-// NewDeploymentSyncer returns a new sync.Interface for reconciling web Deployment
+var errImmutableDeploymentSelector = errors.New("deployment selector is immutable")
+
+// NewDeploymentSyncer returns a new sync.Interface for reconciling web Deployment.
 func NewDeploymentSyncer(wp *wordpress.Wordpress, secret *corev1.Secret, c client.Client, scheme *runtime.Scheme) syncer.Interface {
 	objLabels := wp.ComponentLabels(wordpress.WordpressDeployment)
 
@@ -63,7 +65,7 @@ func NewDeploymentSyncer(wp *wordpress.Wordpress, secret *corev1.Secret, c clien
 			if obj.ObjectMeta.CreationTimestamp.IsZero() {
 				obj.Spec.Selector = selector
 			} else {
-				return fmt.Errorf("deployment selector is immutable")
+				return errImmutableDeploymentSelector
 			}
 		}
 

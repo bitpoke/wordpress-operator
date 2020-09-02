@@ -34,9 +34,11 @@ const ingressClassAnnotationKey = "kubernetes.io/ingress.class"
 
 func upsertPath(rules []netv1beta1.IngressRule, domain, path string, bk netv1beta1.IngressBackend) []netv1beta1.IngressRule {
 	var rule *netv1beta1.IngressRule
+
 	for i := range rules {
 		if rules[i].Host == domain {
 			rule = &rules[i]
+
 			break
 		}
 	}
@@ -51,9 +53,11 @@ func upsertPath(rules []netv1beta1.IngressRule, domain, path string, bk netv1bet
 	}
 
 	var httpPath *netv1beta1.HTTPIngressPath
+
 	for i := range rule.HTTP.Paths {
 		if rule.HTTP.Paths[i].Path == path {
 			httpPath = &rule.HTTP.Paths[i]
+
 			break
 		}
 	}
@@ -68,7 +72,7 @@ func upsertPath(rules []netv1beta1.IngressRule, domain, path string, bk netv1bet
 	return rules
 }
 
-// NewIngressSyncer returns a new sync.Interface for reconciling web Ingress
+// NewIngressSyncer returns a new sync.Interface for reconciling web Ingress.
 func NewIngressSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.Scheme) syncer.Interface {
 	objLabels := wp.ComponentLabels(wordpress.WordpressIngress)
 

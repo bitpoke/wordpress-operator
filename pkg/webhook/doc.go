@@ -14,5 +14,5 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package webhook is an empty package to conform with kubebuilder-v1 folder structure
+// Package webhook is an empty package to conform with kubebuilder-v1 folder structure.
 package webhook

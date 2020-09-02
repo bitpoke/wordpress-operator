@@ -14,9 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// nolint: staticcheck
-// staticcheck has some false positive for package deprecation
-
 package main
 
 import (
@@ -41,6 +38,7 @@ var setupLog = logf.Log.WithName("wordpress-operator")
 func main() {
 	fs := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 	options.AddToFlagSet(fs)
+
 	err := fs.Parse(os.Args)
 	if err != nil {
 		setupLog.Error(err, "unable to parse args")

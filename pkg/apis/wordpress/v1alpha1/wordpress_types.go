@@ -22,13 +22,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// SecretRef represents a reference to a Secret
+// SecretRef represents a reference to a Secret.
 type SecretRef string
 
-// Domain represents a valid domain name
+// Domain represents a valid domain name.
 type Domain string
 
-// RouteSpec defines a desired state for a route
+// RouteSpec defines a desired state for a route.
 type RouteSpec struct {
 	// Domain for the route
 	// +kubebuilder:validation:MinLength=1
@@ -38,10 +38,10 @@ type RouteSpec struct {
 	Path string `json:"path"`
 }
 
-// WordpressConditionType defines condition types of a backup resources
+// WordpressConditionType defines condition types of a backup resources.
 type WordpressConditionType string
 
-// WordpressCondition defines condition struct for backup resource
+// WordpressCondition defines condition struct for backup resource.
 type WordpressCondition struct {
 	// Type of Wordpress condition.
 	Type WordpressConditionType `json:"type"`
@@ -58,17 +58,17 @@ type WordpressCondition struct {
 }
 
 const (
-	// WPCronTriggeringCondition signals that health of wp-cron trigger
+	// WPCronTriggeringCondition signals that health of wp-cron trigger.
 	WPCronTriggeringCondition WordpressConditionType = "WPCronTriggering"
 
-	// WPCronTriggerErrorReason is the generic reason for cron failures
+	// WPCronTriggerErrorReason is the generic reason for cron failures.
 	WPCronTriggerErrorReason = "WPCronTriggerError"
 
-	// WPCronTriggeringReason is the reason for successfully triggering wp-cron
+	// WPCronTriggeringReason is the reason for successfully triggering wp-cron.
 	WPCronTriggeringReason = "WPCronTriggering"
 )
 
-// WordpressSpec defines the desired state of Wordpress
+// WordpressSpec defines the desired state of Wordpress.
 type WordpressSpec struct {
 	// Number of desired web pods. This is a pointer to distinguish between
 	// explicit zero and not specified. Defaults to 1.
@@ -171,7 +171,7 @@ type WordpressSpec struct {
 	Sidecars []corev1.Container `json:"sidecars,omitempty"`
 }
 
-// GitVolumeSource is the desired spec for git code source
+// GitVolumeSource is the desired spec for git code source.
 type GitVolumeSource struct {
 	// Repository is the git repository for the code
 	Repository string `json:"repository"`
@@ -193,7 +193,7 @@ type GitVolumeSource struct {
 }
 
 // S3VolumeSource is the desired spec for accessing media files over S3
-// compatible object store
+// compatible object store.
 type S3VolumeSource struct {
 	// Bucket for storing media files
 	// +kubebuilder:validation:MinLength=1
@@ -209,7 +209,7 @@ type S3VolumeSource struct {
 }
 
 // GCSVolumeSource is the desired spec for accessing media files using google
-// cloud storage object store
+// cloud storage object store.
 type GCSVolumeSource struct {
 	// Bucket for storing media files
 	// +kubebuilder:validation:MinLength=1
@@ -225,7 +225,7 @@ type GCSVolumeSource struct {
 }
 
 // CodeVolumeSpec is the desired spec for mounting code into the wordpress
-// runtime container
+// runtime container.
 type CodeVolumeSpec struct {
 	// Metadata for the media volume. Currently only labels and annotations are set if a PVC is specified
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -259,7 +259,7 @@ type CodeVolumeSpec struct {
 	EmptyDir *corev1.EmptyDirVolumeSource `json:"emptyDir,omitempty"`
 }
 
-// MediaVolumeSpec is the desired spec for handling media files at runtime
+// MediaVolumeSpec is the desired spec for handling media files at runtime.
 type MediaVolumeSpec struct {
 	// Metadata for the media volume. Currently only labels and annotations are set if a PVC is specified
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -295,7 +295,7 @@ type MediaVolumeSpec struct {
 	EmptyDir *corev1.EmptyDirVolumeSource `json:"emptyDir,omitempty"`
 }
 
-// WordpressBootstrapSpec requires defining at least
+// WordpressBootstrapSpec requires defining at least.
 // `WORDPRESS_BOOSTRAP_USER` and `WORDPRESS_BOOTSTRAP_PASSWORD` env variables.
 // `WORDPRESS_BOOSTRAP_EMAIL` and `WORDPRESS_BOOTSTRAP_TITLE` are also used if provided.
 type WordpressBootstrapSpec struct {
@@ -309,7 +309,7 @@ type WordpressBootstrapSpec struct {
 	EnvFrom []corev1.EnvFromSource `json:"envFrom,omitempty"`
 }
 
-// WordpressStatus defines the observed state of Wordpress
+// WordpressStatus defines the observed state of Wordpress.
 type WordpressStatus struct {
 	// Conditions represents the Wordpress resource conditions list.
 	// +optional
@@ -323,7 +323,7 @@ type WordpressStatus struct {
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// Wordpress is the Schema for the wordpresses API
+// Wordpress is the Schema for the wordpresses API.
 // +k8s:openapi-gen=true
 // +kubebuilder:resource:shortName=wp
 // +kubebuilder:subresource:status
@@ -340,7 +340,7 @@ type Wordpress struct {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// WordpressList contains a list of Wordpress
+// WordpressList contains a list of Wordpress.
 type WordpressList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

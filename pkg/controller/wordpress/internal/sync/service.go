@@ -17,7 +17,7 @@ limitations under the License.
 package sync
 
 import (
-	"fmt"
+	"errors"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,7 +31,9 @@ import (
 	"github.com/presslabs/wordpress-operator/pkg/internal/wordpress"
 )
 
-// NewServiceSyncer returns a new sync.Interface for reconciling web Service
+var errImmutableServiceSelector = errors.New("service selector is immutable")
+
+// NewServiceSyncer returns a new sync.Interface for reconciling web Service.
 func NewServiceSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.Scheme) syncer.Interface {
 	objLabels := wp.ComponentLabels(wordpress.WordpressDeployment)
 
@@ -50,7 +52,7 @@ func NewServiceSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.
 			if obj.ObjectMeta.CreationTimestamp.IsZero() {
 				obj.Spec.Selector = selector
 			} else {
-				return fmt.Errorf("service selector is immutable")
+				return errImmutableServiceSelector
 			}
 		}
 

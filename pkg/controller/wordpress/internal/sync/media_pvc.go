@@ -17,21 +17,22 @@ limitations under the License.
 package sync
 
 import (
-	"fmt"
+	"errors"
 	"reflect"
 
+	"github.com/presslabs/controller-util/syncer"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/presslabs/controller-util/syncer"
-
 	"github.com/presslabs/wordpress-operator/pkg/internal/wordpress"
 )
 
-// NewMediaPVCSyncer returns a new sync.Interface for reconciling media PVC
+var errMediaVolumeClaimNotDefined = errors.New(".spec.media.persistentVolumeClaim is not defined")
+
+// NewMediaPVCSyncer returns a new sync.Interface for reconciling media PVC.
 func NewMediaPVCSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.Scheme) syncer.Interface {
 	objLabels := wp.ComponentLabels(wordpress.WordpressMediaPVC)
 
@@ -41,6 +42,7 @@ func NewMediaPVCSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime
 			Namespace: wp.Namespace,
 		},
 	}
+
 	return syncer.NewObjectSyncer("MediaPVC", wp.Unwrap(), obj, c, scheme, func() error {
 		obj.Labels = labels.Merge(labels.Merge(wp.Spec.MediaVolumeSpec.Labels, objLabels), controllerLabels)
 
@@ -49,7 +51,7 @@ func NewMediaPVCSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime
 		}
 
 		if wp.Spec.MediaVolumeSpec == nil || wp.Spec.MediaVolumeSpec.PersistentVolumeClaim == nil {
-			return fmt.Errorf(".spec.media.persistentVolumeClaim is not defined")
+			return errMediaVolumeClaimNotDefined
 		}
 
 		// PVC spec is immutable

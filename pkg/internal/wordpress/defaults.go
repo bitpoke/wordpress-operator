@@ -44,11 +44,9 @@ const (
 	knativeInternalMountPath = "/var/knative-internal"
 )
 
-var (
-	varLogSizeLimit = resource.MustParse("1Gi")
-)
+var varLogSizeLimit = resource.MustParse("1Gi")
 
-// SetDefaults sets Wordpress field defaults
+// SetDefaults sets Wordpress field defaults.
 // nolint: gocyclo
 func (wp *Wordpress) SetDefaults() {
 	if len(wp.Spec.Image) == 0 {
