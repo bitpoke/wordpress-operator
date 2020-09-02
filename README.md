@@ -50,6 +50,8 @@ To deploy this controller, use the provided helm chart, by running:
 ```shell
 helm repo add presslabs https://presslabs.github.io/charts
 helm install presslabs/wordpress-operator --name wordpress-operator
+# or if using helm v3
+helm install wordpress-operator presslabs/wordpress-operator
 ```
 
 
