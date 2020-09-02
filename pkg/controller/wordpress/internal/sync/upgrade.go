@@ -31,7 +31,7 @@ import (
 	"github.com/presslabs/wordpress-operator/pkg/internal/wordpress"
 )
 
-// NewDBUpgradeJobSyncer returns a new sync.Interface for reconciling database upgrade Job
+// NewDBUpgradeJobSyncer returns a new sync.Interface for reconciling database upgrade Job.
 func NewDBUpgradeJobSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.Scheme) syncer.Interface {
 	objLabels := wp.ComponentLabels(wordpress.WordpressDBUpgrade)
 
@@ -51,7 +51,7 @@ func NewDBUpgradeJobSyncer(wp *wordpress.Wordpress, c client.Client, scheme *run
 		obj.Labels = labels.Merge(labels.Merge(obj.Labels, objLabels), controllerLabels)
 
 		if !obj.CreationTimestamp.IsZero() {
-			// TODO(calind): handle the case that the existing job is failed
+			// TODO (calind): handle the case that the existing job is failed
 			return nil
 		}
 

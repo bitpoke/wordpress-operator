@@ -33,7 +33,7 @@ spec:
     status: {}
   validation:
     openAPIV3Schema:
-      description: Wordpress is the Schema for the wordpresses API
+      description: Wordpress is the Schema for the wordpresses API.
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
@@ -48,7 +48,7 @@ spec:
         metadata:
           type: object
         spec:
-          description: WordpressSpec defines the desired state of Wordpress
+          description: WordpressSpec defines the desired state of Wordpress.
           properties:
             affinity:
               description: If specified, the pod's scheduling constraints
@@ -1200,7 +1200,7 @@ spec:
                 DEPRECATED: use Routes instead. This field will be dropped in next
                 release.'
               items:
-                description: Domain represents a valid domain name
+                description: Domain represents a valid domain name.
                 type: string
               type: array
             env:
@@ -3104,7 +3104,7 @@ spec:
                 is set the WP_HOME and WP_SITEURL constants. If no routes are specified,
                 ingress syncing is disabled and WP_HOME de defaults to NAME.NAMESPACE.svc.
               items:
-                description: RouteSpec defines a desired state for a route
+                description: RouteSpec defines a desired state for a route.
                 properties:
                   domain:
                     description: Domain for the route
@@ -4240,14 +4240,14 @@ spec:
               type: string
           type: object
         status:
-          description: WordpressStatus defines the observed state of Wordpress
+          description: WordpressStatus defines the observed state of Wordpress.
           properties:
             conditions:
               description: Conditions represents the Wordpress resource conditions
                 list.
               items:
                 description: WordpressCondition defines condition struct for backup
-                  resource
+                  resource.
                 properties:
                   lastTransitionTime:
                     description: Last time the condition transitioned from one status

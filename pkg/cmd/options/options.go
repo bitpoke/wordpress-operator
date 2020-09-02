@@ -22,14 +22,14 @@ var (
 	// GitCloneImage is the image used by the init container that clones the code.
 	GitCloneImage = "docker.io/library/buildpack-deps:stretch-scm"
 
-	// WordpressRuntimeImage is the base image used to run your code
+	// WordpressRuntimeImage is the base image used to run your code.
 	WordpressRuntimeImage = "quay.io/presslabs/wordpress-runtime:5.2.2"
 
-	// IngressClass is the default ingress class used used for creating WordPress ingresses
+	// IngressClass is the default ingress class used used for creating WordPress ingresses.
 	IngressClass = ""
 )
 
-// AddToFlagSet set command line arguments
+// AddToFlagSet set command line arguments.
 func AddToFlagSet(flag *pflag.FlagSet) {
 	flag.StringVar(&GitCloneImage, "git-clone-image", GitCloneImage, "The image used when cloning code from git.")
 	flag.StringVar(&WordpressRuntimeImage, "wordpress-runtime-image", WordpressRuntimeImage, "The base image used for Wordpress.")

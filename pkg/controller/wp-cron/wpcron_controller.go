@@ -18,6 +18,7 @@ package wpcron
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -25,7 +26,7 @@ import (
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
@@ -47,13 +48,15 @@ const (
 	cronTriggerTimeout  = 30 * time.Second
 )
 
+var errHTTP = errors.New("HTTP error")
+
 // Add creates a new Wordpress Controller and adds it to the Manager with default RBAC. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager) error {
 	return add(mgr, newReconciler(mgr))
 }
 
-// newReconciler returns a new reconcile.Reconciler
+// newReconciler returns a new reconcile.Reconciler.
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	return &ReconcileWordpress{
 		Client:   mgr.GetClient(),
@@ -63,7 +66,7 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	}
 }
 
-// add adds a new Controller to mgr with r as the reconcile.Reconciler
+// add adds a new Controller to mgr with r as the reconcile.Reconciler.
 func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Create a new controller
 	c, err := controller.New(controllerName, mgr, controller.Options{Reconciler: r, MaxConcurrentReconciles: 32})
@@ -82,7 +85,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 
 var _ reconcile.Reconciler = &ReconcileWordpress{}
 
-// ReconcileWordpress reconciles a Wordpress object
+// ReconcileWordpress reconciles a Wordpress object.
 type ReconcileWordpress struct {
 	client.Client
 	Log      logr.Logger
@@ -91,17 +94,19 @@ type ReconcileWordpress struct {
 }
 
 // Reconcile reads that state of the cluster for a Wordpress object and makes changes based on the state read
-// and what is in the Wordpress.Spec
+// and what is in the Wordpress.Spec.
 //
-// Automatically generate RBAC rules to allow the Controller to read and write Deployments
+// Automatically generate RBAC rules to allow the Controller to read and write Deployments.
 // +kubebuilder:rbac:groups=wordpress.presslabs.org,resources=wordpresses;wordpresses/status,verbs=get;list;watch;create;update;patch;delete
 func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	// Fetch the Wordpress instance
 	wp := wordpress.New(&wordpressv1alpha1.Wordpress{})
+
 	err := r.Get(context.TODO(), request.NamespacedName, wp.Unwrap())
 	if err != nil {
 		return reconcile.Result{}, ignoreNotFound(err)
 	}
+
 	r.scheme.Default(wp.Unwrap())
 	wp.SetDefaults()
 
@@ -114,9 +119,11 @@ func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Res
 
 	svcHostname := fmt.Sprintf("%s.%s.svc", wp.Name, wp.Namespace)
 	u := wp.SiteURL("wp-cron.php") + "?doing_wp_cron"
+
 	_u, err := url.Parse(u)
 	if err != nil {
 		log.Error(err, "error parsing url", "url", u)
+
 		return requeue, nil
 	}
 
@@ -139,7 +146,6 @@ func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Res
 	return requeue, nil
 }
 
-// nolint: gocyclo
 func maybeUpdateWPCronCondition(cond wordpressv1alpha1.WordpressCondition, err error) (wordpressv1alpha1.WordpressCondition, bool) {
 	needsUpdate := false
 
@@ -162,6 +168,7 @@ func maybeUpdateWPCronCondition(cond wordpressv1alpha1.WordpressCondition, err e
 		now := metav1.Now()
 		cond.LastUpdateTime = now
 		cond.LastTransitionTime = now
+
 		if err == nil {
 			cond.Status = corev1.ConditionTrue
 			cond.Reason = wordpressv1alpha1.WPCronTriggeringReason
@@ -180,11 +187,13 @@ func (r *ReconcileWordpress) updateWPCronStatus(wp *wordpress.Wordpress, e error
 	var needsUpdate bool
 
 	idx := -1
+
 	for i := range wp.Status.Conditions {
 		if wp.Status.Conditions[i].Type == wordpressv1alpha1.WPCronTriggeringCondition {
 			idx = i
 		}
 	}
+
 	if idx == -1 {
 		wp.Status.Conditions = append(wp.Status.Conditions, wordpressv1alpha1.WordpressCondition{
 			Type: wordpressv1alpha1.WPCronTriggeringCondition,
@@ -206,15 +215,19 @@ func (r *ReconcileWordpress) updateWPCronStatus(wp *wordpress.Wordpress, e error
 
 func (r *ReconcileWordpress) pingURL(ctx context.Context, url, hostOverride string) error {
 	client := &http.Client{}
+
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return err
 	}
+
 	req.Host = hostOverride
+
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
+
 	defer func() {
 		err := resp.Body.Close()
 		if err != nil {
@@ -223,14 +236,16 @@ func (r *ReconcileWordpress) pingURL(ctx context.Context, url, hostOverride stri
 	}()
 
 	if resp.StatusCode != 200 {
-		return fmt.Errorf("HTTP %d: %s", resp.StatusCode, http.StatusText(resp.StatusCode))
+		return fmt.Errorf("%w: %v, %v", errHTTP, resp.StatusCode, http.StatusText(resp.StatusCode))
 	}
+
 	return nil
 }
 
 func ignoreNotFound(err error) error {
-	if errors.IsNotFound(err) {
+	if k8serrors.IsNotFound(err) {
 		return nil
 	}
+
 	return err
 }

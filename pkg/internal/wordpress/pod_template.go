@@ -31,9 +31,9 @@ import (
 )
 
 const (
-	// InternalHTTPPort represents the internal port used by the runtime container
+	// InternalHTTPPort represents the internal port used by the runtime container.
 	InternalHTTPPort = 8080
-	// MetricsExporterPort represents the exposed port where metrics can be found
+	// MetricsExporterPort represents the exposed port where metrics can be found.
 	MetricsExporterPort = 9145
 	codeVolumeName      = "code"
 	mediaVolumeName     = "media"
@@ -105,10 +105,12 @@ func (wp *Wordpress) mediaEnv() []corev1.EnvVar {
 
 	if wp.Spec.MediaVolumeSpec.S3VolumeSource != nil {
 		bucket := path.Join(wp.Spec.MediaVolumeSpec.S3VolumeSource.Bucket, wp.Spec.MediaVolumeSpec.S3VolumeSource.PathPrefix)
+
 		out = append(out, corev1.EnvVar{
 			Name:  "STACK_MEDIA_BUCKET",
 			Value: fmt.Sprintf("%s://%s", s3Prefix, bucket),
 		})
+
 		for _, env := range wp.Spec.MediaVolumeSpec.S3VolumeSource.Env {
 			if name, ok := s3EnvVars[env.Name]; ok {
 				_env := env.DeepCopy()
@@ -120,10 +122,12 @@ func (wp *Wordpress) mediaEnv() []corev1.EnvVar {
 
 	if wp.Spec.MediaVolumeSpec.GCSVolumeSource != nil {
 		bucket := path.Join(wp.Spec.MediaVolumeSpec.GCSVolumeSource.Bucket, wp.Spec.MediaVolumeSpec.GCSVolumeSource.PathPrefix)
+
 		out = append(out, corev1.EnvVar{
 			Name:  "STACK_MEDIA_BUCKET",
 			Value: fmt.Sprintf("%s://%s", gcsPrefix, bucket),
 		})
+
 		for _, env := range wp.Spec.MediaVolumeSpec.GCSVolumeSource.Env {
 			if name, ok := gcsEnvVars[env.Name]; ok {
 				_env := env.DeepCopy()
@@ -140,10 +144,13 @@ func (wp *Wordpress) routes() []string {
 	if len(wp.Spec.Routes) == 0 {
 		return []string{wp.MainDomain()}
 	}
-	var out = make([]string, len(wp.Spec.Routes))
+
+	out := make([]string, len(wp.Spec.Routes))
+
 	for i, r := range wp.Spec.Routes {
 		out[i] = path.Join(r.Domain, r.Path)
 	}
+
 	return out
 }
 
@@ -232,6 +239,7 @@ func (wp *Wordpress) volumeMounts() []corev1.VolumeMount {
 		},
 	}
 	out = append(out, wp.Spec.VolumeMounts...)
+
 	if wp.hasCodeMounts() {
 		out = append(out, corev1.VolumeMount{
 			MountPath: codeSrcMountPath,
@@ -251,17 +259,21 @@ func (wp *Wordpress) volumeMounts() []corev1.VolumeMount {
 			SubPath:   wp.Spec.CodeVolumeSpec.ConfigSubPath,
 		})
 	}
+
 	if wp.hasMediaMounts() {
 		v := corev1.VolumeMount{
 			MountPath: wp.Spec.MediaVolumeSpec.MountPath,
 			Name:      mediaVolumeName,
 			ReadOnly:  wp.Spec.MediaVolumeSpec.ReadOnly,
 		}
+
 		if wp.Spec.MediaVolumeSpec.ContentSubPath != "" {
 			v.SubPath = wp.Spec.MediaVolumeSpec.ContentSubPath
 		}
+
 		out = append(out, v)
 	}
+
 	return out
 }
 
@@ -355,17 +367,21 @@ func (wp *Wordpress) volumes() []corev1.Volume {
 		},
 	}
 	volumes = append(volumes, wp.Spec.Volumes...)
+
 	if wp.hasCodeMounts() {
 		volumes = append(volumes, wp.codeVolume())
 	}
+
 	if wp.hasMediaMounts() {
 		volumes = append(volumes, wp.mediaVolume())
 	}
+
 	return volumes
 }
 
 func (wp *Wordpress) securityContext() *corev1.SecurityContext {
 	defaultProcMount := corev1.DefaultProcMount
+
 	return &corev1.SecurityContext{
 		RunAsUser: &wwwDataUserID,
 		ProcMount: &defaultProcMount,
@@ -439,9 +455,11 @@ func (wp *Wordpress) prepareVolumesContainer() corev1.Container {
 			Name:      codeVolumeName,
 			MountPath: "/mnt/code",
 		}
+
 		if wp.Wordpress.Spec.CodeVolumeSpec.ContentSubPath != "" {
 			m.SubPath = wp.Wordpress.Spec.CodeVolumeSpec.ContentSubPath
 		}
+
 		c.VolumeMounts = append(c.VolumeMounts, m)
 	}
 
@@ -450,9 +468,11 @@ func (wp *Wordpress) prepareVolumesContainer() corev1.Container {
 			Name:      mediaVolumeName,
 			MountPath: "/mnt/media",
 		}
+
 		if wp.Wordpress.Spec.MediaVolumeSpec.ContentSubPath != "" {
 			m.SubPath = wp.Wordpress.Spec.MediaVolumeSpec.ContentSubPath
 		}
+
 		c.VolumeMounts = append(c.VolumeMounts, m)
 	}
 
@@ -486,9 +506,11 @@ func (wp *Wordpress) installWPContainer() []corev1.Container {
 
 func (wp *Wordpress) initContainers() []corev1.Container {
 	containers := []corev1.Container{}
+
 	if wp.hasMediaMounts() || wp.hasCodeMounts() {
 		containers = append(containers, wp.prepareVolumesContainer())
 	}
+
 	containers = append(containers, wp.Spec.InitContainers...)
 
 	if wp.Spec.CodeVolumeSpec != nil && wp.Spec.CodeVolumeSpec.GitDir != nil {
@@ -511,7 +533,6 @@ func (wp *Wordpress) readinessProbe() *corev1.Probe {
 	//	* https://github.com/kubernetes/kubernetes/pull/75416
 	//	* https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/
 	//	  Any code greater than or equal to 200 and less than 400 indicates success.
-
 	if wp.Spec.ReadinessProbe != nil {
 		return wp.Spec.ReadinessProbe
 	}
@@ -557,13 +578,15 @@ func (wp *Wordpress) livenessProbe() *corev1.Probe {
 	}
 }
 
-// WebPodTemplateSpec generates a pod template spec suitable for use in Wordpress deployment
+// WebPodTemplateSpec generates a pod template spec suitable for use in Wordpress deployment.
 // nolint: funlen
 func (wp *Wordpress) WebPodTemplateSpec() (out corev1.PodTemplateSpec) {
 	out = corev1.PodTemplateSpec{}
+
 	if wp.Spec.PodMetadata != nil {
 		wp.Spec.PodMetadata.DeepCopyInto(&out.ObjectMeta)
 	}
+
 	out.ObjectMeta.Labels = labels.Merge(out.ObjectMeta.Labels, wp.WebPodLabels())
 
 	out.Spec.ImagePullSecrets = wp.Spec.ImagePullSecrets
@@ -633,12 +656,14 @@ func (wp *Wordpress) WebPodTemplateSpec() (out corev1.PodTemplateSpec) {
 	return out
 }
 
-// JobPodTemplateSpec generates a pod template spec suitable for use in wp-cli jobs
+// JobPodTemplateSpec generates a pod template spec suitable for use in wp-cli jobs.
 func (wp *Wordpress) JobPodTemplateSpec(cmd ...string) (out corev1.PodTemplateSpec) {
 	out = corev1.PodTemplateSpec{}
+
 	if wp.Spec.PodMetadata != nil {
 		wp.Spec.PodMetadata.DeepCopyInto(&out.ObjectMeta)
 	}
+
 	out.ObjectMeta.Labels = labels.Merge(out.ObjectMeta.Labels, wp.JobPodLabels())
 
 	out.Spec.ImagePullSecrets = wp.Spec.ImagePullSecrets
@@ -688,6 +713,7 @@ func (wp *Wordpress) hasMediaMounts() bool {
 	if wp.Spec.MediaVolumeSpec == nil {
 		return false
 	}
+
 	switch {
 	case wp.Spec.MediaVolumeSpec.PersistentVolumeClaim != nil:
 		return true
@@ -696,6 +722,7 @@ func (wp *Wordpress) hasMediaMounts() bool {
 	case wp.Spec.MediaVolumeSpec.EmptyDir != nil:
 		return true
 	}
+
 	return false
 }
 
@@ -703,6 +730,7 @@ func (wp *Wordpress) hasCodeMounts() bool {
 	if wp.Spec.CodeVolumeSpec == nil {
 		return false
 	}
+
 	switch {
 	case wp.Spec.CodeVolumeSpec.GitDir != nil:
 		return true
@@ -713,5 +741,6 @@ func (wp *Wordpress) hasCodeMounts() bool {
 	case wp.Spec.CodeVolumeSpec.EmptyDir != nil:
 		return true
 	}
+
 	return false
 }

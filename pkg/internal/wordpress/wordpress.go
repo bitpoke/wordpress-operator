@@ -26,7 +26,7 @@ import (
 	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
-// Wordpress embeds wordpressv1alpha1.Wordpress and adds utility functions
+// Wordpress embeds wordpressv1alpha1.Wordpress and adds utility functions.
 type Wordpress struct {
 	*wordpressv1alpha1.Wordpress
 }
@@ -38,35 +38,35 @@ type component struct {
 }
 
 var (
-	// WordpressSecret component
+	// WordpressSecret component.
 	WordpressSecret = component{name: "web", objNameFmt: "%s-wp"}
-	// WordpressDeployment component
+	// WordpressDeployment component.
 	WordpressDeployment = component{name: "web", objNameFmt: "%s"}
-	// WordpressCron component
+	// WordpressCron component.
 	WordpressCron = component{name: "cron", objNameFmt: "%s-wp-cron"}
-	// WordpressDBUpgrade component
+	// WordpressDBUpgrade component.
 	WordpressDBUpgrade = component{name: "upgrade", objNameFmt: "%s-upgrade"}
-	// WordpressService component
+	// WordpressService component.
 	WordpressService = component{name: "web", objNameFmt: "%s"}
-	// WordpressIngress component
+	// WordpressIngress component.
 	WordpressIngress = component{name: "web", objNameFmt: "%s"}
-	// WordpressCodePVC component
+	// WordpressCodePVC component.
 	WordpressCodePVC = component{name: "code", objNameFmt: "%s-code"}
-	// WordpressMediaPVC component
+	// WordpressMediaPVC component.
 	WordpressMediaPVC = component{name: "media", objNameFmt: "%s-media"}
 )
 
-// New wraps a wordpressv1alpha1.Wordpress into a Wordpress object
+// New wraps a wordpressv1alpha1.Wordpress into a Wordpress object.
 func New(obj *wordpressv1alpha1.Wordpress) *Wordpress {
 	return &Wordpress{obj}
 }
 
-// Unwrap returns the wrapped wordpressv1alpha1.Wordpress object
+// Unwrap returns the wrapped wordpressv1alpha1.Wordpress object.
 func (wp *Wordpress) Unwrap() *wordpressv1alpha1.Wordpress {
 	return wp.Wordpress
 }
 
-// Labels returns default label set for wordpressv1alpha1.Wordpress
+// Labels returns default label set for wordpressv1alpha1.Wordpress.
 func (wp *Wordpress) Labels() labels.Set {
 	partOf := "wordpress"
 	if wp.ObjectMeta.Labels != nil && len(wp.ObjectMeta.Labels["app.kubernetes.io/part-of"]) > 0 {
@@ -82,7 +82,7 @@ func (wp *Wordpress) Labels() labels.Set {
 	return labels
 }
 
-// ComponentLabels returns labels for a label set for a wordpressv1alpha1.Wordpress component
+// ComponentLabels returns labels for a label set for a wordpressv1alpha1.Wordpress component.
 func (wp *Wordpress) ComponentLabels(component component) labels.Set {
 	l := wp.Labels()
 	l["app.kubernetes.io/component"] = component.name
@@ -94,7 +94,7 @@ func (wp *Wordpress) ComponentLabels(component component) labels.Set {
 	return l
 }
 
-// ComponentName returns the object name for a component
+// ComponentName returns the object name for a component.
 func (wp *Wordpress) ComponentName(component component) string {
 	name := component.objName
 	if len(component.objNameFmt) > 0 {
@@ -109,26 +109,28 @@ func (wp *Wordpress) ComponentName(component component) string {
 }
 
 // ImageVersion returns the version from the image in a format suitable
-// for kubernetes object names and labels
+// for kubernetes object names and labels.
 func (wp *Wordpress) ImageVersion() string {
 	return slugify.Slugify(wp.Spec.Image)
 }
 
-// WebPodLabels return labels to apply to web pods
+// WebPodLabels return labels to apply to web pods.
 func (wp *Wordpress) WebPodLabels() labels.Set {
 	l := wp.Labels()
 	l["app.kubernetes.io/component"] = "web"
+
 	return l
 }
 
-// JobPodLabels return labels to apply to cli job pods
+// JobPodLabels return labels to apply to cli job pods.
 func (wp *Wordpress) JobPodLabels() labels.Set {
 	l := wp.Labels()
 	l["app.kubernetes.io/component"] = "wp-cli"
+
 	return l
 }
 
-// MainDomain returns the site main domain or a local domain <cluster-name>.<namespace>.svc.cluster.local
+// MainDomain returns the site main domain or a local domain <cluster-name>.<namespace>.svc.cluster.local.
 func (wp *Wordpress) MainDomain() string {
 	if len(wp.Spec.Routes) > 0 {
 		return wp.Spec.Routes[0].Domain
@@ -149,7 +151,9 @@ func (wp *Wordpress) HomeURL(subPaths ...string) string {
 	if len(wp.Spec.Routes) > 0 {
 		paths = append(paths, wp.Spec.Routes[0].Path)
 	}
+
 	paths = append(paths, subPaths...)
+
 	p := path.Join(paths...)
 	if p == "/" {
 		p = ""
@@ -162,5 +166,6 @@ func (wp *Wordpress) HomeURL(subPaths ...string) string {
 func (wp *Wordpress) SiteURL(subPaths ...string) string {
 	p := []string{wp.Spec.WordpressPathPrefix}
 	p = append(p, subPaths...)
+
 	return wp.HomeURL(p...)
 }

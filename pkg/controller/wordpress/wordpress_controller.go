@@ -49,12 +49,12 @@ func Add(mgr manager.Manager) error {
 	return add(mgr, newReconciler(mgr))
 }
 
-// newReconciler returns a new reconcile.Reconciler
+// newReconciler returns a new reconcile.Reconciler.
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	return &ReconcileWordpress{Client: mgr.GetClient(), scheme: mgr.GetScheme(), recorder: mgr.GetEventRecorderFor(controllerName)}
 }
 
-// add adds a new Controller to mgr with r as the reconcile.Reconciler
+// add adds a new Controller to mgr with r as the reconcile.Reconciler.
 func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Create a new controller
 	c, err := controller.New(controllerName, mgr, controller.Options{Reconciler: r})
@@ -91,7 +91,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 
 var _ reconcile.Reconciler = &ReconcileWordpress{}
 
-// ReconcileWordpress reconciles a Wordpress object
+// ReconcileWordpress reconciles a Wordpress object.
 type ReconcileWordpress struct {
 	client.Client
 	scheme   *runtime.Scheme
@@ -106,10 +106,11 @@ type ReconcileWordpress struct {
 // +kubebuilder:rbac:groups=wordpress.presslabs.org,resources=wordpresses;wordpresses/status,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile reads that state of the cluster for a Wordpress object and makes changes based on the state read
-// and what is in the Wordpress.Spec
+// and what is in the Wordpress.Spec.
 func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	// Fetch the Wordpress instance
 	wp := wordpress.New(&wordpressv1alpha1.Wordpress{})
+
 	err := r.Get(context.TODO(), request.NamespacedName, wp.Unwrap())
 	if err != nil {
 		return reconcile.Result{}, ignoreNotFound(err)
@@ -117,6 +118,7 @@ func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Res
 
 	if updated, needsMigration := r.maybeMigrate(wp.Unwrap()); needsMigration {
 		err = r.Update(context.TODO(), updated)
+
 		return reconcile.Result{}, err
 	}
 
@@ -147,6 +149,7 @@ func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Res
 
 	oldStatus := wp.Status.DeepCopy()
 	wp.Status.Replicas = deploySyncer.Object().(*appsv1.Deployment).Status.Replicas
+
 	if oldStatus.Replicas != wp.Status.Replicas {
 		if errUp := r.Status().Update(context.TODO(), wp.Unwrap()); errUp != nil {
 			return reconcile.Result{}, errUp
@@ -165,6 +168,7 @@ func ignoreNotFound(err error) error {
 	if errors.IsNotFound(err) {
 		return nil
 	}
+
 	return err
 }
 
@@ -174,12 +178,15 @@ func (r *ReconcileWordpress) sync(syncers []syncer.Interface) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
 func (r *ReconcileWordpress) maybeMigrate(wp *wordpressv1alpha1.Wordpress) (*wordpressv1alpha1.Wordpress, bool) {
 	var needsMigration bool
+
 	out := wp.DeepCopy()
+
 	if len(out.Spec.Routes) == 0 {
 		for i := range out.Spec.Domains {
 			out.Spec.Routes = append(out.Spec.Routes, wordpressv1alpha1.RouteSpec{
@@ -189,7 +196,9 @@ func (r *ReconcileWordpress) maybeMigrate(wp *wordpressv1alpha1.Wordpress) (*wor
 			needsMigration = true
 		}
 	}
+
 	out.Spec.Domains = nil
+
 	return out, needsMigration
 }
 
@@ -200,6 +209,7 @@ func (r *ReconcileWordpress) cleanupCronJob(wp *wordpress.Wordpress) error {
 	}
 
 	cronJob := &batchv1beta1.CronJob{}
+
 	if err := r.Get(context.TODO(), cronKey, cronJob); err != nil {
 		return ignoreNotFound(err)
 	}
@@ -221,5 +231,6 @@ func isOwnedBy(refs []metav1.OwnerReference, owner *wordpress.Wordpress) bool {
 			return true
 		}
 	}
+
 	return false
 }
