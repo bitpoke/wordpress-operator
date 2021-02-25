@@ -76,7 +76,7 @@ type WordpressSpec struct {
 	Replicas *int32 `json:"replicas,omitempty"`
 	// Domains for which this this site answers.
 	// The first item is set as the "main domain" (eg. WP_HOME and WP_SITEURL constants).
-	// DEPRECATED: use Routes instead. This field will be dropped in next release.
+	// Deprecated: use Routes instead. This field will be dropped in next release.
 	// +optional
 	Domains []Domain `json:"domains,omitempty"`
 	// Routes for which the ingress is created

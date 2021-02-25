@@ -470,7 +470,7 @@ endif
 	@$$(OK) installing $(1) version $(2) from $(3)
 endef # tool.download.tar.gz
 
-YQ_VERSION ?= 2.4.1
+YQ_VERSION ?= 3.4.1
 YQ_DOWNLOAD_URL ?= https://github.com/mikefarah/yq/releases/download/$(YQ_VERSION)/yq_$(HOST_PLATFORM)
 $(eval $(call tool.download,yq,$(YQ_VERSION),$(YQ_DOWNLOAD_URL)))
 

@@ -218,11 +218,7 @@ func (r *ReconcileWordpress) cleanupCronJob(wp *wordpress.Wordpress) error {
 		return nil
 	}
 
-	if err := r.Delete(context.TODO(), cronJob); err != nil {
-		return err
-	}
-
-	return nil
+	return r.Delete(context.TODO(), cronJob)
 }
 
 func isOwnedBy(refs []metav1.OwnerReference, owner *wordpress.Wordpress) bool {
