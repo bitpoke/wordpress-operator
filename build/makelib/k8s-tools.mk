@@ -29,7 +29,7 @@ KIND_DOWNLOAD_URL ?= https://github.com/kubernetes-sigs/kind/releases/download/v
 $(eval $(call tool.download,kind,$(KIND_VERSION),$(KIND_DOWNLOAD_URL)))
 
 # kind download and install
-KUSTOMIZE_VERSION ?= 3.4.0
+KUSTOMIZE_VERSION ?= 3.8.4
 KUSTOMIZE_DOWNLOAD_URL ?=https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v$(KUSTOMIZE_VERSION)/kustomize_v$(KUSTOMIZE_VERSION)_$(HOST_PLATFORM).tar.gz
 $(eval $(call tool.download.tar.gz,kustomize,$(KUSTOMIZE_VERSION),$(KUSTOMIZE_DOWNLOAD_URL),kustomize,0))
 

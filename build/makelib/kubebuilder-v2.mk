@@ -18,7 +18,7 @@ __KUBEBUILDERV2_MAKEFILE__ := included
 # ====================================================================================
 # Options
 
-KUBEBUILDER_VERSION ?= 2.3.1
+KUBEBUILDER_VERSION ?= 2.3.2
 KUBEBUILDER := $(TOOLS_HOST_DIR)/kubebuilder-$(KUBEBUILDER_VERSION)
 
 CRD_DIR ?= config/crds

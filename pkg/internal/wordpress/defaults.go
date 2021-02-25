@@ -47,7 +47,6 @@ const (
 var varLogSizeLimit = resource.MustParse("1Gi")
 
 // SetDefaults sets Wordpress field defaults.
-// nolint: gocyclo
 func (wp *Wordpress) SetDefaults() {
 	if len(wp.Spec.Image) == 0 {
 		wp.Spec.Image = options.WordpressRuntimeImage
