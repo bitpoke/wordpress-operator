@@ -17,17 +17,19 @@ limitations under the License.
 package wordpress
 
 import (
+	"context"
 	"path/filepath"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"github.com/go-logr/zapr"
+	logf "github.com/presslabs/controller-util/log"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -38,7 +40,9 @@ var cfg *rest.Config
 var t *envtest.Environment
 
 func TestWordpressController(t *testing.T) {
-	logf.SetLogger(zap.LoggerTo(GinkgoWriter, true))
+	zapLogger := logf.RawStackdriverZapLoggerTo(GinkgoWriter, true)
+	logf.SetLogger(zapr.NewLogger(zapLogger))
+
 	RegisterFailHandler(Fail)
 	RunSpecsWithDefaultAndCustomReporters(t, "Wordpress Controller Suite", []Reporter{printer.NewlineReporter{}})
 }
@@ -53,7 +57,7 @@ var _ = BeforeSuite(func() {
 	Expect(apis.AddToScheme(scheme.Scheme)).To(Succeed())
 
 	cfg, err = t.Start()
-	Expect(err).NotTo(HaveOccurred())
+	Expect(err).To(BeNil())
 })
 
 var _ = AfterSuite(func() {
@@ -65,8 +69,8 @@ var _ = AfterSuite(func() {
 // writes the request to requests after Reconcile is finished.
 func SetupTestReconcile(inner reconcile.Reconciler) (reconcile.Reconciler, chan reconcile.Request) {
 	requests := make(chan reconcile.Request)
-	fn := reconcile.Func(func(req reconcile.Request) (reconcile.Result, error) {
-		result, err := inner.Reconcile(req)
+	fn := reconcile.Func(func(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
+		result, err := inner.Reconcile(ctx, req)
 		requests <- req
 		return result, err
 	})
@@ -74,11 +78,13 @@ func SetupTestReconcile(inner reconcile.Reconciler) (reconcile.Reconciler, chan 
 }
 
 // StartTestManager adds recFn
-func StartTestManager(mgr manager.Manager) chan struct{} {
-	stop := make(chan struct{})
+func StartTestManager(mgr manager.Manager) context.CancelFunc {
+	ctx, stop := context.WithCancel(context.Background())
+	// defer cancel()
+
 	go func() {
 		defer GinkgoRecover()
-		Expect(mgr.Start(stop)).To(Succeed())
+		Expect(mgr.Start(ctx)).To(Succeed())
 	}()
 	return stop
 }

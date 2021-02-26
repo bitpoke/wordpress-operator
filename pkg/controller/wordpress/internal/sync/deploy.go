@@ -24,7 +24,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/appscode/mergo"
@@ -38,7 +37,7 @@ import (
 var errImmutableDeploymentSelector = errors.New("deployment selector is immutable")
 
 // NewDeploymentSyncer returns a new sync.Interface for reconciling web Deployment.
-func NewDeploymentSyncer(wp *wordpress.Wordpress, secret *corev1.Secret, c client.Client, scheme *runtime.Scheme) syncer.Interface {
+func NewDeploymentSyncer(wp *wordpress.Wordpress, secret *corev1.Secret, c client.Client) syncer.Interface {
 	objLabels := wp.ComponentLabels(wordpress.WordpressDeployment)
 
 	obj := &appsv1.Deployment{
@@ -48,7 +47,7 @@ func NewDeploymentSyncer(wp *wordpress.Wordpress, secret *corev1.Secret, c clien
 		},
 	}
 
-	return syncer.NewObjectSyncer("Deployment", wp.Unwrap(), obj, c, scheme, func() error {
+	return syncer.NewObjectSyncer("Deployment", wp.Unwrap(), obj, c, func() error {
 		obj.Labels = labels.Merge(labels.Merge(obj.Labels, objLabels), controllerLabels)
 
 		template := wp.WebPodTemplateSpec()

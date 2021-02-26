@@ -22,13 +22,15 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/go-logr/zapr"
+	logf "github.com/presslabs/controller-util/log"
 	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
 func TestPodTemplate(t *testing.T) {
-	logf.SetLogger(zap.LoggerTo(GinkgoWriter, true))
+	zapLogger := logf.RawStackdriverZapLoggerTo(GinkgoWriter, true)
+	logf.SetLogger(zapr.NewLogger(zapLogger))
+
 	RegisterFailHandler(Fail)
 	RunSpecsWithDefaultAndCustomReporters(t, "Wordpress Sync Test Suite", []Reporter{printer.NewlineReporter{}})
 }

@@ -98,11 +98,11 @@ type ReconcileWordpress struct {
 //
 // Automatically generate RBAC rules to allow the Controller to read and write Deployments.
 // +kubebuilder:rbac:groups=wordpress.presslabs.org,resources=wordpresses;wordpresses/status,verbs=get;list;watch;create;update;patch;delete
-func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+func (r *ReconcileWordpress) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	// Fetch the Wordpress instance
 	wp := wordpress.New(&wordpressv1alpha1.Wordpress{})
 
-	err := r.Get(context.TODO(), request.NamespacedName, wp.Unwrap())
+	err := r.Get(ctx, request.NamespacedName, wp.Unwrap())
 	if err != nil {
 		return reconcile.Result{}, ignoreNotFound(err)
 	}
@@ -130,15 +130,15 @@ func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Res
 	_u.Scheme = "http"
 	_u.Host = svcHostname
 
-	ctx, cancel := context.WithTimeout(context.Background(), cronTriggerTimeout)
+	ctxWithTimeout, cancel := context.WithTimeout(context.Background(), cronTriggerTimeout)
 	defer cancel()
 
-	err = r.pingURL(ctx, _u.String(), wp.MainDomain())
+	err = r.pingURL(ctxWithTimeout, _u.String(), wp.MainDomain())
 	if err != nil {
 		log.Error(err, "error while triggering wp-cron")
 	}
 
-	err = r.updateWPCronStatus(wp, err)
+	err = r.updateWPCronStatus(ctx, wp, err)
 	if err != nil {
 		log.Error(err, "error updating wordpress wp-cron status")
 	}
@@ -183,7 +183,7 @@ func maybeUpdateWPCronCondition(cond wordpressv1alpha1.WordpressCondition, err e
 	return cond, needsUpdate
 }
 
-func (r *ReconcileWordpress) updateWPCronStatus(wp *wordpress.Wordpress, e error) error {
+func (r *ReconcileWordpress) updateWPCronStatus(ctx context.Context, wp *wordpress.Wordpress, e error) error {
 	var needsUpdate bool
 
 	idx := -1
@@ -204,7 +204,7 @@ func (r *ReconcileWordpress) updateWPCronStatus(wp *wordpress.Wordpress, e error
 	wp.Status.Conditions[idx], needsUpdate = maybeUpdateWPCronCondition(wp.Status.Conditions[idx], e)
 
 	if needsUpdate {
-		err := r.Client.Status().Update(context.TODO(), wp.Unwrap())
+		err := r.Client.Status().Update(ctx, wp.Unwrap())
 		if err != nil {
 			return err
 		}

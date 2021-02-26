@@ -68,7 +68,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	subresources := []runtime.Object{
+	subresources := []client.Object{
 		&appsv1.Deployment{},
 		&corev1.PersistentVolumeClaim{},
 		&corev1.Service{},
@@ -107,17 +107,17 @@ type ReconcileWordpress struct {
 
 // Reconcile reads that state of the cluster for a Wordpress object and makes changes based on the state read
 // and what is in the Wordpress.Spec.
-func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+func (r *ReconcileWordpress) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	// Fetch the Wordpress instance
 	wp := wordpress.New(&wordpressv1alpha1.Wordpress{})
 
-	err := r.Get(context.TODO(), request.NamespacedName, wp.Unwrap())
+	err := r.Get(ctx, request.NamespacedName, wp.Unwrap())
 	if err != nil {
 		return reconcile.Result{}, ignoreNotFound(err)
 	}
 
 	if updated, needsMigration := r.maybeMigrate(wp.Unwrap()); needsMigration {
-		err = r.Update(context.TODO(), updated)
+		err = r.Update(ctx, updated)
 
 		return reconcile.Result{}, err
 	}
@@ -125,25 +125,25 @@ func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Res
 	r.scheme.Default(wp.Unwrap())
 	wp.SetDefaults()
 
-	secretSyncer := sync.NewSecretSyncer(wp, r.Client, r.scheme)
-	deploySyncer := sync.NewDeploymentSyncer(wp, secretSyncer.Object().(*corev1.Secret), r.Client, r.scheme)
+	secretSyncer := sync.NewSecretSyncer(wp, r.Client)
+	deploySyncer := sync.NewDeploymentSyncer(wp, secretSyncer.Object().(*corev1.Secret), r.Client)
 	syncers := []syncer.Interface{
 		secretSyncer,
 		deploySyncer,
-		sync.NewServiceSyncer(wp, r.Client, r.scheme),
-		sync.NewIngressSyncer(wp, r.Client, r.scheme),
-		// sync.NewDBUpgradeJobSyncer(wp, r.Client, r.scheme),
+		sync.NewServiceSyncer(wp, r.Client),
+		sync.NewIngressSyncer(wp, r.Client),
+		// sync.NewDBUpgradeJobSyncer(wp, r.Client),
 	}
 
 	if wp.Spec.CodeVolumeSpec != nil && wp.Spec.CodeVolumeSpec.PersistentVolumeClaim != nil {
-		syncers = append(syncers, sync.NewCodePVCSyncer(wp, r.Client, r.scheme))
+		syncers = append(syncers, sync.NewCodePVCSyncer(wp, r.Client))
 	}
 
 	if wp.Spec.MediaVolumeSpec != nil && wp.Spec.MediaVolumeSpec.PersistentVolumeClaim != nil {
-		syncers = append(syncers, sync.NewMediaPVCSyncer(wp, r.Client, r.scheme))
+		syncers = append(syncers, sync.NewMediaPVCSyncer(wp, r.Client))
 	}
 
-	if err = r.sync(syncers); err != nil {
+	if err = r.sync(ctx, syncers); err != nil {
 		return reconcile.Result{}, err
 	}
 
@@ -151,13 +151,13 @@ func (r *ReconcileWordpress) Reconcile(request reconcile.Request) (reconcile.Res
 	wp.Status.Replicas = deploySyncer.Object().(*appsv1.Deployment).Status.Replicas
 
 	if oldStatus.Replicas != wp.Status.Replicas {
-		if errUp := r.Status().Update(context.TODO(), wp.Unwrap()); errUp != nil {
+		if errUp := r.Status().Update(ctx, wp.Unwrap()); errUp != nil {
 			return reconcile.Result{}, errUp
 		}
 	}
 
 	// remove old cron job if exists
-	if err = r.cleanupCronJob(wp); err != nil {
+	if err = r.cleanupCronJob(ctx, wp); err != nil {
 		return reconcile.Result{}, err
 	}
 
@@ -172,9 +172,9 @@ func ignoreNotFound(err error) error {
 	return err
 }
 
-func (r *ReconcileWordpress) sync(syncers []syncer.Interface) error {
+func (r *ReconcileWordpress) sync(ctx context.Context, syncers []syncer.Interface) error {
 	for _, s := range syncers {
-		if err := syncer.Sync(context.TODO(), s, r.recorder); err != nil {
+		if err := syncer.Sync(ctx, s, r.recorder); err != nil {
 			return err
 		}
 	}
@@ -202,7 +202,7 @@ func (r *ReconcileWordpress) maybeMigrate(wp *wordpressv1alpha1.Wordpress) (*wor
 	return out, needsMigration
 }
 
-func (r *ReconcileWordpress) cleanupCronJob(wp *wordpress.Wordpress) error {
+func (r *ReconcileWordpress) cleanupCronJob(ctx context.Context, wp *wordpress.Wordpress) error {
 	cronKey := types.NamespacedName{
 		Name:      wp.ComponentName(wordpress.WordpressCron),
 		Namespace: wp.Namespace,
@@ -210,7 +210,7 @@ func (r *ReconcileWordpress) cleanupCronJob(wp *wordpress.Wordpress) error {
 
 	cronJob := &batchv1beta1.CronJob{}
 
-	if err := r.Get(context.TODO(), cronKey, cronJob); err != nil {
+	if err := r.Get(ctx, cronKey, cronJob); err != nil {
 		return ignoreNotFound(err)
 	}
 
@@ -218,7 +218,7 @@ func (r *ReconcileWordpress) cleanupCronJob(wp *wordpress.Wordpress) error {
 		return nil
 	}
 
-	return r.Delete(context.TODO(), cronJob)
+	return r.Delete(ctx, cronJob)
 }
 
 func isOwnedBy(refs []metav1.OwnerReference, owner *wordpress.Wordpress) bool {

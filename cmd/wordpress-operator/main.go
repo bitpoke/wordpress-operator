@@ -19,6 +19,7 @@ package main
 import (
 	"os"
 
+	"github.com/go-logr/zapr"
 	logf "github.com/presslabs/controller-util/log"
 	flag "github.com/spf13/pflag"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
@@ -46,7 +47,8 @@ func main() {
 	}
 
 	development := os.Getenv("DEV") == "true"
-	logf.SetLogger(logf.ZapLogger(development))
+	zapLogger := logf.RawStackdriverZapLoggerTo(os.Stderr, development)
+	logf.SetLogger(zapr.NewLogger(zapLogger))
 
 	setupLog.Info("Starting wordpress-operator...")
 
