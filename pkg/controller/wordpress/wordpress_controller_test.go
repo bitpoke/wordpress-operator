@@ -17,6 +17,7 @@ limitations under the License.
 package wordpress
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"time"
@@ -25,13 +26,11 @@ import (
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 
-	"golang.org/x/net/context"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	netv1beta1 "k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -47,7 +46,7 @@ var _ = Describe("Wordpress controller", func() {
 		// channel for incoming reconcile requests
 		requests chan reconcile.Request
 		// stop channel for controller manager
-		stop chan struct{}
+		stop context.CancelFunc
 		// controller k8s client
 		c client.Client
 	)
@@ -66,7 +65,7 @@ var _ = Describe("Wordpress controller", func() {
 	})
 
 	AfterEach(func() {
-		close(stop)
+		stop()
 	})
 
 	When("creating a new Wordpress resource", func() {
@@ -141,7 +140,7 @@ var _ = Describe("Wordpress controller", func() {
 
 			// GC created objects
 			for _, e := range entries {
-				obj := e.Parameters[1].(runtime.Object)
+				obj := e.Parameters[1].(client.Object)
 				nameFmt := e.Parameters[0].(string)
 				mo := obj.(metav1.Object)
 				mo.SetName(fmt.Sprintf(nameFmt, wp.Name))
@@ -150,7 +149,7 @@ var _ = Describe("Wordpress controller", func() {
 			}
 		})
 
-		DescribeTable("the reconciler", func(nameFmt string, obj runtime.Object) {
+		DescribeTable("the reconciler", func(nameFmt string, obj client.Object) {
 			key := types.NamespacedName{
 				Name:      fmt.Sprintf(nameFmt, wp.Name),
 				Namespace: wp.Namespace,

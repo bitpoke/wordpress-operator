@@ -20,7 +20,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/controller-util/rand"
@@ -41,7 +40,7 @@ var generatedSalts = map[string]int{
 }
 
 // NewSecretSyncer returns a new sync.Interface for reconciling wordpress secret.
-func NewSecretSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.Scheme) syncer.Interface {
+func NewSecretSyncer(wp *wordpress.Wordpress, c client.Client) syncer.Interface {
 	objLabels := wp.ComponentLabels(wordpress.WordpressSecret)
 
 	obj := &corev1.Secret{
@@ -51,7 +50,7 @@ func NewSecretSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.S
 		},
 	}
 
-	return syncer.NewObjectSyncer("Secret", wp.Unwrap(), obj, c, scheme, func() error {
+	return syncer.NewObjectSyncer("Secret", wp.Unwrap(), obj, c, func() error {
 		obj.Labels = labels.Merge(labels.Merge(obj.Labels, objLabels), controllerLabels)
 
 		if len(obj.Data) == 0 {

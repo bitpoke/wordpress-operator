@@ -20,7 +20,6 @@ import (
 	netv1beta1 "k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -73,7 +72,7 @@ func upsertPath(rules []netv1beta1.IngressRule, domain, path string, bk netv1bet
 }
 
 // NewIngressSyncer returns a new sync.Interface for reconciling web Ingress.
-func NewIngressSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.Scheme) syncer.Interface {
+func NewIngressSyncer(wp *wordpress.Wordpress, c client.Client) syncer.Interface {
 	objLabels := wp.ComponentLabels(wordpress.WordpressIngress)
 
 	obj := &netv1beta1.Ingress{
@@ -88,7 +87,7 @@ func NewIngressSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.
 		ServicePort: intstr.FromString("http"),
 	}
 
-	return syncer.NewObjectSyncer("Ingress", wp.Unwrap(), obj, c, scheme, func() error {
+	return syncer.NewObjectSyncer("Ingress", wp.Unwrap(), obj, c, func() error {
 		obj.Labels = labels.Merge(labels.Merge(obj.Labels, objLabels), controllerLabels)
 
 		if len(obj.ObjectMeta.Annotations) == 0 && (len(wp.Spec.IngressAnnotations) > 0 || options.IngressClass != "") {

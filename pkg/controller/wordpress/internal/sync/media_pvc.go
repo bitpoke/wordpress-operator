@@ -24,7 +24,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/presslabs/wordpress-operator/pkg/internal/wordpress"
@@ -33,7 +32,7 @@ import (
 var errMediaVolumeClaimNotDefined = errors.New(".spec.media.persistentVolumeClaim is not defined")
 
 // NewMediaPVCSyncer returns a new sync.Interface for reconciling media PVC.
-func NewMediaPVCSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.Scheme) syncer.Interface {
+func NewMediaPVCSyncer(wp *wordpress.Wordpress, c client.Client) syncer.Interface {
 	objLabels := wp.ComponentLabels(wordpress.WordpressMediaPVC)
 
 	obj := &corev1.PersistentVolumeClaim{
@@ -43,7 +42,7 @@ func NewMediaPVCSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime
 		},
 	}
 
-	return syncer.NewObjectSyncer("MediaPVC", wp.Unwrap(), obj, c, scheme, func() error {
+	return syncer.NewObjectSyncer("MediaPVC", wp.Unwrap(), obj, c, func() error {
 		obj.Labels = labels.Merge(labels.Merge(wp.Spec.MediaVolumeSpec.Labels, objLabels), controllerLabels)
 
 		if len(wp.Spec.MediaVolumeSpec.Annotations) > 0 {

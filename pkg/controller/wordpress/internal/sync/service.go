@@ -22,7 +22,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -34,7 +33,7 @@ import (
 var errImmutableServiceSelector = errors.New("service selector is immutable")
 
 // NewServiceSyncer returns a new sync.Interface for reconciling web Service.
-func NewServiceSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.Scheme) syncer.Interface {
+func NewServiceSyncer(wp *wordpress.Wordpress, c client.Client) syncer.Interface {
 	objLabels := wp.ComponentLabels(wordpress.WordpressDeployment)
 
 	obj := &corev1.Service{
@@ -44,7 +43,7 @@ func NewServiceSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.
 		},
 	}
 
-	return syncer.NewObjectSyncer("Service", wp.Unwrap(), obj, c, scheme, func() error {
+	return syncer.NewObjectSyncer("Service", wp.Unwrap(), obj, c, func() error {
 		obj.Labels = labels.Merge(labels.Merge(obj.Labels, objLabels), controllerLabels)
 
 		selector := wp.WebPodLabels()

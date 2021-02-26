@@ -20,7 +20,6 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/appscode/mergo"
@@ -32,7 +31,7 @@ import (
 )
 
 // NewDBUpgradeJobSyncer returns a new sync.Interface for reconciling database upgrade Job.
-func NewDBUpgradeJobSyncer(wp *wordpress.Wordpress, c client.Client, scheme *runtime.Scheme) syncer.Interface {
+func NewDBUpgradeJobSyncer(wp *wordpress.Wordpress, c client.Client) syncer.Interface {
 	objLabels := wp.ComponentLabels(wordpress.WordpressDBUpgrade)
 
 	obj := &batchv1.Job{
@@ -47,7 +46,7 @@ func NewDBUpgradeJobSyncer(wp *wordpress.Wordpress, c client.Client, scheme *run
 		activeDeadlineSeconds int64 = 10
 	)
 
-	return syncer.NewObjectSyncer("DBUpgradeJob", wp.Unwrap(), obj, c, scheme, func() error {
+	return syncer.NewObjectSyncer("DBUpgradeJob", wp.Unwrap(), obj, c, func() error {
 		obj.Labels = labels.Merge(labels.Merge(obj.Labels, objLabels), controllerLabels)
 
 		if !obj.CreationTimestamp.IsZero() {
