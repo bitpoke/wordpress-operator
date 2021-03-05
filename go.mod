@@ -1,6 +1,6 @@
 module github.com/presslabs/wordpress-operator
 
-go 1.15
+go 1.16
 
 require (
 	github.com/appscode/mergo v0.3.6
