@@ -104,6 +104,7 @@ type ReconcileWordpress struct {
 // +kubebuilder:rbac:groups=batch,resources=jobs;cronjobs,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=wordpress.presslabs.org,resources=wordpresses;wordpresses/status,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile reads that state of the cluster for a Wordpress object and makes changes based on the state read
 // and what is in the Wordpress.Spec.
