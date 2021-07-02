@@ -24,10 +24,10 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/go-logr/zapr"
 	logf "github.com/presslabs/controller-util/log"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	"k8s.io/klog/v2/klogr"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -40,8 +40,7 @@ var cfg *rest.Config
 var t *envtest.Environment
 
 func TestWordpressController(t *testing.T) {
-	zapLogger := logf.RawStackdriverZapLoggerTo(GinkgoWriter, true)
-	logf.SetLogger(zapr.NewLogger(zapLogger))
+	logf.SetLogger(klogr.New())
 
 	RegisterFailHandler(Fail)
 	RunSpecsWithDefaultAndCustomReporters(t, "Wordpress Controller Suite", []Reporter{printer.NewlineReporter{}})
