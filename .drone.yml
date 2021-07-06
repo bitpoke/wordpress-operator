@@ -19,33 +19,33 @@ steps:
 
 - name: install dependencies
   pull: always
-  image: quay.io/presslabs/bfc:0.10
+  image: quay.io/presslabs/bfc:0.11
   commands:
   - make -j4 build.tools
 
 - name: verify generated code
-  image: quay.io/presslabs/bfc:0.10
+  image: quay.io/presslabs/bfc:0.11
   commands:
   - make generate
   - git diff --exit-code
 
 - name: lint
-  image: quay.io/presslabs/bfc:0.10
+  image: quay.io/presslabs/bfc:0.11
   commands:
   - make -j4 lint
 
 - name: test
-  image: quay.io/presslabs/bfc:0.10
+  image: quay.io/presslabs/bfc:0.11
   commands:
   - make test
 
 - name: build
-  image: quay.io/presslabs/bfc:0.10
+  image: quay.io/presslabs/bfc:0.11
   commands:
   - make -j4 build
 
 - name: publish
-  image: quay.io/presslabs/bfc:0.10
+  image: quay.io/presslabs/bfc:0.11
   environment:
     DOCKER_REGISTRY: quay.io
     DOCKER_USERNAME: presslabs+drone
