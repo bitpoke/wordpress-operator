@@ -27,6 +27,7 @@ import (
 	logf "github.com/presslabs/controller-util/log"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	"k8s.io/klog/v2"
 	"k8s.io/klog/v2/klogr"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
@@ -40,6 +41,7 @@ var cfg *rest.Config
 var t *envtest.Environment
 
 func TestWordpressController(t *testing.T) {
+	klog.SetOutput(GinkgoWriter)
 	logf.SetLogger(klogr.New())
 
 	RegisterFailHandler(Fail)
