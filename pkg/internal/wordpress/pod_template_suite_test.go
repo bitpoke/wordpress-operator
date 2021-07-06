@@ -23,11 +23,13 @@ import (
 	. "github.com/onsi/gomega"
 
 	logf "github.com/presslabs/controller-util/log"
+	"k8s.io/klog/v2"
 	"k8s.io/klog/v2/klogr"
 	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 )
 
 func TestPodTemplate(t *testing.T) {
+	klog.SetOutput(GinkgoWriter)
 	logf.SetLogger(klogr.New())
 
 	RegisterFailHandler(Fail)
