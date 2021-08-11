@@ -16,6 +16,8 @@ include build/makelib/image.mk
 
 GO_STATIC_PACKAGES = $(GO_PROJECT)/cmd/wordpress-operator
 
+GOLANGCI_LINT_VERSION = 1.37.1
+
 include build/makelib/golang.mk
 include build/makelib/kubebuilder-v2.mk
 include build/makelib/helm.mk
