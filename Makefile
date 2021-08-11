@@ -29,16 +29,15 @@ GO_LDFLAGS += -X github.com/bitpoke/wordpress-operator/pkg/version.buildDate=$(B
 .kubebuilder.update.chart: kubebuilder.manifests $(YQ)
 	@$(INFO) updating helm RBAC and CRDs from kubebuilder manifests
 	@kustomize build config/ > $(HELM_CHARTS_DIR)/wordpress-operator/crds/_crds.yaml
-	@yq w -d'*' -i $(HELM_CHARTS_DIR)/wordpress-operator/crds/_crds.yaml 'metadata.annotations[helm.sh/hook]' crd-install
-	@yq w -d'*' -i $(HELM_CHARTS_DIR)/wordpress-operator/crds/_crds.yaml 'metadata.labels[app]' wordpress-operator
-	@yq d -d'*' -i $(HELM_CHARTS_DIR)/wordpress-operator/crds/_crds.yaml metadata.creationTimestamp
-	@yq d -d'*' -i $(HELM_CHARTS_DIR)/wordpress-operator/crds/_crds.yaml status metadata.creationTimestamp
+	@yq e '.metadata.annotations["helm.sh/hook"]="crd-install"' -i $(HELM_CHARTS_DIR)/wordpress-operator/crds/_crds.yaml
+	@yq e '.metadata.labels["app"]="wordpress-operator"'        -i $(HELM_CHARTS_DIR)/wordpress-operator/crds/_crds.yaml
+	@yq e 'del(.metadata.creationTimestamp)'                    -i $(HELM_CHARTS_DIR)/wordpress-operator/crds/_crds.yaml
+	@yq e 'del(.status)'                                        -i $(HELM_CHARTS_DIR)/wordpress-operator/crds/_crds.yaml
 	@mv $(HELM_CHARTS_DIR)/wordpress-operator/crds/_crds.yaml $(HELM_CHARTS_DIR)/wordpress-operator/crds/crds.yaml
-
 	@cp config/rbac/role.yaml $(HELM_CHARTS_DIR)/wordpress-operator/templates/_rbac.yaml
-	@yq m -d'*' -i $(HELM_CHARTS_DIR)/wordpress-operator/templates/_rbac.yaml hack/chart-metadata.yaml
-	@yq d -d'*' -i $(HELM_CHARTS_DIR)/wordpress-operator/templates/_rbac.yaml metadata.creationTimestamp
-	@yq w -d'*' -i $(HELM_CHARTS_DIR)/wordpress-operator/templates/_rbac.yaml metadata.name '{{ template "wordpress-operator.fullname" . }}'
+	@yq eval-all 'select(fileIndex == 0) * select(filename == "hack/chart-metadata.yaml")' -i $(HELM_CHARTS_DIR)/wordpress-operator/templates/_rbac.yaml hack/chart-metadata.yaml
+	@yq e 'del(.metadata.creationTimestamp)'                                               -i $(HELM_CHARTS_DIR)/wordpress-operator/templates/_rbac.yaml
+	@yq e  '.metadata.name="{{ template \"wordpress-operator.fullname\" . }}"'               -i $(HELM_CHARTS_DIR)/wordpress-operator/templates/_rbac.yaml
 	@echo '{{- if .Values.rbac.create }}' > $(HELM_CHARTS_DIR)/wordpress-operator/templates/controller-clusterrole.yaml
 	@cat $(HELM_CHARTS_DIR)/wordpress-operator/templates/_rbac.yaml >> $(HELM_CHARTS_DIR)/wordpress-operator/templates/controller-clusterrole.yaml
 	@echo '{{- end }}' >> $(HELM_CHARTS_DIR)/wordpress-operator/templates/controller-clusterrole.yaml
