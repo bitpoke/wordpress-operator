@@ -22,7 +22,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 
-	"github.com/presslabs/wordpress-operator/pkg/cmd/options"
+	"github.com/bitpoke/wordpress-operator/pkg/cmd/options"
 )
 
 const (

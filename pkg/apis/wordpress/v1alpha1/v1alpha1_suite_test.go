@@ -28,7 +28,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 
-	. "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
+	. "github.com/bitpoke/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
 var t *envtest.Environment

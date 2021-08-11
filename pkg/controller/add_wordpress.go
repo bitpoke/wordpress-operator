@@ -17,7 +17,7 @@ limitations under the License.
 package controller
 
 import (
-	"github.com/presslabs/wordpress-operator/pkg/controller/wordpress"
+	"github.com/bitpoke/wordpress-operator/pkg/controller/wordpress"
 )
 
 func init() {

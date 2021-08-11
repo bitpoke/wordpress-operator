@@ -24,7 +24,7 @@ import (
 	// metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	. "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
+	. "github.com/bitpoke/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
 var _ = Describe("Wordpress CRUD", func() {

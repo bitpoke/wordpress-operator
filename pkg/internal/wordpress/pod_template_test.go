@@ -28,8 +28,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
-	"github.com/presslabs/wordpress-operator/pkg/cmd/options"
+	wordpressv1alpha1 "github.com/bitpoke/wordpress-operator/pkg/apis/wordpress/v1alpha1"
+	"github.com/bitpoke/wordpress-operator/pkg/cmd/options"
 )
 
 var _ = Describe("Web pod spec", func() {

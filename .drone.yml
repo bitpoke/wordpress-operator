@@ -7,7 +7,7 @@ clone:
 
 workspace:
   base: /workspace
-  path: src/github.com/presslabs/wordpress-operator
+  path: src/github.com/bitpoke/wordpress-operator
 
 steps:
 - name: git
@@ -19,38 +19,40 @@ steps:
 
 - name: install dependencies
   pull: always
-  image: quay.io/presslabs/bfc:0.11
+  image: docker.io/bitpoke/build:v0.3.0-3.g7069e76
   commands:
   - make -j4 build.tools
 
 - name: verify generated code
-  image: quay.io/presslabs/bfc:0.11
+  image: docker.io/bitpoke/build:v0.3.0-3.g7069e76
   commands:
   - make generate
   - git diff --exit-code
 
 - name: lint
-  image: quay.io/presslabs/bfc:0.11
+  image: docker.io/bitpoke/build:v0.3.0-3.g7069e76
   commands:
   - make -j4 lint
 
 - name: test
-  image: quay.io/presslabs/bfc:0.11
+  image: docker.io/bitpoke/build:v0.3.0-3.g7069e76
   commands:
   - make test
 
 - name: build
-  image: quay.io/presslabs/bfc:0.11
+  image: docker.io/bitpoke/build:v0.3.0-3.g7069e76
   commands:
   - make -j4 build
 
 - name: publish
-  image: quay.io/presslabs/bfc:0.11
+  image: docker.io/bitpoke/build:v0.3.0-3.g7069e76
   environment:
-    DOCKER_REGISTRY: quay.io
-    DOCKER_USERNAME: presslabs+drone
+    DOCKER_REGISTRY:
+      from_secret: DOCKER_REGISTRY
+    DOCKER_USERNAME:
+      from_secret: DOCKER_USERNAME
     DOCKER_PASSWORD:
-      from_secret: QUAY_TOKEN
+      from_secret: DOCKER_PASSWORD
   commands:
   - /usr/local/bin/setup-credentials-helper.sh
   - make publish

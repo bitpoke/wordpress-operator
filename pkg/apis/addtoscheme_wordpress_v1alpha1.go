@@ -17,7 +17,7 @@ limitations under the License.
 package apis
 
 import (
-	"github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
+	"github.com/bitpoke/wordpress-operator/pkg/apis/wordpress/v1alpha1"
 )
 
 func init() {

@@ -17,7 +17,7 @@ limitations under the License.
 package controller
 
 import (
-	wpcron "github.com/presslabs/wordpress-operator/pkg/controller/wp-cron"
+	wpcron "github.com/bitpoke/wordpress-operator/pkg/controller/wp-cron"
 )
 
 func init() {

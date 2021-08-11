@@ -26,7 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/presslabs/wordpress-operator/pkg/internal/wordpress"
+	"github.com/bitpoke/wordpress-operator/pkg/internal/wordpress"
 )
 
 var errMediaVolumeClaimNotDefined = errors.New(".spec.media.persistentVolumeClaim is not defined")

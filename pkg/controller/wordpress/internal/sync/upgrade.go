@@ -27,7 +27,7 @@ import (
 	"github.com/presslabs/controller-util/mergo/transformers"
 	"github.com/presslabs/controller-util/syncer"
 
-	"github.com/presslabs/wordpress-operator/pkg/internal/wordpress"
+	"github.com/bitpoke/wordpress-operator/pkg/internal/wordpress"
 )
 
 // NewDBUpgradeJobSyncer returns a new sync.Interface for reconciling database upgrade Job.

@@ -38,8 +38,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	wordpressv1alpha1 "github.com/presslabs/wordpress-operator/pkg/apis/wordpress/v1alpha1"
-	"github.com/presslabs/wordpress-operator/pkg/internal/wordpress"
+	wordpressv1alpha1 "github.com/bitpoke/wordpress-operator/pkg/apis/wordpress/v1alpha1"
+	"github.com/bitpoke/wordpress-operator/pkg/internal/wordpress"
 )
 
 const (

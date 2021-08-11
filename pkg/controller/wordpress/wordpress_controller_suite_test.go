@@ -34,7 +34,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	"github.com/presslabs/wordpress-operator/pkg/apis"
+	"github.com/bitpoke/wordpress-operator/pkg/apis"
 )
 
 var cfg *rest.Config

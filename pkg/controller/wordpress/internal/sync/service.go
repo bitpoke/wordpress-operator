@@ -27,7 +27,7 @@ import (
 
 	"github.com/presslabs/controller-util/syncer"
 
-	"github.com/presslabs/wordpress-operator/pkg/internal/wordpress"
+	"github.com/bitpoke/wordpress-operator/pkg/internal/wordpress"
 )
 
 var errImmutableServiceSelector = errors.New("service selector is immutable")

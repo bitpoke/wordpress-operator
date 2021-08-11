@@ -1,10 +1,10 @@
 # Project Setup
 PROJECT_NAME := wordpress-operator
-PROJECT_REPO := github.com/presslabs/$(PROJECT_NAME)
+PROJECT_REPO := github.com/bitpoke/$(PROJECT_NAME)
 
 PLATFORMS = linux_amd64 darwin_amd64
 
-DOCKER_REGISTRY := quay.io/presslabs
+DOCKER_REGISTRY := docker.io/bitpoke
 
 GO111MODULE=on
 
@@ -20,10 +20,10 @@ include build/makelib/golang.mk
 include build/makelib/kubebuilder-v2.mk
 include build/makelib/helm.mk
 
-GO_LDFLAGS += -X github.com/presslabs/wordpress-operator/pkg/version.buildDate=$(BUILD_DATE) \
-	       -X github.com/presslabs/wordpress-operator/pkg/version.gitVersion=$(VERSION) \
-	       -X github.com/presslabs/wordpress-operator/pkg/version.gitCommit=$(GIT_COMMIT) \
-	       -X github.com/presslabs/wordpress-operator/pkg/version.gitTreeState=$(GIT_TREE_STATE)
+GO_LDFLAGS += -X github.com/bitpoke/wordpress-operator/pkg/version.buildDate=$(BUILD_DATE) \
+	       -X github.com/bitpoke/wordpress-operator/pkg/version.gitVersion=$(VERSION) \
+	       -X github.com/bitpoke/wordpress-operator/pkg/version.gitCommit=$(GIT_COMMIT) \
+	       -X github.com/bitpoke/wordpress-operator/pkg/version.gitTreeState=$(GIT_TREE_STATE)
 
 .PHONY: .kubebuilder.update.chart
 .kubebuilder.update.chart: kubebuilder.manifests $(YQ)

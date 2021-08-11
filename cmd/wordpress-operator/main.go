@@ -27,9 +27,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 
-	"github.com/presslabs/wordpress-operator/pkg/apis"
-	"github.com/presslabs/wordpress-operator/pkg/cmd/options"
-	"github.com/presslabs/wordpress-operator/pkg/controller"
+	"github.com/bitpoke/wordpress-operator/pkg/apis"
+	"github.com/bitpoke/wordpress-operator/pkg/cmd/options"
+	"github.com/bitpoke/wordpress-operator/pkg/controller"
 )
 
 const genericErrorExitCode = 1

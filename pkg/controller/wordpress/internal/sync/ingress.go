@@ -25,8 +25,8 @@ import (
 
 	"github.com/presslabs/controller-util/syncer"
 
-	"github.com/presslabs/wordpress-operator/pkg/cmd/options"
-	"github.com/presslabs/wordpress-operator/pkg/internal/wordpress"
+	"github.com/bitpoke/wordpress-operator/pkg/cmd/options"
+	"github.com/bitpoke/wordpress-operator/pkg/internal/wordpress"
 )
 
 const ingressClassAnnotationKey = "kubernetes.io/ingress.class"

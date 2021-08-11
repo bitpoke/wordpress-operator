@@ -1,4 +1,4 @@
-module github.com/presslabs/wordpress-operator
+module github.com/bitpoke/wordpress-operator
 
 go 1.16
 

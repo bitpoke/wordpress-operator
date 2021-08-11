@@ -1,5 +1,5 @@
 wordpress-operator
-[![Build Status](https://stack-ci.presslabs.net/api/badges/presslabs/wordpress-operator/status.svg)](https://stack-ci.presslabs.net/presslabs/wordpress-operator)
+[![Build Status](https://bitpoke.cloud/api/badges/bitpoke/wordpress-operator/status.svg)](https://bitpoke.cloud/bitpoke/wordpress-operator)
 ===
 WordPress operator enables managing multiple WordPress installments at scale.
 
@@ -13,14 +13,14 @@ The main goals of the operator are:
 2. Allow best practices for en masse upgrades (canary, slow rollout, etc.)
 3. Friendly to devops (monitoring, availability, scalability and backup stories solved)
 
-The project is actively developed and maintained and has reached stable beta state. Check [here](https://github.com/presslabs/wordpress-operator/releases) the project releases.
+The project is actively developed and maintained and has reached stable beta state. Check [here](https://github.com/bitpoke/wordpress-operator/releases) the project releases.
 
 
 
 ## Components
 
 1. WordPress operator - this project
-2. WordPress runtime - container image supporting the project goals (https://github.com/presslabs/runtime)
+2. WordPress runtime - container image supporting the project goals (https://github.com/bitpoke/stack-runtime/tree/master/wordpress)
 
 
 
@@ -35,23 +35,23 @@ Install kustomize. New to kustomize? Check https://kustomize.io/
 To install CRDs use the following command:
 
 ```shell
-kustomize build github.com/presslabs/wordpress-operator/config | kubectl apply -f-
+kustomize build github.com/bitpoke/wordpress-operator/config | kubectl apply -f-
 ```
 
 
 ### Install controller
 
-Install helm. New to helm? Check https://github.com/helm/helm#install 
+Install helm. New to helm? Check https://github.com/helm/helm#install
 
-Install kubectl. For more details, see: https://kubernetes.io/docs/tasks/tools/install-kubectl/ 
+Install kubectl. For more details, see: https://kubernetes.io/docs/tasks/tools/install-kubectl/
 
 To deploy this controller, use the provided helm chart, by running:
 
 ```shell
-helm repo add presslabs https://presslabs.github.io/charts
-helm install presslabs/wordpress-operator --name wordpress-operator
+helm repo add bitpoke https://helm.bitpoke.cloud/charts
+helm install bitpoke/wordpress-operator --name wordpress-operator
 # or if using helm v3
-helm install wordpress-operator presslabs/wordpress-operator
+helm install wordpress-operator bitpoke/wordpress-operator
 ```
 
 
@@ -67,7 +67,7 @@ spec:
   replicas: 3
   domains:
     - example.com
-  # image: quay.io/presslabs/wordpress-runtime
+  # image: docker.io/bitpoke/wordpress-runtime
   # tag: latest
   code: # where to find the code
     # contentSubpath: wp-content/
@@ -118,7 +118,7 @@ spec:
         valueFrom:
           secretKeyRef:
             name: mysite
-            key: EMAIL 
+            key: EMAIL
       - name: WORDPRESS_BOOTSTRAP_TITLE
         valueFrom:
           secretKeyRef:

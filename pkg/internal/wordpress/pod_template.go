@@ -27,7 +27,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	"github.com/presslabs/wordpress-operator/pkg/cmd/options"
+	"github.com/bitpoke/wordpress-operator/pkg/cmd/options"
 )
 
 const (
