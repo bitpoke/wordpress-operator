@@ -1,5 +1,26 @@
-apiVersion: v1
-appVersion: master
-description: Bitpoke WordPress Operator Helm Chart
+apiVersion: v2
 name: wordpress-operator
+description: Bitpoke WordPress Operator Helm Chart
+appVersion: master
+kubeVersion: ">= 1.16.0"
+keywords:
+  - wordpress
+  - bitpoke
+  - woocommerce
+  - php
+  - blog
+  - http
+  - web
+  - application
 version: 0.1.0+master
+home: https://www.bitpoke.io/
+sources:
+  - https://github.com/bitpoke/wordpress-operator.git
+annotations:
+  category: CMS
+  artifacthub.io/license: "Apache-2.0"
+  artifacthub.io/operator: "true"
+  artifacthub.io/operatorCapabilities: "full lifecycle"
+  artifacthub.io/images: |
+    - name: wordpress-operator
+      image: docker.io/bitpoke/wordpress-operator:latest

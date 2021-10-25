@@ -63,6 +63,7 @@ GO_LDFLAGS += -X github.com/bitpoke/wordpress-operator/pkg/version.buildDate=$(B
 .helm.package.prepare.wordpress-operator:  $(YQ)
 	@$(INFO) prepare wordpress-operator chart $(HELM_CHART_VERSION)
 	@$(YQ) e '.image="$(DOCKER_REGISTRY)/wordpress-operator:$(IMAGE_TAG)"' -i $(HELM_CHARTS_WORK_DIR)/wordpress-operator/values.yaml
+	@$(SED) 's/:latest/:$(IMAGE_TAG)/g' $(HELM_CHARTS_WORK_DIR)/wordpress-operator/Chart.yaml
 	@$(OK) prepare wordpress-operator chart $(HELM_CHART_VERSION)
 .helm.package.run.wordpress-operator: .helm.package.prepare.wordpress-operator
 
