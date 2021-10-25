@@ -20,7 +20,7 @@ The project is actively developed and maintained and has reached stable beta sta
 ## Components
 
 1. WordPress operator - this project
-2. WordPress runtime - container image supporting the project goals (https://github.com/bitpoke/stack-runtime/tree/master/wordpress)
+2. WordPress runtime - container image supporting the project goals (https://github.com/bitpoke/stack-runtimes/tree/master/wordpress)
 
 
 
