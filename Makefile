@@ -46,3 +46,23 @@ GO_LDFLAGS += -X github.com/bitpoke/wordpress-operator/pkg/version.buildDate=$(B
 	@rm $(HELM_CHARTS_DIR)/wordpress-operator/templates/_rbac.yaml
 	@$(OK) updating helm RBAC and CRDs from kubebuilder manifests
 .generate.run: .kubebuilder.update.chart
+
+.PHONY: .helm.publish
+.helm.publish:
+	@$(INFO) publishing helm charts
+	@rm -rf $(WORK_DIR)/charts
+	@git clone -q git@github.com:bitpoke/helm-charts.git $(WORK_DIR)/charts
+	@cp $(HELM_OUTPUT_DIR)/*.tgz $(WORK_DIR)/charts/docs/
+	@git -C $(WORK_DIR)/charts add $(WORK_DIR)/charts/docs/*.tgz
+	@git -C $(WORK_DIR)/charts commit -q -m "Added $(call list-join,$(COMMA)$(SPACE),$(foreach c,$(HELM_CHARTS),$(c)-v$(HELM_CHART_VERSION)))"
+	@git -C $(WORK_DIR)/charts push -q
+	@$(OK) publishing helm charts
+.publish.run: .helm.publish
+
+.PHONY: .helm.package.prepare.wordpress-operator
+.helm.package.prepare.wordpress-operator:  $(YQ)
+	@$(INFO) prepare wordpress-operator chart $(HELM_CHART_VERSION)
+	@$(YQ) e '.image="$(DOCKER_REGISTRY)/wordpress-operator:$(IMAGE_TAG)"' -i $(HELM_CHARTS_WORK_DIR)/wordpress-operator/values.yaml
+	@$(OK) prepare wordpress-operator chart $(HELM_CHART_VERSION)
+.helm.package.run.wordpress-operator: .helm.package.prepare.wordpress-operator
+
