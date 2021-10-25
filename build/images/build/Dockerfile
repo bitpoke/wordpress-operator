@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM google/cloud-sdk:351.0.0
+FROM google/cloud-sdk:357.0.0
 
 ARG ARCH
 
@@ -66,8 +66,13 @@ RUN sh -c 'echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" > /
 
 # ------------------------------------------------------------------------------------------------
 # git config
-RUN git config --global user.email "bot@bitpoke.cloud" \
-    && git config --global user.name "RoBot"
+RUN set -ex \
+    && git config --global user.email "bot@bitpoke.cloud" \
+    && git config --global user.name "Bitpoke Bot" \
+    && git config --global diff.tar-filelist.binary true \
+    && git config --global diff.tar-filelist.textconv 'tar -tvf' \
+    && git config --global diff.tar.binary true \
+    && git config --global diff.tar.textconv 'tar -xvOf'
 
 # ------------------------------------------------------------------------------------------------
 # Go support
@@ -176,8 +181,6 @@ RUN set -ex \
     && export TINI_VERSION=v0.19.0 \
     && curl -sL -o /tini https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-${ARCH} \
     && chmod +x /tini
-
-ENV DOCKER_HOST=unix:///workspace/docker.sock
 
 COPY root /
 
