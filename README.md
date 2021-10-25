@@ -1,9 +1,6 @@
-wordpress-operator
-[![Build Status](https://bitpoke.cloud/api/badges/bitpoke/wordpress-operator/status.svg)](https://bitpoke.cloud/bitpoke/wordpress-operator)
+wordpress-operator [![Build Status](https://ci.bitpoke.io/api/badges/bitpoke/wordpress-operator/status.svg)](https://ci.bitpoke.io/bitpoke/wordpress-operator)
 ===
-WordPress operator enables managing multiple WordPress installments at scale.
-
-
+Bitpoke WordPress operator enables managing multiple WordPress installments at scale.
 
 ## Goals and status
 
@@ -15,14 +12,10 @@ The main goals of the operator are:
 
 The project is actively developed and maintained and has reached stable beta state. Check [here](https://github.com/bitpoke/wordpress-operator/releases) the project releases.
 
-
-
 ## Components
 
 1. WordPress operator - this project
 2. WordPress runtime - container image supporting the project goals (https://github.com/bitpoke/stack-runtimes/tree/master/wordpress)
-
-
 
 ## Deploy
 
@@ -31,6 +24,7 @@ The project is actively developed and maintained and has reached stable beta sta
 #### This step is optional. By default helm will install CRDs.
 
 Install kustomize. New to kustomize? Check https://kustomize.io/
+Install kubectl. For more details, see: https://kubernetes.io/docs/tasks/tools/install-kubectl/
 
 To install CRDs use the following command:
 
@@ -38,25 +32,18 @@ To install CRDs use the following command:
 kustomize build github.com/bitpoke/wordpress-operator/config | kubectl apply -f-
 ```
 
-
 ### Install controller
 
 Install helm. New to helm? Check https://github.com/helm/helm#install
 
-Install kubectl. For more details, see: https://kubernetes.io/docs/tasks/tools/install-kubectl/
-
 To deploy this controller, use the provided helm chart, by running:
 
 ```shell
-helm repo add bitpoke https://helm.bitpoke.cloud/charts
-helm install bitpoke/wordpress-operator --name wordpress-operator
-# or if using helm v3
+helm repo add bitpoke https://helm-charts.bitpoke.io
 helm install wordpress-operator bitpoke/wordpress-operator
 ```
 
-
-
-## Deploying a Wordpress Site
+## Deploying a WordPress Site
 
 ```yaml
 apiVersion: wordpress.presslabs.org/v1alpha1
@@ -124,11 +111,11 @@ spec:
           secretKeyRef:
             name: mysite
             key: TITLE
-  # extra volumes for the Wordpress container
+  # extra volumes for the WordPress container
   volumes: []
-  # extra volume mounts for the Wordpress container
+  # extra volume mounts for the WordPress container
   volumeMounts: []
-  # extra env variables for the Wordpress container
+  # extra env variables for the WordPress container
   env:
     - name: DB_HOST
       value: mysite-mysql
@@ -151,8 +138,6 @@ spec:
   # extra ingress annotations
   ingressAnnotations: {}
 ```
-
-
 
 ## License
 
