@@ -19,33 +19,73 @@ steps:
 
 - name: install dependencies
   pull: always
-  image: docker.io/bitpoke/build:v0.3.0-3.g7069e76
+  image: docker.io/bitpoke/build:v0.6.0
   commands:
   - make -j4 build.tools
 
 - name: verify generated code
-  image: docker.io/bitpoke/build:v0.3.0-3.g7069e76
+  image: docker.io/bitpoke/build:v0.6.0
   commands:
   - make generate
   - git diff --exit-code
 
 - name: lint
-  image: docker.io/bitpoke/build:v0.3.0-3.g7069e76
+  image: docker.io/bitpoke/build:v0.6.0
   commands:
   - make -j4 lint
 
 - name: test
-  image: docker.io/bitpoke/build:v0.3.0-3.g7069e76
+  image: docker.io/bitpoke/build:v0.6.0
   commands:
   - make test
 
 - name: build
-  image: docker.io/bitpoke/build:v0.3.0-3.g7069e76
+  image: docker.io/bitpoke/build:v0.6.0
+  commands:
+  - make -j4 build
+
+services:
+- name: docker
+  image: docker:20.10.8-dind-rootless
+  environment:
+    DOCKER_TLS_CERTDIR: ""
+
+trigger:
+  ref:
+    - refs/pull/**
+    - refs/heads/master
+    - refs/heads/release-*
+    # CI related changes SHOULD be prefixed with drone-
+    - refs/heads/drone-*
+
+---
+kind: pipeline
+name: publish
+
+trigger:
+  ref:
+    - refs/tags/**
+clone:
+  disable: true
+
+workspace:
+  base: /workspace
+  path: src/github.com/bitpoke/wordpress-operator
+
+steps:
+- name: git
+  image: plugins/git
+  settings:
+    depth: 0
+    tags: true
+
+- name: build
+  image: docker.io/bitpoke/build:v0.6.0
   commands:
   - make -j4 build
 
 - name: publish
-  image: docker.io/bitpoke/build:v0.3.0-3.g7069e76
+  image: docker.io/bitpoke/build:v0.6.0
   environment:
     DOCKER_REGISTRY:
       from_secret: DOCKER_REGISTRY
@@ -53,24 +93,21 @@ steps:
       from_secret: DOCKER_USERNAME
     DOCKER_PASSWORD:
       from_secret: DOCKER_PASSWORD
+    SSH_KEY:
+      from_secret: SSH_KEY
+    # make build system happy by setting a branch name on tags
+    BRANCH_NAME: release-${DRONE_TAG}
   commands:
   - /usr/local/bin/setup-credentials-helper.sh
+  - git config --global user.email "bot@bitpoke.io"
+  - git config --global user.name "Bitpoke Bot"
+  - git config --global push.default current
+  - ssh-keyscan -H github.com > /etc/ssh/ssh_known_hosts
   - make publish
-  when:
-    event:
-      - push
-      - tag
 
 services:
 - name: docker
-  image: docker:dind
-  privileged: true
-  commands:
-    - /usr/local/bin/dockerd-entrypoint.sh dockerd --host "unix:///workspace/docker.sock" --storage-driver overlay2 --log-level error
+  image: docker:20.10.8-dind-rootless
+  environment:
+    DOCKER_TLS_CERTDIR: ""
 
-trigger:
-  ref:
-    - refs/pull/**
-    - refs/heads/master
-    - refs/heads/release-*
-    - refs/tags/**
