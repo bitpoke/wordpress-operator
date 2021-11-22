@@ -1025,7 +1025,7 @@ spec:
                     type: object
                   type: array
                 image:
-                  description: WordPress runtime image to use. Defaults to quay.io/presslabs/wordpress-runtime:<latest stable runtime tag>
+                  description: WordPress runtime image to use. Defaults to docker.io/bitpoke/wordpress-runtime:<latest stable runtime tag>
                   type: string
                 imagePullPolicy:
                   description: ImagePullPolicy overrides WordpressRuntime spec.imagePullPolicy

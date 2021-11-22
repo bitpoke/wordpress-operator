@@ -32,7 +32,7 @@ var _ = Describe("The upsertPath function", func() {
 	BeforeEach(func() {
 		rules = []netv1beta1.IngressRule{
 			{
-				Host: "presslabs.com",
+				Host: "bitpoke.io",
 				IngressRuleValue: netv1beta1.IngressRuleValue{
 					HTTP: &netv1beta1.HTTPIngressRuleValue{
 						Paths: []netv1beta1.HTTPIngressPath{
@@ -41,17 +41,17 @@ var _ = Describe("The upsertPath function", func() {
 					},
 				},
 			},
-			{Host: "blog.presslabs.com"},
+			{Host: "blog.bitpoke.io"},
 		}
 		bk = netv1beta1.IngressBackend{}
 	})
 
 	When("upserting a new host", func() {
 		It("should create a new rule", func() {
-			Expect(upsertPath(rules, "docs.presslabs.com", "/", bk)).To(Equal(
+			Expect(upsertPath(rules, "docs.bitpoke.io", "/", bk)).To(Equal(
 				[]netv1beta1.IngressRule{
 					{
-						Host: "presslabs.com",
+						Host: "bitpoke.io",
 						IngressRuleValue: netv1beta1.IngressRuleValue{
 							HTTP: &netv1beta1.HTTPIngressRuleValue{
 								Paths: []netv1beta1.HTTPIngressPath{
@@ -60,9 +60,9 @@ var _ = Describe("The upsertPath function", func() {
 							},
 						},
 					},
-					{Host: "blog.presslabs.com"},
+					{Host: "blog.bitpoke.io"},
 					{
-						Host: "docs.presslabs.com",
+						Host: "docs.bitpoke.io",
 						IngressRuleValue: netv1beta1.IngressRuleValue{
 							HTTP: &netv1beta1.HTTPIngressRuleValue{
 								Paths: []netv1beta1.HTTPIngressPath{
@@ -77,10 +77,10 @@ var _ = Describe("The upsertPath function", func() {
 
 	When("upserting an existing host with a new path", func() {
 		It("should add the path to the existing rule", func() {
-			Expect(upsertPath(rules, "presslabs.com", "/blog", bk)).To(Equal(
+			Expect(upsertPath(rules, "bitpoke.io", "/blog", bk)).To(Equal(
 				[]netv1beta1.IngressRule{
 					{
-						Host: "presslabs.com",
+						Host: "bitpoke.io",
 						IngressRuleValue: netv1beta1.IngressRuleValue{
 							HTTP: &netv1beta1.HTTPIngressRuleValue{
 								Paths: []netv1beta1.HTTPIngressPath{
@@ -90,17 +90,17 @@ var _ = Describe("The upsertPath function", func() {
 							},
 						},
 					},
-					{Host: "blog.presslabs.com"},
+					{Host: "blog.bitpoke.io"},
 				}))
 		})
 	})
 
 	When("upserting an existing host with an existing path", func() {
 		It("should not change anything", func() {
-			Expect(upsertPath(rules, "presslabs.com", "/", bk)).To(Equal(
+			Expect(upsertPath(rules, "bitpoke.io", "/", bk)).To(Equal(
 				[]netv1beta1.IngressRule{
 					{
-						Host: "presslabs.com",
+						Host: "bitpoke.io",
 						IngressRuleValue: netv1beta1.IngressRuleValue{
 							HTTP: &netv1beta1.HTTPIngressRuleValue{
 								Paths: []netv1beta1.HTTPIngressPath{
@@ -109,7 +109,7 @@ var _ = Describe("The upsertPath function", func() {
 							},
 						},
 					},
-					{Host: "blog.presslabs.com"},
+					{Host: "blog.bitpoke.io"},
 				}))
 
 		})

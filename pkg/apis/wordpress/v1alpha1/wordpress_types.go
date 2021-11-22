@@ -84,7 +84,7 @@ type WordpressSpec struct {
 	// If no routes are specified, ingress syncing is disabled and WP_HOME de defaults to NAME.NAMESPACE.svc.
 	// +optional
 	Routes []RouteSpec `json:"routes,omitempty"`
-	// WordPress runtime image to use. Defaults to quay.io/presslabs/wordpress-runtime:<latest stable runtime tag>
+	// WordPress runtime image to use. Defaults to docker.io/bitpoke/wordpress-runtime:<latest stable runtime tag>
 	// +optional
 	Image string `json:"image,omitempty"`
 	// ImagePullPolicy overrides WordpressRuntime spec.imagePullPolicy

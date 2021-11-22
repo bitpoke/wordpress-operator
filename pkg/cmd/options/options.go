@@ -23,7 +23,7 @@ var (
 	GitCloneImage = "docker.io/library/buildpack-deps:stretch-scm"
 
 	// WordpressRuntimeImage is the base image used to run your code.
-	WordpressRuntimeImage = "quay.io/presslabs/wordpress-runtime:5.2.2"
+	WordpressRuntimeImage = "docker.io/bitpoke/wordpress-runtime:5.8.2"
 
 	// IngressClass is the default ingress class used used for creating WordPress ingresses.
 	IngressClass = ""
