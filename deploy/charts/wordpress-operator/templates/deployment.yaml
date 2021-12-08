@@ -3,51 +3,59 @@ kind: Deployment
 metadata:
   name: {{ include "wordpress-operator.fullname" . }}
   labels:
-    app: {{ include "wordpress-operator.name" . }}
-    chart: {{ include "wordpress-operator.chart" . }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
+    {{- include "wordpress-operator.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: {{ include "wordpress-operator.name" . }}
-      release: {{ .Release.Name }}
+      {{- include "wordpress-operator.selectorLabels" . | nindent 6 }}
   template:
     metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       labels:
-        app: {{ include "wordpress-operator.name" . }}
-        release: {{ .Release.Name }}
+        {{- include "wordpress-operator.selectorLabels" . | nindent 8 }}
     spec:
-      serviceAccount: {{ template "wordpress-operator.serviceAccountName" . }}
-      containers:
-        - name: {{ .Chart.Name }}
-          image: "{{ .Values.image }}"
-          imagePullPolicy: {{ .Values.imagePullPolicy }}
-
-          {{- with .Values.extraEnv }}
-          env:
-            {{- range $name, $value := . }}
-            - name: {{ $name }}
-              value: {{ $value | quote }}
-            {{ end }}
-          {{- end }}
-
-          {{- with .Values.extraArgs }}
-          args:
-            {{- range $arg := . }}
-            - {{ $arg }}
-            {{- end }}
-          {{- end }}
-          resources:
-            {{- toYaml .Values.resources | nindent 12 }}
-
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
-        {{- range $arg := . }}
-        - name: {{ $arg }}
-        {{- end }}
+        {{- toYaml . | nindent 8 }}
       {{- end }}
+      serviceAccountName: {{ include "wordpress-operator.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if .Values.extraEnv }}
+          env:
+            {{- toYaml .Values.extraEnv | nindent 12 }}
+          {{- end }}
+          {{- if .Values.extraArgs }}
+          args:
+            {{- toYaml .Values.extraArgs | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: health
+              containerPort: 9000
+              protocol: TCP
+            - name: prometheus
+              containerPort: 9125
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: health
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: health
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -60,3 +68,4 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+

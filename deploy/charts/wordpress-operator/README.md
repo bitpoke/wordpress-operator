@@ -14,10 +14,10 @@ The following table contains the configuration parameters for wordpress-operator
 | Parameter                       | Description                                                                                   | Default value                                           |
 | ---                             | ---                                                                                           | ---                                                     |
 | `replicas`                      | Replicas for controller                                                                       | `1`                                                     |
-| `image`                         | Controller container image                                                                    | `docker.io/bitpoke/wordpress-operator:latest`           |
-| `imagePullPolicy`               | Controller image pull policy                                                                  | `IfNotPresent`                                          |
+| `image.repository`              | Controller image repository                                                                   | `docker.io/bitpoke/wordpress-operator`                  |
+| `image.pullPolicy`              | Controller image pull policy                                                                  | `IfNotPresent`                                          |
+| `image.tag       `              | Controller image tag                                                                          | `latest`                                                |
 | `imagePullSecrets`              | Controller image pull secret                                                                  |                                                         |
-| `installCRDs`                   | Whether or not to install CRDS, Regardless of value of this, Helm v3+ will install the CRDs if those are not present already. Use `--skip-crds` with `helm install` if you want to skip CRD creation                                                                | `true`                                    |
 | `resources`                     | Controller container resources limits and requests                                            | `{}`                                                    |
 | `nodeSelector`                  | Controller pod nodeSelector                                                                   | `{}`                                                    |
 | `tolerations`                   | Controller pod tolerations                                                                    | `{}`                                                    |
