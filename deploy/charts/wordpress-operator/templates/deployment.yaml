@@ -41,10 +41,10 @@ spec:
           {{- end }}
           ports:
             - name: health
-              containerPort: 9000
+              containerPort: 8081
               protocol: TCP
             - name: prometheus
-              containerPort: 9125
+              containerPort: 8080
               protocol: TCP
           livenessProbe:
             httpGet:
