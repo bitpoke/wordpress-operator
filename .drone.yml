@@ -19,28 +19,28 @@ steps:
 
 - name: install dependencies
   pull: always
-  image: docker.io/bitpoke/build:v0.6.0
+  image: docker.io/bitpoke/build:v0.7.2
   commands:
   - make -j4 build.tools
 
 - name: verify generated code
-  image: docker.io/bitpoke/build:v0.6.0
+  image: docker.io/bitpoke/build:v0.7.2
   commands:
   - make generate
   - git diff --exit-code
 
 - name: lint
-  image: docker.io/bitpoke/build:v0.6.0
+  image: docker.io/bitpoke/build:v0.7.2
   commands:
   - make -j4 lint
 
 - name: test
-  image: docker.io/bitpoke/build:v0.6.0
+  image: docker.io/bitpoke/build:v0.7.2
   commands:
   - make test
 
 - name: build
-  image: docker.io/bitpoke/build:v0.6.0
+  image: docker.io/bitpoke/build:v0.7.2
   commands:
   - make -j4 build
 
@@ -80,17 +80,15 @@ steps:
     tags: true
 
 - name: build
-  image: docker.io/bitpoke/build:v0.6.0
+  image: docker.io/bitpoke/build:v0.7.2
   commands:
   - make -j4 build
 
 - name: publish
-  image: docker.io/bitpoke/build:v0.6.0
+  image: docker.io/bitpoke/build:v0.7.2
   environment:
-    DOCKER_REGISTRY:
-      from_secret: DOCKER_REGISTRY
-    DOCKER_USERNAME:
-      from_secret: DOCKER_USERNAME
+    DOCKER_REGISTRY: docker.io/bitpoke
+    DOCKER_USERNAME: bitpokebot
     DOCKER_PASSWORD:
       from_secret: DOCKER_PASSWORD
     SSH_KEY:
