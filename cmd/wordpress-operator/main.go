@@ -24,6 +24,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/klog/v2/klogr"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
+	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 
@@ -36,15 +37,11 @@ const genericErrorExitCode = 1
 
 var setupLog = logf.Log.WithName("wordpress-operator")
 
-func main() {
-	fs := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
-	options.AddToFlagSet(fs)
+// +kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;watch;create;update;patch;delete
 
-	err := fs.Parse(os.Args)
-	if err != nil {
-		setupLog.Error(err, "unable to parse args")
-		os.Exit(genericErrorExitCode)
-	}
+func main() {
+	options.AddToFlagSet(flag.CommandLine)
+	flag.Parse()
 
 	logf.SetLogger(klogr.New())
 
@@ -58,7 +55,14 @@ func main() {
 	}
 
 	// Create a new Cmd to provide shared dependencies and start components
-	mgr, err := manager.New(cfg, manager.Options{})
+	mgr, err := manager.New(cfg, manager.Options{
+		LeaderElection:             options.LeaderElection,
+		LeaderElectionID:           options.LeaderElectionID,
+		LeaderElectionNamespace:    options.LeaderElectionNamespace,
+		LeaderElectionResourceLock: "leases",
+		MetricsBindAddress:         options.MetricsBindAddress,
+		HealthProbeBindAddress:     options.HealthProbeBindAddress,
+	})
 	if err != nil {
 		setupLog.Error(err, "unable to create a new manager")
 		os.Exit(genericErrorExitCode)
@@ -74,6 +78,16 @@ func main() {
 	if err := controller.AddToManager(mgr); err != nil {
 		setupLog.Error(err, "unable to setup controllers")
 		os.Exit(genericErrorExitCode)
+	}
+
+	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+		setupLog.Error(err, "unable to set up health check")
+		os.Exit(1)
+	}
+
+	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+		setupLog.Error(err, "unable to set up ready check")
+		os.Exit(1)
 	}
 
 	// Start the Cmd
