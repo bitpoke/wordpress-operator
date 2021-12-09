@@ -10,8 +10,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Removed
 ### Fixed
 
+## [0.11.1] - 2021-11-22
+### Changed
+ * Change the default image to `docker.io/bitpoke/wordpress-runtime:5.8.2`
+
 ## [0.11.0] - 2021-11-15
-### Added
 ### Changed
  * Use [Bitpoke Build](https://github.com/bitpoke/build) for building the
    project
