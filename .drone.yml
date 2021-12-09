@@ -87,10 +87,8 @@ steps:
 - name: publish
   image: docker.io/bitpoke/build:v0.6.0
   environment:
-    DOCKER_REGISTRY:
-      from_secret: DOCKER_REGISTRY
-    DOCKER_USERNAME:
-      from_secret: DOCKER_USERNAME
+    DOCKER_REGISTRY: docker.io/bitpoke
+    DOCKER_USERNAME: bitpokebot
     DOCKER_PASSWORD:
       from_secret: DOCKER_PASSWORD
     SSH_KEY:
