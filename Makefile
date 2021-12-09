@@ -45,6 +45,8 @@ include build/makelib/helm.mk
 			$(YQ) e 'del(.status)'                                        -i $(HELM_CHARTS_DIR)/wordpress-operator/crds/$$(basename $${crd}) ; \
 		done
 	@echo '{{- if .Values.rbac.create }}'                                 > $(HELM_CHARTS_DIR)/wordpress-operator/templates/clusterrole.yaml
+	@echo 'apiVersion: rbac.authorization.k8s.io/v1'                     >> $(HELM_CHARTS_DIR)/wordpress-operator/templates/clusterrole.yaml
+	@echo 'kind: ClusterRole'                                            >> $(HELM_CHARTS_DIR)/wordpress-operator/templates/clusterrole.yaml
 	@echo 'metadata:'                                                    >> $(HELM_CHARTS_DIR)/wordpress-operator/templates/clusterrole.yaml
 	@echo '  name: {{ include "wordpress-operator.fullname" . }}'        >> $(HELM_CHARTS_DIR)/wordpress-operator/templates/clusterrole.yaml
 	@echo '  labels:'                                                    >> $(HELM_CHARTS_DIR)/wordpress-operator/templates/clusterrole.yaml
