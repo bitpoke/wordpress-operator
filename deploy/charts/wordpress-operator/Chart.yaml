@@ -2,7 +2,7 @@ apiVersion: v2
 name: wordpress-operator
 description: Bitpoke WordPress Operator Helm Chart
 appVersion: master
-kubeVersion: ">= 1.16.0"
+kubeVersion: ">= 1.19.0-0"
 keywords:
   - wordpress
   - bitpoke

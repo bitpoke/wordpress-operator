@@ -12,6 +12,8 @@ The main goals of the operator are:
 
 The project is actively developed and maintained and has reached stable beta state. Check [here](https://github.com/bitpoke/wordpress-operator/releases) the project releases.
 
+The minimum supported Kubernetes version is 1.19.
+
 ## Components
 
 1. WordPress operator - this project
@@ -29,7 +31,7 @@ Install kubectl. For more details, see: https://kubernetes.io/docs/tasks/tools/i
 To install CRDs use the following command:
 
 ```shell
-kustomize build github.com/bitpoke/wordpress-operator/config | kubectl apply -f-
+kustomize build github.com/bitpoke/wordpress-operator/config/crd | kubectl apply -f-
 ```
 
 ### Install controller
