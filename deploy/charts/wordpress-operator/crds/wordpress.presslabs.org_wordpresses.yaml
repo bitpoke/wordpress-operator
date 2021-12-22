@@ -5,7 +5,7 @@ metadata:
     controller-gen.kubebuilder.io/version: v0.7.0
   name: wordpresses.wordpress.presslabs.org
   labels:
-    app: wordpress-operator
+    app.kubernetes.io/name: wordpress-operator
 spec:
   group: wordpress.presslabs.org
   names:

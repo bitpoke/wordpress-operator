@@ -40,9 +40,9 @@ include build/makelib/helm.mk
 	@set -e; \
 		for crd in $(wildcard $(CRD_DIR)/*.yaml) ; do \
 			cp $${crd} $(HELM_CHARTS_DIR)/wordpress-operator/crds/ ; \
-			$(YQ) e '.metadata.labels["app"]="wordpress-operator"'        -i $(HELM_CHARTS_DIR)/wordpress-operator/crds/$$(basename $${crd}) ; \
-			$(YQ) e 'del(.metadata.creationTimestamp)'                    -i $(HELM_CHARTS_DIR)/wordpress-operator/crds/$$(basename $${crd}) ; \
-			$(YQ) e 'del(.status)'                                        -i $(HELM_CHARTS_DIR)/wordpress-operator/crds/$$(basename $${crd}) ; \
+			$(YQ) e '.metadata.labels["app.kubernetes.io/name"]="wordpress-operator"' -i $(HELM_CHARTS_DIR)/wordpress-operator/crds/$$(basename $${crd}) ; \
+			$(YQ) e 'del(.metadata.creationTimestamp)'                                -i $(HELM_CHARTS_DIR)/wordpress-operator/crds/$$(basename $${crd}) ; \
+			$(YQ) e 'del(.status)'                                                    -i $(HELM_CHARTS_DIR)/wordpress-operator/crds/$$(basename $${crd}) ; \
 		done
 	@echo '{{- if .Values.rbac.create }}'                                 > $(HELM_CHARTS_DIR)/wordpress-operator/templates/clusterrole.yaml
 	@echo 'apiVersion: rbac.authorization.k8s.io/v1'                     >> $(HELM_CHARTS_DIR)/wordpress-operator/templates/clusterrole.yaml
@@ -72,7 +72,7 @@ include build/makelib/helm.mk
 .PHONY: .helm.package.prepare.wordpress-operator
 .helm.package.prepare.wordpress-operator:  $(YQ)
 	@$(INFO) prepare wordpress-operator chart $(HELM_CHART_VERSION)
-	@$(YQ) e '.image="$(DOCKER_REGISTRY)/wordpress-operator:$(IMAGE_TAG)"' -i $(HELM_CHARTS_WORK_DIR)/wordpress-operator/values.yaml
+	@$(YQ) e '.image.repository="$(DOCKER_REGISTRY)/wordpress-operator"' -i $(HELM_CHARTS_WORK_DIR)/wordpress-operator/values.yaml
 	@$(SED) 's/:latest/:$(IMAGE_TAG)/g' $(HELM_CHARTS_WORK_DIR)/wordpress-operator/Chart.yaml
 	@$(OK) prepare wordpress-operator chart $(HELM_CHART_VERSION)
 .helm.package.run.wordpress-operator: .helm.package.prepare.wordpress-operator

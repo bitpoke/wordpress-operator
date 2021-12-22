@@ -10,6 +10,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Removed
 ### Fixed
 
+## [0.12.1] - 2021-12-22
+### Changed
+ * Bump https://github.com/bitpoke/build to 0.7.1
+### Fixed
+ * Fix the app version in the published Helm charts
+
 ## [0.12.0] - 2021-12-22
 ### Added
 ### Changed
