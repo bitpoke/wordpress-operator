@@ -29,8 +29,12 @@ serviceAccount:
 
 podAnnotations: {}
 
-podSecurityContext: {}
-  # fsGroup: 2000
+podSecurityContext:
+  runAsNonRoot: true
+  # 65532 is the UID for nonroot user from distroless image
+  runAsUser: 65532
+  runAsGroup: 65532
+  fsGroup: 65532
 
 securityContext: {}
   # capabilities:
