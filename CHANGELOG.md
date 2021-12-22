@@ -10,6 +10,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Removed
 ### Fixed
 
+## [0.12.0] - 2021-12-22
+### Added
+### Changed
+ * Minimum required Kubernetes version is 1.19
+ * Use `networking.k8s.io/v1` for `Ingress` resources
+ * Run WordPress Operator as non-root user
+ * Bump https://github.com/bitpoke/build to 0.7.0
+### Removed
+### Fixed
+
 ## [0.11.1] - 2021-11-22
 ### Changed
  * Change the default image to `docker.io/bitpoke/wordpress-runtime:5.8.2`
