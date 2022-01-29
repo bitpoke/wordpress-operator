@@ -31,7 +31,7 @@ Install kubectl. For more details, see: https://kubernetes.io/docs/tasks/tools/i
 To install CRDs use the following command:
 
 ```shell
-kustomize build github.com/bitpoke/wordpress-operator/config/crd | kubectl apply -f-
+kubectl apply -f https://raw.githubusercontent.com/bitpoke/wordpress-operator/master/config/crd/bases/wordpress.presslabs.org_wordpresses.yaml
 ```
 
 ### Install controller
