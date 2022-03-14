@@ -44,7 +44,6 @@ func main() {
 	flag.Parse()
 
 	logf.SetLogger(klogr.New())
-
 	setupLog.Info("Starting wordpress-operator...")
 
 	// Get a config to talk to the apiserver
