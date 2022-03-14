@@ -62,8 +62,8 @@ func main() {
 		HealthProbeBindAddress:     options.HealthProbeBindAddress,
 	}
 
-	if options.ScopedNamespace != "" {
-		opt.Namespace = options.ScopedNamespace
+	if options.WatchNamespace != "" {
+		opt.Namespace = options.WatchNamespace
 	}
 
 	// Create a new Cmd to provide shared dependencies and start components
