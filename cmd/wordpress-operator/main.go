@@ -54,15 +54,21 @@ func main() {
 		os.Exit(genericErrorExitCode)
 	}
 
-	// Create a new Cmd to provide shared dependencies and start components
-	mgr, err := manager.New(cfg, manager.Options{
+	opt := manager.Options{
 		LeaderElection:             options.LeaderElection,
 		LeaderElectionID:           options.LeaderElectionID,
 		LeaderElectionNamespace:    options.LeaderElectionNamespace,
 		LeaderElectionResourceLock: "leases",
 		MetricsBindAddress:         options.MetricsBindAddress,
 		HealthProbeBindAddress:     options.HealthProbeBindAddress,
-	})
+	}
+
+	if options.ScopedNamespace != "" {
+		opt.Namespace = options.ScopedNamespace
+	}
+
+	// Create a new Cmd to provide shared dependencies and start components
+	mgr, err := manager.New(cfg, opt)
 	if err != nil {
 		setupLog.Error(err, "unable to create a new manager")
 		os.Exit(genericErrorExitCode)
