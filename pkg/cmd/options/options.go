@@ -51,6 +51,8 @@ var (
 
 	// HealthProbeBindAddress is the TCP address that the controller should bind to for serving health probes.
 	HealthProbeBindAddress = ":8081"
+
+	ScopedNamespace = os.Getenv("SCOPED_NAMESPACE")
 )
 
 func namespace() string {
