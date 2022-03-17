@@ -491,6 +491,7 @@ func (wp *Wordpress) installWPContainer() []corev1.Container {
 			VolumeMounts:    wp.volumeMounts(),
 			Env:             append(wp.env(), wp.Spec.WordpressBootstrapSpec.Env...),
 			EnvFrom:         append(wp.envFrom(), wp.Spec.WordpressBootstrapSpec.EnvFrom...),
+			Resources:       wp.Spec.Resources,
 			SecurityContext: wp.securityContext(),
 			Command:         []string{"wp-install"},
 			Args: []string{
