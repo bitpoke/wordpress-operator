@@ -10,7 +10,7 @@ require (
 	github.com/onsi/gomega v1.15.0
 	github.com/presslabs/controller-util v0.3.0
 	github.com/spf13/pflag v1.0.5
-	golang.org/x/net v0.0.0-20210428140749-89ef3d95e781
+	golang.org/x/net v0.7.0
 
 	// kubernetes
 	k8s.io/api v0.21.4
