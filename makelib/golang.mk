@@ -58,7 +58,7 @@ GO_LDFLAGS += -s -w
 endif
 
 # supported go versions
-GO_SUPPORTED_VERSIONS ?= 1.11|1.12|1.13
+GO_SUPPORTED_VERSIONS ?= 1.16|1.17
 
 # set GOOS and GOARCH
 GOOS := $(OS)
@@ -160,6 +160,24 @@ $$(TOOLS_HOST_DIR)/$(1)-v$(2): |$$(TOOLS_HOST_DIR)
 	@$$(OK) go get $(3)
 endef # tool.go.get
 
+# Creates a target for installing a go tool from source
+# 1 tool, 2 version, 3 tool url, 4 go env vars
+define tool.go.install
+$(call tool,$(1),$(2))
+
+$$(TOOLS_HOST_DIR)/$(1)-v$(2): |$$(TOOLS_HOST_DIR)
+	@echo ${TIME} ${BLUE}[TOOL]${CNone} go install $(3)@$(2)
+	@mkdir -p $$(TOOLS_HOST_DIR)/tmp-$(1)-v$(2) || $$(FAIL)
+	@mkdir -p $$(TOOLS_DIR)/go/$(1)-v$(2)/ && cd $$(TOOLS_DIR)/go/$(1)-v$(2)/ && $(GOHOST) mod init tools && \
+	    $(4) GO111MODULE=on GOPATH=$$(TOOLS_HOST_DIR)/tmp-$(1)-v$(2) $(GOHOST) install $(3)@$(2) || $$(FAIL)
+	@find $$(TOOLS_HOST_DIR)/tmp-$(1)-v$(2) -type f -print0 | xargs -0 chmod 0644 || $$(FAIL)
+	@find $$(TOOLS_HOST_DIR)/tmp-$(1)-v$(2) -type d -print0 | xargs -0 chmod 0755 || $$(FAIL)
+	@mv $$(TOOLS_HOST_DIR)/tmp-$(1)-v$(2)/bin/$(1) $$@ || $$(FAIL)
+	@chmod +x $$@
+	@rm -rf $$(TOOLS_HOST_DIR)/tmp-$(1)-v$(2)
+	@$$(OK) go install $(3)
+endef # tool.go.install
+
 # Creates a target for compiling a vendored go tool
 # 1 tool, 2 package
 define tool.go.vendor.install
@@ -180,19 +198,19 @@ DEP_VERSION ?= 0.5.4
 DEP_DOWNLOAD_URL ?= https://github.com/golang/dep/releases/download/v$(DEP_VERSION)/dep-$(HOSTOS)-$(HOSTARCH)
 $(eval $(call tool.download,dep,$(DEP_VERSION),$(DEP_DOWNLOAD_URL)))
 
-GOLANGCI_LINT_VERSION ?= 1.21.0
+GOLANGCI_LINT_VERSION ?= 1.41.1
 GOLANGCI_LINT_DOWNLOAD_URL ?= https://github.com/golangci/golangci-lint/releases/download/v$(GOLANGCI_LINT_VERSION)/golangci-lint-$(GOLANGCI_LINT_VERSION)-$(HOSTOS)-$(HOSTARCH).tar.gz
 $(eval $(call tool.download.tar.gz,golangci-lint,$(GOLANGCI_LINT_VERSION),$(GOLANGCI_LINT_DOWNLOAD_URL)))
 
 ifneq ($(LANGUAGES),)
 GO_XGETTEXT_VERSION ?= v0.0.0-20180127124228-c366ce0fe48d
 GO_XGETTEXT_URL ?= github.com/presslabs/gettext/go-xgettext
-$(eval $(call tool.go.get,go-xgettext,$(GO_XGETTEXT_VERSION),$(GO_XGETTEXT_URL)))
+$(eval $(call tool.go.install,go-xgettext,$(GO_XGETTEXT_VERSION),$(GO_XGETTEXT_URL)))
 endif
 
 # we use a consistent version of gofmt even while running different go compilers.
 # see https://github.com/golang/go/issues/26397 for more details
-GOFMT_VERSION ?= 1.13
+GOFMT_VERSION ?= 1.16.6
 GOFMT_DOWNLOAD_URL ?= https://dl.google.com/go/go$(GOFMT_VERSION).$(HOSTOS)-$(HOSTARCH).tar.gz
 ifneq ($(findstring $(GOFMT_VERSION),$(GO_VERSION)),)
 GOFMT := $(shell which gofmt)
@@ -200,18 +218,18 @@ else
 $(eval $(call tool.download.tar.gz,gofmt,$(GOFMT_VERSION),$(GOFMT_DOWNLOAD_URL),bin/gofmt))
 endif
 
-GOIMPORTS_VERSION ?= v0.0.0-20191111154804-8cb0d02132ec
+GOIMPORTS_VERSION ?= v0.1.5
 GOIMPORTS_URL ?= golang.org/x/tools/cmd/goimports
-$(eval $(call tool.go.get,goimports,$(GOIMPORTS_VERSION),$(GOIMPORTS_URL)))
+$(eval $(call tool.go.install,goimports,$(GOIMPORTS_VERSION),$(GOIMPORTS_URL)))
 
 ifeq ($(GO_TEST_TOOL),ginkgo)
-GINKGO_VERSION ?= v1.10.3
+GINKGO_VERSION ?= v1.16.4
 GINKGO_URL ?= github.com/onsi/ginkgo/ginkgo
-$(eval $(call tool.go.get,ginkgo,$(GINKGO_VERSION),$(GINKGO_URL)))
+$(eval $(call tool.go.install,ginkgo,$(GINKGO_VERSION),$(GINKGO_URL)))
 else # GO_TEST_TOOL != ginkgo
 GO_JUNIT_REPORT_VERSION ?= v0.9.2-0.20191008195320-984a47ca6b0a
 GO_JUNIT_REPORT_URL ?= github.com/jstemmer/go-junit-report
-$(eval $(call tool.go.get,go-junit-report,$(GO_JUNIT_REPORT_VERSION),$(GO_JUNIT_REPORT_URL),go-junit-report))
+$(eval $(call tool.go.install,go-junit-report,$(GO_JUNIT_REPORT_VERSION),$(GO_JUNIT_REPORT_URL),go-junit-report))
 endif # GO_TEST_TOOL
 
 # ====================================================================================
@@ -231,7 +249,7 @@ $(eval $(call common.target,go.build))
 .go.build.run: .do.go.build
 .do.go.build:
 	@$(INFO) go build $(PLATFORM) $(GO_TAGS)
-	$(foreach p,$(GO_STATIC_PACKAGES),@CGO_ENABLED=0 $(GO) build -v -i -o $(GO_OUT_DIR)/$(call list-join,_,$(lastword $(subst /, ,$(p))) $(call lower,$(GO_TAGS)))$(GO_OUT_EXT) $(GO_STATIC_FLAGS) $(p) || $(FAIL) ${\n})
+	$(foreach p,$(GO_STATIC_PACKAGES),@CGO_ENABLED=0 $(GO) build -v -o $(GO_OUT_DIR)/$(call list-join,_,$(lastword $(subst /, ,$(p))) $(call lower,$(GO_TAGS)))$(GO_OUT_EXT) $(GO_STATIC_FLAGS) $(p) || $(FAIL) ${\n})
 	@$(OK) go build $(PLATFORM) $(GO_TAGS)
 
 ifeq ($(GO_TEST_TOOL),ginkgo)
@@ -241,7 +259,7 @@ go.test.unit: $(GINKGO)
 	@CGO_ENABLED=0 $(GINKGO) $(GO_TEST_FLAGS) $(GO_STATIC_FLAGS) $(patsubst $(ROOT_DIR)/%,./%,$(shell go list -f '{{ .Dir }}' $(GO_TEST_PACKAGES))) || $(FAIL)
 	@$(OK) go test unit-tests
 
-go.test.integration:
+go.test.integration: $(GINKGO)
 	@$(INFO) ginkgo integration-tests
 	@mkdir -p $(GO_TEST_OUTPUT) || $(FAIL)
 	@CGO_ENABLED=0 $(GINKGO) $(GO_TEST_FLAGS) $(GO_STATIC_FLAGS) $(foreach t,$(GO_INTEGRATION_TESTS_SUBDIRS),./$(t)/...) $(TEST_FILTER_PARAM) || $(FAIL)
@@ -251,7 +269,7 @@ else # GO_TEST_TOOL != ginkgo
 go.test.unit: $(GO_JUNIT_REPORT)
 	@$(INFO) go test unit-tests
 	@mkdir -p $(GO_TEST_OUTPUT)
-	@CGO_ENABLED=0 $(GOHOST) test -i $(GO_STATIC_FLAGS) $(GO_TEST_PACKAGES) || $(FAIL)
+	@CGO_ENABLED=0 $(GOHOST) test $(GO_STATIC_FLAGS) $(GO_TEST_PACKAGES) || $(FAIL)
 	@CGO_ENABLED=0 $(GOHOST) test $(GO_TEST_FLAGS) $(GO_STATIC_FLAGS) $(GO_TEST_PACKAGES) $(TEST_FILTER_PARAM) 2>&1 | tee $(GO_TEST_OUTPUT)/unit-tests.log || $(FAIL)
 	@cat $(GO_TEST_OUTPUT)/unit-tests.log | $(GO_JUNIT_REPORT) -set-exit-code > $(GO_TEST_OUTPUT)/unit-tests.xml || $(FAIL)
 	@$(OK) go test unit-tests
