@@ -8,7 +8,9 @@ include build/makelib/common.mk
 
 GO111MODULE=on
 GO_STATIC_PACKAGES = $(GO_PROJECT)/cmd/wordpress-operator
-GOLANGCI_LINT_VERSION = 1.37.1
+GO_SUPPORTED_VERSIONS = 1.17
+GOFMT_VERSION = 1.17
+GOLANGCI_LINT_VERSION = 1.42.1
 GO_LDFLAGS += -X github.com/bitpoke/wordpress-operator/pkg/version.buildDate=$(BUILD_DATE) \
 	       -X github.com/bitpoke/wordpress-operator/pkg/version.gitVersion=$(VERSION) \
 	       -X github.com/bitpoke/wordpress-operator/pkg/version.gitCommit=$(GIT_COMMIT) \
