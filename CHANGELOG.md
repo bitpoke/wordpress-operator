@@ -10,6 +10,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Removed
 ### Fixed
 
+## [0.12.2] - 2023-05-23
+### Changed
+ * Minimum required Kubernetes version is 1.21
+ * Bump https://github.com/bitpoke/build to 0.8.3
+ * Allow the operator to be namespace scoped (`SCOPED_NAMESPACE` environment variable)
+ * Set resources for `init-wp` initContainer
+
 ## [0.12.1] - 2021-12-22
 ### Changed
  * Bump https://github.com/bitpoke/build to 0.7.1
