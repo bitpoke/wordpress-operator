@@ -1,4 +1,5 @@
 /*
+Copyright 2023 Bitpoke Soft SRL
 Copyright 2018 Pressinfra SRL.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -103,7 +104,7 @@ type ReconcileWordpress struct {
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=batch,resources=jobs;cronjobs,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=wordpress.presslabs.org,resources=wordpresses;wordpresses/status,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=wordpress.bitpoke.io,resources=wordpresses;wordpresses/status,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile reads that state of the cluster for a Wordpress object and makes changes based on the state read
 // and what is in the Wordpress.Spec.

@@ -1,4 +1,5 @@
 /*
+Copyright 2023 Bitpoke Soft SRL
 Copyright 2018 Pressinfra SRL.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -88,7 +89,7 @@ func (wp *Wordpress) ComponentLabels(component component) labels.Set {
 	l["app.kubernetes.io/component"] = component.name
 
 	if component == WordpressDBUpgrade {
-		l["wordpress.presslabs.org/upgrade-for"] = wp.ImageVersion()
+		l["wordpress.bitpoke.io/upgrade-for"] = wp.ImageVersion()
 	}
 
 	return l

@@ -1,4 +1,5 @@
 /*
+Copyright 2023 Bitpoke Soft SRL
 Copyright 2018 Pressinfra SRL.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,5 +18,5 @@ limitations under the License.
 package sync
 
 var controllerLabels = map[string]string{
-	"app.kubernetes.io/managed-by": "wordpress-operator.presslabs.org",
+	"app.kubernetes.io/managed-by": "wordpress-operator.bitpoke.io",
 }

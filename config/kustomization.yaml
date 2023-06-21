@@ -1,5 +1,5 @@
 resources:
-  - crds/wordpress.presslabs.org_wordpresses.yaml
+  - crds/wordpress.bitpoke.io_wordpresses.yaml
 
 
 patchesJson6902:
@@ -8,7 +8,7 @@ patchesJson6902:
     group: apiextensions.k8s.io
     version: v1
     kind: CustomResourceDefinition
-    name: wordpresses.wordpress.presslabs.org
+    name: wordpresses.wordpress.bitpoke.io
   path: patches/volume.yaml
 
 # https://github.com/kubernetes-sigs/controller-tools/issues/444
@@ -16,5 +16,5 @@ patchesJson6902:
     group: apiextensions.k8s.io
     version: v1
     kind: CustomResourceDefinition
-    name: wordpresses.wordpress.presslabs.org
+    name: wordpresses.wordpress.bitpoke.io
   path: patches/x-kubernetes-list-map-keys.yaml

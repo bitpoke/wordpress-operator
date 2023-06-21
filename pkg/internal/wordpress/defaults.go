@@ -1,4 +1,5 @@
 /*
+Copyright 2023 Bitpoke Soft SRL
 Copyright 2018 Pressinfra SRL.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +27,7 @@ import (
 )
 
 const (
-	codeSrcMountPath = "/var/run/presslabs.org/code/src"
+	codeSrcMountPath = "/var/run/bitpoke.io/code/src"
 
 	defaultCodeMountPath   = "/app/web/wp-content"
 	defaultRepoCodeSubPath = "wp-content"

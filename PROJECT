@@ -1,3 +1,7 @@
 version: "1"
-domain: presslabs.org
+domain: bitpoke.io
 repo: github.com/bitpoke/wordpress-operator
+resources:
+- group: wordpress
+  kind: Wordpress
+  version: v1alpha1

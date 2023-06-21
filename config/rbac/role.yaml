@@ -71,7 +71,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - wordpress.presslabs.org
+  - wordpress.bitpoke.io
   resources:
   - wordpresses
   - wordpresses/status

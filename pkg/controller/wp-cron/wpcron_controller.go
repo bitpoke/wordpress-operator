@@ -1,4 +1,5 @@
 /*
+Copyright 2023 Bitpoke Soft SRL
 Copyright 2020 Pressinfra SRL.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -97,7 +98,7 @@ type ReconcileWordpress struct {
 // and what is in the Wordpress.Spec.
 //
 // Automatically generate RBAC rules to allow the Controller to read and write Deployments.
-// +kubebuilder:rbac:groups=wordpress.presslabs.org,resources=wordpresses;wordpresses/status,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=wordpress.bitpoke.io,resources=wordpresses;wordpresses/status,verbs=get;list;watch;create;update;patch;delete
 func (r *ReconcileWordpress) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	// Fetch the Wordpress instance
 	wp := wordpress.New(&wordpressv1alpha1.Wordpress{})

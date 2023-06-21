@@ -3,11 +3,11 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.7.0
-  name: wordpresses.wordpress.presslabs.org
+  name: wordpresses.wordpress.bitpoke.io
   labels:
     app.kubernetes.io/name: wordpress-operator
 spec:
-  group: wordpress.presslabs.org
+  group: wordpress.bitpoke.io
   names:
     kind: Wordpress
     listKind: WordpressList

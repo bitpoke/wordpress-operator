@@ -1,4 +1,5 @@
 /*
+Copyright 2023 Bitpoke Soft SRL
 Copyright 2018 Pressinfra SRL.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -55,7 +56,7 @@ func NewDeploymentSyncer(wp *wordpress.Wordpress, secret *corev1.Secret, c clien
 		if len(template.Annotations) == 0 {
 			template.Annotations = make(map[string]string)
 		}
-		template.Annotations["wordpress.presslabs.org/secretVersion"] = secret.ResourceVersion
+		template.Annotations["wordpress.bitpoke.io/secretVersion"] = secret.ResourceVersion
 
 		obj.Spec.Template.ObjectMeta = template.ObjectMeta
 

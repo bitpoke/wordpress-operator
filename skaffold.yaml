@@ -2,7 +2,7 @@ apiVersion: skaffold/v1beta11
 kind: Config
 build:
   artifacts:
-  - image: quay.io/presslabs/wordpress-operator
+  - image: docker.io/bitpoke/wordpress-operator
     docker:
       dockerfile: hack/Dockerfile.skaffold
 deploy:
@@ -15,5 +15,5 @@ deploy:
       valuesFiles:
         - hack/skaffold-values.yaml
       values:
-        image: quay.io/presslabs/wordpress-operator
+        image: docker.io/bitpoke/wordpress-operator
 
