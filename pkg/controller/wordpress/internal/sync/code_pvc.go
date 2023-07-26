@@ -45,12 +45,12 @@ func NewCodePVCSyncer(wp *wordpress.Wordpress, c client.Client) syncer.Interface
 	return syncer.NewObjectSyncer("CodePVC", wp.Unwrap(), obj, c, func() error {
 		obj.Labels = labels.Merge(labels.Merge(wp.Spec.CodeVolumeSpec.Labels, objLabels), controllerLabels)
 
-		if len(wp.Spec.CodeVolumeSpec.Annotations) > 0 {
-			obj.Annotations = labels.Merge(obj.Annotations, wp.Spec.CodeVolumeSpec.Annotations)
-		}
-
 		if wp.Spec.CodeVolumeSpec == nil || wp.Spec.CodeVolumeSpec.PersistentVolumeClaim == nil {
 			return errCodeVolumeClaimNotDefined
+		}
+
+		if len(wp.Spec.CodeVolumeSpec.Annotations) > 0 {
+			obj.Annotations = labels.Merge(obj.Annotations, wp.Spec.CodeVolumeSpec.Annotations)
 		}
 
 		// PVC spec is immutable
