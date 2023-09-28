@@ -21,7 +21,7 @@ import (
 
 	"github.com/presslabs/controller-util/syncer"
 	appsv1 "k8s.io/api/apps/v1"
-	batchv1beta1 "k8s.io/api/batch/v1beta1"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -208,7 +208,7 @@ func (r *ReconcileWordpress) cleanupCronJob(ctx context.Context, wp *wordpress.W
 		Namespace: wp.Namespace,
 	}
 
-	cronJob := &batchv1beta1.CronJob{}
+	cronJob := &batchv1.CronJob{}
 
 	if err := r.Get(ctx, cronKey, cronJob); err != nil {
 		return ignoreNotFound(err)
