@@ -54,8 +54,8 @@ metadata:
   name: mysite
 spec:
   replicas: 3
-  domains:
-    - example.com
+  routes:
+    - domain: example.com
   # image: docker.io/bitpoke/wordpress-runtime
   # tag: latest
   code: # where to find the code
