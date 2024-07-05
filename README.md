@@ -12,7 +12,7 @@ The main goals of the operator are:
 
 The project is actively developed and maintained and has reached stable beta state. Check [here](https://github.com/bitpoke/wordpress-operator/releases) the project releases.
 
-The minimum supported Kubernetes version is 1.19.
+The minimum supported Kubernetes version is 1.21.
 
 ## Components
 
