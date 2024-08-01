@@ -135,7 +135,7 @@ spec:
         key: DATABASE
   envFrom: []
 
-  # secret containg HTTPS certificate
+  # secret containing HTTPS certificate
   tlsSecretRef: mysite-tls
   # extra ingress annotations
   ingressAnnotations: {}

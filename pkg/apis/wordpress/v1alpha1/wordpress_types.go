@@ -296,8 +296,8 @@ type MediaVolumeSpec struct {
 }
 
 // WordpressBootstrapSpec requires defining at least.
-// `WORDPRESS_BOOSTRAP_USER` and `WORDPRESS_BOOTSTRAP_PASSWORD` env variables.
-// `WORDPRESS_BOOSTRAP_EMAIL` and `WORDPRESS_BOOTSTRAP_TITLE` are also used if provided.
+// `WORDPRESS_BOOTSTRAP_USER` and `WORDPRESS_BOOTSTRAP_PASSWORD` env variables.
+// `WORDPRESS_BOOTSTRAP_EMAIL` and `WORDPRESS_BOOTSTRAP_TITLE` are also used if provided.
 type WordpressBootstrapSpec struct {
 	// Env defines environment variables for bootstrapping WordPress
 	// +optional
